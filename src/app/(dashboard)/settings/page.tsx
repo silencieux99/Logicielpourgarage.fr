@@ -590,48 +590,217 @@ export default function SettingsPage() {
                     <div className="space-y-6">
                         <div>
                             <h2 className="text-lg font-semibold text-zinc-900 mb-1">Abonnement</h2>
-                            <p className="text-sm text-zinc-500">Gérez votre plan</p>
+                            <p className="text-sm text-zinc-500">Gérez votre plan et votre facturation</p>
                         </div>
 
+                        {/* Plan actuel */}
                         <div className="bg-gradient-to-br from-zinc-900 to-zinc-800 rounded-2xl p-6 text-white">
-                            <div className="flex items-center justify-between mb-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                                 <div>
-                                    <p className="text-sm text-zinc-400">Plan actuel</p>
+                                    <p className="text-sm text-zinc-400 mb-1">Plan actuel</p>
                                     <p className="text-2xl font-bold">Démo gratuite</p>
                                 </div>
-                                <span className="px-3 py-1 bg-white/20 text-white text-xs font-semibold rounded-full">GRATUIT</span>
+                                <div className="flex items-center gap-3">
+                                    <span className="px-3 py-1 bg-amber-500/20 text-amber-300 text-xs font-semibold rounded-full border border-amber-500/30">
+                                        ESSAI GRATUIT
+                                    </span>
+                                </div>
                             </div>
-                            <p className="text-sm text-zinc-300 mb-4">Limité à 5 clients et 5 véhicules</p>
-                            <ul className="space-y-2 text-sm text-zinc-300">
-                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> 5 clients max</li>
-                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> 5 véhicules max</li>
-                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /> 10 documents/mois</li>
-                            </ul>
+
+                            {/* Période d'essai */}
+                            <div className="bg-white/10 rounded-xl p-4 mb-6">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-sm text-zinc-300">Période d'essai</span>
+                                    <span className="text-sm font-semibold text-white">14 jours restants</span>
+                                </div>
+                                <div className="w-full bg-white/20 rounded-full h-2">
+                                    <div className="bg-amber-400 h-2 rounded-full" style={{ width: '50%' }} />
+                                </div>
+                                <p className="text-xs text-zinc-400 mt-2">
+                                    Votre essai gratuit se termine le 15 janvier 2025
+                                </p>
+                            </div>
+
+                            {/* Limites d'utilisation */}
+                            <div className="grid grid-cols-3 gap-4">
+                                <div className="text-center">
+                                    <p className="text-2xl font-bold text-white">2/5</p>
+                                    <p className="text-xs text-zinc-400">Clients</p>
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-2xl font-bold text-white">3/5</p>
+                                    <p className="text-xs text-zinc-400">Véhicules</p>
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-2xl font-bold text-white">4/10</p>
+                                    <p className="text-xs text-zinc-400">Documents</p>
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="bg-white rounded-2xl border-2 border-zinc-900 p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <div>
-                                    <p className="text-sm text-zinc-500">Recommandé</p>
-                                    <p className="text-2xl font-bold text-zinc-900">Pro</p>
+                        {/* Alerte upgrade */}
+                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                                <Bell className="h-5 w-5 text-amber-600" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-amber-900">Passez au plan Pro pour débloquer toutes les fonctionnalités</p>
+                                <p className="text-xs text-amber-700 mt-1">
+                                    Clients illimités, véhicules illimités, SMS automatiques et plus encore.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Plans disponibles */}
+                        <div>
+                            <h3 className="text-md font-semibold text-zinc-900 mb-4">Choisir un plan</h3>
+                            <div className="grid md:grid-cols-2 gap-4">
+                                {/* Plan Pro Mensuel */}
+                                <div className="bg-white rounded-2xl border-2 border-zinc-200 p-6 hover:border-zinc-900 transition-colors cursor-pointer">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div>
+                                            <p className="text-lg font-bold text-zinc-900">Pro Mensuel</p>
+                                            <p className="text-xs text-zinc-500">Sans engagement</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-2xl font-bold text-zinc-900">59,99 €</p>
+                                            <p className="text-xs text-zinc-500">HT / mois</p>
+                                        </div>
+                                    </div>
+                                    <ul className="space-y-2 text-sm text-zinc-600 mb-6">
+                                        <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-500" /> Clients illimités</li>
+                                        <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-500" /> Véhicules illimités</li>
+                                        <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-500" /> Documents illimités</li>
+                                        <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-500" /> 100 SMS / mois inclus</li>
+                                        <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-500" /> Support prioritaire</li>
+                                    </ul>
+                                    <button className="w-full h-11 bg-zinc-900 hover:bg-zinc-800 text-white font-semibold rounded-xl transition-colors">
+                                        Choisir ce plan
+                                    </button>
                                 </div>
-                                <div className="text-right">
-                                    <p className="text-2xl font-bold text-zinc-900">59,99 €</p>
-                                    <p className="text-xs text-zinc-500">HT / mois</p>
+
+                                {/* Plan Pro Annuel */}
+                                <div className="relative bg-white rounded-2xl border-2 border-emerald-500 p-6">
+                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-emerald-500 text-white text-xs font-bold rounded-full">
+                                        ÉCONOMISEZ 20%
+                                    </div>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div>
+                                            <p className="text-lg font-bold text-zinc-900">Pro Annuel</p>
+                                            <p className="text-xs text-zinc-500">Engagement 12 mois</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-2xl font-bold text-zinc-900">47,99 €</p>
+                                            <p className="text-xs text-zinc-500">HT / mois</p>
+                                            <p className="text-xs text-emerald-600 font-medium">soit 575,88 € / an</p>
+                                        </div>
+                                    </div>
+                                    <ul className="space-y-2 text-sm text-zinc-600 mb-6">
+                                        <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-500" /> Tout du plan Pro Mensuel</li>
+                                        <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-500" /> 200 SMS / mois inclus</li>
+                                        <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-500" /> Formation personnalisée</li>
+                                        <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-500" /> Backup quotidien</li>
+                                        <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-500" /> 2 mois offerts</li>
+                                    </ul>
+                                    <button className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors">
+                                        Choisir ce plan
+                                    </button>
                                 </div>
                             </div>
-                            <ul className="space-y-2 text-sm text-zinc-700 mb-6">
-                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-500" /> Clients illimités</li>
-                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-500" /> Véhicules illimités</li>
-                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-500" /> Documents illimités</li>
-                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-500" /> SMS inclus (100/mois)</li>
-                            </ul>
-                            <button className="w-full h-12 bg-zinc-900 hover:bg-zinc-800 text-white font-semibold rounded-xl transition-colors">
-                                Passer au Pro
+                        </div>
+
+                        {/* Mode de paiement */}
+                        <div className="bg-zinc-50 rounded-xl p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-md font-semibold text-zinc-900">Mode de paiement</h3>
+                                <button className="text-sm text-zinc-600 font-medium hover:text-zinc-900">
+                                    + Ajouter une carte
+                                </button>
+                            </div>
+
+                            <div className="bg-white rounded-xl border border-zinc-200 p-4 flex items-center gap-4">
+                                <div className="w-12 h-8 bg-gradient-to-r from-blue-600 to-blue-400 rounded-md flex items-center justify-center">
+                                    <span className="text-white text-xs font-bold">VISA</span>
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-sm font-medium text-zinc-900">•••• •••• •••• 4242</p>
+                                    <p className="text-xs text-zinc-500">Expire 12/26</p>
+                                </div>
+                                <span className="px-2 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded">
+                                    Par défaut
+                                </span>
+                            </div>
+
+                            <p className="text-xs text-zinc-500 mt-4">
+                                Vos paiements sont sécurisés par Stripe. Nous ne stockons jamais vos données bancaires.
+                            </p>
+                        </div>
+
+                        {/* Historique de facturation */}
+                        <div>
+                            <h3 className="text-md font-semibold text-zinc-900 mb-4">Historique de facturation</h3>
+
+                            <div className="bg-white rounded-xl border border-zinc-200 divide-y divide-zinc-100">
+                                <div className="p-4 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center">
+                                            <FileText className="h-5 w-5 text-zinc-500" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium text-zinc-900">Facture #001</p>
+                                            <p className="text-xs text-zinc-500">1er décembre 2024</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <div className="text-right">
+                                            <p className="text-sm font-semibold text-zinc-900">59,99 €</p>
+                                            <span className="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded">Payée</span>
+                                        </div>
+                                        <button className="p-2 hover:bg-zinc-100 rounded-lg transition-colors">
+                                            <FileText className="h-4 w-4 text-zinc-500" />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="p-4 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center">
+                                            <FileText className="h-5 w-5 text-zinc-500" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium text-zinc-900">Facture #000</p>
+                                            <p className="text-xs text-zinc-500">1er novembre 2024</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <div className="text-right">
+                                            <p className="text-sm font-semibold text-zinc-900">59,99 €</p>
+                                            <span className="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded">Payée</span>
+                                        </div>
+                                        <button className="p-2 hover:bg-zinc-100 rounded-lg transition-colors">
+                                            <FileText className="h-4 w-4 text-zinc-500" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p className="text-xs text-zinc-500 mt-3 text-center">
+                                Les factures sont automatiquement envoyées par email.
+                            </p>
+                        </div>
+
+                        {/* Annuler l'abonnement */}
+                        <div className="pt-6 border-t border-zinc-200">
+                            <button className="text-sm text-red-600 hover:text-red-700 font-medium">
+                                Annuler mon abonnement
                             </button>
+                            <p className="text-xs text-zinc-500 mt-1">
+                                Vous conserverez l'accès jusqu'à la fin de votre période de facturation.
+                            </p>
                         </div>
                     </div>
                 )
+
 
             case "apparence":
                 return (
