@@ -14,6 +14,7 @@ import {
     Car
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { BrandLogo } from "@/components/ui/brand-logo"
 
 interface Repair {
     id: string
@@ -183,13 +184,15 @@ export default function RepairsPage() {
 
                                         {(repair.vehiculePlaque || repair.clientNom) && (
                                             <div className="flex items-center gap-2 text-sm text-zinc-500 mb-2">
+                                                {repair.vehiculeMarque && (
+                                                    <BrandLogo brand={repair.vehiculeMarque} size={18} />
+                                                )}
                                                 {repair.vehiculePlaque && (
-                                                    <span className="flex items-center gap-1">
-                                                        <Car className="h-3.5 w-3.5" />
+                                                    <span className="font-mono text-[11px] bg-zinc-50 border border-zinc-100 px-1.5 py-0.5 rounded">
                                                         {repair.vehiculePlaque}
                                                     </span>
                                                 )}
-                                                {repair.clientNom && <span>• {repair.clientNom}</span>}
+                                                {repair.clientNom && <span className="text-zinc-400">• {repair.clientNom}</span>}
                                             </div>
                                         )}
 

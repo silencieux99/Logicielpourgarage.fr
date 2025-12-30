@@ -13,6 +13,7 @@ import {
     Loader2
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { BrandLogo } from "@/components/ui/brand-logo"
 
 interface Vehicle {
     id: string
@@ -123,10 +124,8 @@ export default function VehiclesPage() {
                             className="bg-white rounded-xl border border-zinc-200 p-5 hover:border-zinc-300 transition-colors"
                         >
                             <div className="flex items-start justify-between mb-3">
-                                <div className="w-12 h-12 rounded-xl bg-zinc-100 flex items-center justify-center">
-                                    <Car className="h-6 w-6 text-zinc-600" />
-                                </div>
-                                <span className="px-2.5 py-1 bg-zinc-100 text-zinc-700 text-xs font-mono font-semibold rounded-lg">
+                                <BrandLogo brand={vehicle.marque} size={48} className="bg-zinc-50 rounded-xl p-1 border border-zinc-100" />
+                                <span className="px-2 py-1 bg-zinc-50 border border-zinc-100 text-zinc-700 text-[10px] font-mono font-semibold rounded-md">
                                     {vehicle.plaque}
                                 </span>
                             </div>

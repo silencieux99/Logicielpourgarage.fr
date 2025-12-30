@@ -24,6 +24,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUpload } from "@/hooks/use-upload"
+import { BrandLogo } from "@/components/ui/brand-logo"
 
 const etatsVehicule = [
     { id: "excellent", label: "Excellent", color: "bg-emerald-50 text-emerald-600 border-emerald-200", icon: CheckCircle },
@@ -217,17 +218,27 @@ export default function NewVehiclePage() {
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
-                            <div>
+                            <div className="relative">
                                 <label className="text-xs font-medium text-zinc-600 mb-1.5 block">
                                     Marque <span className="text-red-400">*</span>
                                 </label>
-                                <input
-                                    type="text"
-                                    value={formData.marque}
-                                    onChange={(e) => updateField("marque", e.target.value)}
-                                    placeholder="Renault"
-                                    className="w-full h-10 px-3 bg-white border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        value={formData.marque}
+                                        onChange={(e) => updateField("marque", e.target.value)}
+                                        placeholder="Renault"
+                                        className={cn(
+                                            "w-full h-10 bg-white border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400",
+                                            formData.marque ? "pl-11" : "px-3"
+                                        )}
+                                    />
+                                    {formData.marque && (
+                                        <div className="absolute left-2.5 top-1/2 -translate-y-1/2">
+                                            <BrandLogo brand={formData.marque} size={24} />
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                             <div>
                                 <label className="text-xs font-medium text-zinc-600 mb-1.5 block">
