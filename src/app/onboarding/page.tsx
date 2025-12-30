@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import {
     Building2,
@@ -20,6 +20,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { useUpload } from "@/hooks/use-upload"
+import { useAuth } from "@/lib/auth-context"
+import { createGarage, createGarageConfig } from "@/lib/database"
 
 const steps = [
     { id: 1, title: "Votre garage", icon: Building2 },
@@ -30,6 +32,9 @@ const steps = [
 
 export default function OnboardingPage() {
     const [currentStep, setCurrentStep] = useState(1)
+    const [loading, setLoading] = useState(false)
+    const router = useRouter()
+    const { user, refreshGarage } = useAuth()
     const [formData, setFormData] = useState({
         garageName: "",
         address: "",
@@ -39,7 +44,6 @@ export default function OnboardingPage() {
         siret: "",
         teamMembers: [{ name: "", role: "mechanic" }],
     })
-    const router = useRouter()
 
     // File input refs
     const logoInputRef = useRef<HTMLInputElement>(null)
@@ -95,17 +99,57 @@ export default function OnboardingPage() {
         if (currentStep > 1) setCurrentStep(currentStep - 1)
     }
 
-    const finishOnboarding = async () => {
-        // TODO: Save garage data to Firebase with logoUrl
-        const dataToSave = {
-            ...formData,
-            logoUrl: logoFiles[0]?.url,
-            vehicleImportUrl: vehicleImportFiles[0]?.url,
+    // Redirect if not logged in
+    useEffect(() => {
+        if (!user && typeof window !== 'undefined') {
+            router.push('/login')
         }
-        console.log('Onboarding data:', dataToSave)
+    }, [user, router])
 
-        localStorage.setItem("onboarding_completed", "true")
-        router.push("/dashboard")
+    const finishOnboarding = async () => {
+        if (!user) {
+            router.push('/login')
+            return
+        }
+
+        setLoading(true)
+        try {
+            // Créer le garage dans Firebase
+            const garageId = await createGarage({
+                userId: user.uid,
+                nom: formData.garageName,
+                siret: formData.siret || undefined,
+                adresse: formData.address,
+                codePostal: "",
+                ville: "",
+                telephone: formData.phone,
+                email: formData.email || user.email || "",
+                siteWeb: formData.website || undefined,
+                logo: logoFiles[0]?.url || undefined,
+            })
+
+            // Créer la configuration par défaut
+            await createGarageConfig({
+                garageId,
+                tauxHoraireMO: 55,
+                tauxTVA: 20,
+                prefixeDevis: "D",
+                prefixeFacture: "F",
+                prochainNumeroDevis: 1,
+                prochainNumeroFacture: 1,
+                mentionsLegales: "En cas de retard de paiement, une pénalité de 3 fois le taux d'intérêt légal sera appliquée.",
+            })
+
+            // Rafraîchir le contexte auth
+            await refreshGarage()
+
+            // Rediriger vers le dashboard
+            router.push("/dashboard")
+        } catch (error) {
+            console.error("Erreur création garage:", error)
+        } finally {
+            setLoading(false)
+        }
     }
 
     return (

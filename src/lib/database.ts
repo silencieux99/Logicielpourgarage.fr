@@ -23,13 +23,15 @@ export interface Garage {
     id?: string
     userId: string
     nom: string
-    statutJuridique: string
+    statutJuridique?: string
     siret?: string
     numeroTVA?: string
+    tvaIntracommunautaire?: string
     adresse: string
     codePostal: string
     ville: string
     telephone?: string
+    email?: string
     siteWeb?: string
     effectif?: string
     logo?: string
@@ -46,8 +48,11 @@ export interface GarageConfig {
     couleurPrincipale: string
     prefixeDevis: string
     prefixeFacture: string
+    prochainNumeroDevis: number
+    prochainNumeroFacture: number
     mentionsDevis: string
     mentionsFacture: string
+    mentionsLegales?: string
     // Fiscalité
     pays: string
     devise: string
@@ -222,8 +227,37 @@ export const updateGarage = async (garageId: string, data: Partial<Garage>) => {
 // GARAGE CONFIG
 // ============================================
 
-export const createGarageConfig = async (data: Omit<GarageConfig, 'id'>) => {
-    const docRef = await addDoc(collection(db, 'garageConfigs'), data)
+export const createGarageConfig = async (data: Partial<GarageConfig> & { garageId: string }) => {
+    const defaultConfig: Omit<GarageConfig, 'id' | 'garageId'> = {
+        formatPapier: 'A4',
+        modeleEntete: 'standard',
+        couleurPrincipale: '#18181b',
+        prefixeDevis: 'D',
+        prefixeFacture: 'F',
+        prochainNumeroDevis: 1,
+        prochainNumeroFacture: 1,
+        mentionsDevis: 'Devis valable 30 jours',
+        mentionsFacture: 'Payable à réception',
+        pays: 'France',
+        devise: 'EUR',
+        regimeTVA: 'normal',
+        tauxTVA: 20,
+        tauxHoraireMO: 55,
+        tarifDiagnostic: 35,
+        margeMinPieces: 20,
+        arrondiPrix: '0.01',
+        formatDate: 'DD/MM/YYYY',
+        formatHeure: 'HH:mm',
+        premierJourSemaine: 'lundi',
+        fuseauHoraire: 'Europe/Paris',
+        emailNotifications: true,
+        smsRappels: false,
+    }
+
+    const docRef = await addDoc(collection(db, 'garageConfigs'), {
+        ...defaultConfig,
+        ...data, // Les données passées écrasent les défauts
+    })
     return docRef.id
 }
 
