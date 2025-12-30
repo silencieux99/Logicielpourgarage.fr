@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import {
@@ -83,18 +84,30 @@ export function Sidebar() {
                 {/* Logo */}
                 <div className={cn(
                     "h-14 flex items-center border-b border-zinc-50 transition-all duration-300",
-                    isCollapsed ? "justify-center px-0" : "justify-between px-3"
+                    isCollapsed ? "justify-center px-0" : "px-4"
                 )}>
                     <Link href="/dashboard" className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <span className="text-white font-semibold text-xs">G</span>
-                        </div>
-                        <span className={cn(
-                            "text-sm font-semibold text-zinc-900 transition-all duration-300 whitespace-nowrap",
-                            isCollapsed ? "opacity-0 w-0 overflow-hidden" : "opacity-100"
-                        )}>
-                            GaragePro
-                        </span>
+                        {isCollapsed ? (
+                            <div className="relative w-8 h-8">
+                                <Image
+                                    src="/petitlogo.png"
+                                    alt="GaragePro"
+                                    fill
+                                    className="object-contain"
+                                    priority
+                                />
+                            </div>
+                        ) : (
+                            <div className="relative w-36 h-10">
+                                <Image
+                                    src="/GaragePROlogo.png"
+                                    alt="GaragePro"
+                                    fill
+                                    className="object-contain object-left"
+                                    priority
+                                />
+                            </div>
+                        )}
                     </Link>
                 </div>
 
@@ -195,10 +208,14 @@ export function Sidebar() {
             {/* Tablet Sidebar */}
             <aside className="hidden md:flex lg:hidden flex-col fixed left-0 top-0 h-screen w-[56px] bg-white border-r border-zinc-100 z-40">
                 <div className="h-14 flex items-center justify-center border-b border-zinc-50">
-                    <Link href="/dashboard">
-                        <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center">
-                            <span className="text-white font-semibold text-xs">G</span>
-                        </div>
+                    <Link href="/dashboard" className="relative w-8 h-8">
+                        <Image
+                            src="/petitlogo.png"
+                            alt="GaragePro"
+                            fill
+                            className="object-contain"
+                            priority
+                        />
                     </Link>
                 </div>
                 <nav className="flex-1 p-1.5 space-y-0.5 overflow-y-auto">
@@ -241,75 +258,86 @@ export function Sidebar() {
             </aside>
 
             {/* Mobile Bottom Navigation */}
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-zinc-100 z-50 safe-area-bottom">
-                <div className="flex items-center justify-around h-14 px-1">
-                    {mobileNavItems.map((item) => {
-                        const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
-                        const isMore = item.href === "#more"
+            {/* Find if we are on a main page (not a detail/new page) */}
+            {(() => {
+                const isMainPage = navigation.some(item => item.href === pathname) || pathname === '/dashboard' || pathname === '/'
+                if (!isMainPage) return null
 
-                        return (
-                            <button
-                                key={item.href}
-                                onClick={() => {
-                                    if (isMore) {
-                                        setShowMoreMenu(true)
-                                    } else {
-                                        window.location.href = item.href
-                                    }
-                                }}
-                                className={cn(
-                                    "flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-lg transition-all",
-                                    isActive && !isMore ? "text-zinc-900" : "text-zinc-400"
-                                )}
-                            >
-                                <item.icon className={cn("h-5 w-5", isActive && !isMore && "text-zinc-900")} />
-                                <span className="text-[9px] font-medium">{item.name}</span>
-                            </button>
-                        )
-                    })}
-                </div>
-            </nav>
+                return (
+                    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-zinc-100 z-50 safe-area-bottom">
+                        <div className="flex items-center justify-around h-14 px-1">
+                            {mobileNavItems.map((item) => {
+                                const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+                                const isMore = item.href === "#more"
 
-            {/* Mobile "More" Menu */}
-            {showMoreMenu && (
-                <>
-                    <div className="overlay md:hidden" onClick={() => setShowMoreMenu(false)} />
-                    <div className="bottom-sheet md:hidden animate-slide-up">
-                        <div className="bottom-sheet-handle" />
-                        <div className="px-4 py-2.5 border-b border-zinc-100 flex items-center justify-between">
-                            <h3 className="text-sm font-semibold text-zinc-900">Menu</h3>
-                            <button onClick={() => setShowMoreMenu(false)} className="p-1.5 hover:bg-zinc-100 rounded-lg">
-                                <X className="h-4 w-4 text-zinc-500" />
-                            </button>
-                        </div>
-                        <nav className="p-3 space-y-0.5 max-h-[60vh] overflow-y-auto">
-                            {[...navigation, ...secondaryNav].map((item) => {
-                                const isActive = pathname === item.href
                                 return (
-                                    <Link
+                                    <button
                                         key={item.href}
-                                        href={item.href}
-                                        onClick={() => setShowMoreMenu(false)}
+                                        onClick={() => {
+                                            if (isMore) {
+                                                setShowMoreMenu(true)
+                                            } else {
+                                                window.location.href = item.href
+                                            }
+                                        }}
                                         className={cn(
-                                            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                                            isActive ? "bg-zinc-900 text-white" : "text-zinc-700 hover:bg-zinc-50"
+                                            "flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-lg transition-all",
+                                            isActive && !isMore ? "text-zinc-900" : "text-zinc-400"
                                         )}
                                     >
-                                        <item.icon className="h-4 w-4" />
-                                        <span>{item.name}</span>
-                                    </Link>
+                                        <item.icon className={cn("h-5 w-5", isActive && !isMore && "text-zinc-900")} />
+                                        <span className="text-[9px] font-medium">{item.name}</span>
+                                    </button>
                                 )
                             })}
-                            <div className="pt-3 mt-3 border-t border-zinc-100">
-                                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
-                                    <LogOut className="h-4 w-4" />
-                                    <span>Déconnexion</span>
+                        </div>
+                    </nav>
+                )
+            })()}
+
+
+            {/* Mobile "More" Menu */}
+            {
+                showMoreMenu && (
+                    <>
+                        <div className="overlay md:hidden" onClick={() => setShowMoreMenu(false)} />
+                        <div className="bottom-sheet md:hidden animate-slide-up">
+                            <div className="bottom-sheet-handle" />
+                            <div className="px-4 py-2.5 border-b border-zinc-100 flex items-center justify-between">
+                                <h3 className="text-sm font-semibold text-zinc-900">Menu</h3>
+                                <button onClick={() => setShowMoreMenu(false)} className="p-1.5 hover:bg-zinc-100 rounded-lg">
+                                    <X className="h-4 w-4 text-zinc-500" />
                                 </button>
                             </div>
-                        </nav>
-                    </div>
-                </>
-            )}
+                            <nav className="p-3 space-y-0.5 max-h-[60vh] overflow-y-auto">
+                                {[...navigation, ...secondaryNav].map((item) => {
+                                    const isActive = pathname === item.href
+                                    return (
+                                        <Link
+                                            key={item.href}
+                                            href={item.href}
+                                            onClick={() => setShowMoreMenu(false)}
+                                            className={cn(
+                                                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                                                isActive ? "bg-zinc-900 text-white" : "text-zinc-700 hover:bg-zinc-50"
+                                            )}
+                                        >
+                                            <item.icon className="h-4 w-4" />
+                                            <span>{item.name}</span>
+                                        </Link>
+                                    )
+                                })}
+                                <div className="pt-3 mt-3 border-t border-zinc-100">
+                                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
+                                        <LogOut className="h-4 w-4" />
+                                        <span>Déconnexion</span>
+                                    </button>
+                                </div>
+                            </nav>
+                        </div>
+                    </>
+                )
+            }
 
             {/* Mobile Header */}
             <header className="md:hidden fixed top-0 left-0 right-0 h-12 bg-white/95 backdrop-blur-sm border-b border-zinc-100 z-40 flex items-center justify-between px-3 safe-area-top">

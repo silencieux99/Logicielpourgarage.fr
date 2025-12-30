@@ -12,7 +12,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             <Sidebar />
 
             <main className={cn(
-                "pt-12 pb-16 md:pt-0 md:pb-0 min-h-screen transition-all duration-300",
+                "pt-12 pb-24 md:pt-0 md:pb-0 min-h-screen transition-all duration-300",
                 "md:pl-[56px]",
                 isCollapsed ? "lg:pl-[64px]" : "lg:pl-[240px]"
             )}>

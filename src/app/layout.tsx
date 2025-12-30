@@ -11,6 +11,10 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "GaragePro - Logiciel de gestion pour garage automobile",
   description: "Gérez votre garage automobile simplement : clients, véhicules, réparations, devis et factures. Solution complète pour professionnels de l'automobile.",
+  icons: {
+    icon: '/favicon.png',
+    apple: '/favicon.png',
+  },
   keywords: "logiciel garage, gestion garage, facturation garage, devis garage automobile",
 };
 
