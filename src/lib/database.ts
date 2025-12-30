@@ -268,6 +268,41 @@ export const getClient = async (clientId: string): Promise<Client | null> => {
     return { id: docSnap.id, ...docSnap.data() } as Client
 }
 
+export const getClientsVIP = async (garageId: string): Promise<Client[]> => {
+    const q = query(
+        collection(db, 'clients'),
+        where('garageId', '==', garageId),
+        where('isVIP', '==', true),
+        orderBy('nom', 'asc')
+    )
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client))
+}
+
+export const getRecentClients = async (garageId: string, limitCount: number = 10): Promise<Client[]> => {
+    const q = query(
+        collection(db, 'clients'),
+        where('garageId', '==', garageId),
+        orderBy('createdAt', 'desc'),
+        limit(limitCount)
+    )
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client))
+}
+
+export const searchClients = async (garageId: string, searchTerm: string): Promise<Client[]> => {
+    // Firebase ne supporte pas la recherche full-text, on récupère tout et on filtre
+    const clients = await getClients(garageId)
+    const term = searchTerm.toLowerCase()
+    return clients.filter(client =>
+        client.nom?.toLowerCase().includes(term) ||
+        client.prenom?.toLowerCase().includes(term) ||
+        client.telephone?.includes(term) ||
+        client.email?.toLowerCase().includes(term) ||
+        client.ville?.toLowerCase().includes(term)
+    )
+}
+
 export const updateClient = async (clientId: string, data: Partial<Client>) => {
     await updateDoc(doc(db, 'clients', clientId), {
         ...data,

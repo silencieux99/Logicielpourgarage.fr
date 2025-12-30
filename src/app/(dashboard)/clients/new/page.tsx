@@ -20,9 +20,12 @@ import {
     ChevronRight,
     FileText,
     Wrench,
-    Check
+    Check,
+    AlertCircle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/lib/auth-context"
+import { createClient, createVehicule, getVehicules, Vehicule } from "@/lib/database"
 
 interface Vehicle {
     id: string
@@ -43,11 +46,13 @@ interface NewVehicle {
 
 export default function NewClientPage() {
     const router = useRouter()
+    const { garage } = useAuth()
     const [isLoading, setIsLoading] = useState(false)
     const [step, setStep] = useState<"info" | "vehicle" | "action">("info")
+    const [error, setError] = useState<string | null>(null)
 
     // Vehicles from database
-    const [vehicles, setVehicles] = useState<Vehicle[]>([])
+    const [vehicles, setVehicles] = useState<Vehicule[]>([])
     const [loadingVehicles, setLoadingVehicles] = useState(false)
 
     // Client form data
@@ -95,12 +100,13 @@ export default function NewClientPage() {
     }, [vehicleMode])
 
     const loadVehicles = async () => {
+        if (!garage?.id) return
+
         setLoadingVehicles(true)
         try {
-            // TODO: Load from Firebase
-            // const vehiclesData = await getVehicles(garageId)
-            // setVehicles(vehiclesData)
-            setVehicles([])
+            const vehiclesData = await getVehicules(garage.id)
+            // Filtrer les véhicules sans client (orphelins)
+            setVehicles(vehiclesData.filter(v => !v.clientId || v.clientId === ''))
         } catch (error) {
             console.error("Erreur chargement véhicules:", error)
         } finally {
@@ -124,25 +130,56 @@ export default function NewClientPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+
+        if (!garage?.id) {
+            setError("Veuillez d'abord configurer votre garage")
+            return
+        }
+
         setIsLoading(true)
+        setError(null)
 
         try {
-            // TODO: Save to Firebase
-            // 1. Create client
-            // 2. Create vehicle if new
-            // 3. Link vehicle to client
+            // 1. Créer le client dans Firebase
+            const clientId = await createClient({
+                garageId: garage.id,
+                civilite: formData.civilite,
+                prenom: formData.prenom,
+                nom: formData.nom,
+                email: formData.email || undefined,
+                telephone: formData.telephone || undefined,
+                adresse: formData.adresse || undefined,
+                codePostal: formData.codePostal || undefined,
+                ville: formData.ville || undefined,
+                notes: formData.notes || undefined,
+                isVIP: formData.isVIP
+            })
 
-            await new Promise(resolve => setTimeout(resolve, 500))
+            // 2. Créer le véhicule si nouveau
+            if (vehicleMode === "new" && newVehicle.plaque) {
+                await createVehicule({
+                    garageId: garage.id,
+                    clientId: clientId,
+                    plaque: newVehicle.plaque.toUpperCase(),
+                    marque: newVehicle.marque,
+                    modele: newVehicle.modele,
+                    annee: newVehicle.annee,
+                    carburant: newVehicle.carburant,
+                    kilometrage: newVehicle.kilometrage
+                })
+            }
 
+            // 3. Rediriger selon l'action choisie
             if (afterSaveAction === "devis") {
-                router.push("/invoices/new?type=devis")
+                router.push(`/invoices/new?type=devis&clientId=${clientId}`)
             } else if (afterSaveAction === "reparation") {
-                router.push("/repairs/new")
+                router.push(`/repairs/new?clientId=${clientId}`)
             } else {
                 router.push("/clients")
             }
         } catch (error) {
             console.error("Erreur lors de la création:", error)
+            setError("Une erreur est survenue lors de la création du client")
         } finally {
             setIsLoading(false)
         }
@@ -555,7 +592,7 @@ export default function NewClientPage() {
                                                 <button
                                                     key={vehicle.id}
                                                     type="button"
-                                                    onClick={() => setSelectedVehicleId(vehicle.id)}
+                                                    onClick={() => vehicle.id && setSelectedVehicleId(vehicle.id)}
                                                     className={cn(
                                                         "w-full p-3 rounded-xl border-2 text-left flex items-center gap-3 transition-all",
                                                         selectedVehicleId === vehicle.id ? "border-zinc-900 bg-zinc-50" : "border-zinc-200 hover:border-zinc-300"
