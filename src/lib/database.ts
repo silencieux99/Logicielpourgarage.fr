@@ -410,6 +410,58 @@ export const updateReparation = async (reparationId: string, data: Partial<Repar
     })
 }
 
+export const getReparation = async (reparationId: string): Promise<Reparation | null> => {
+    const docSnap = await getDoc(doc(db, 'reparations', reparationId))
+    if (!docSnap.exists()) return null
+    return { id: docSnap.id, ...docSnap.data() } as Reparation
+}
+
+export const getReparationsByClient = async (clientId: string): Promise<Reparation[]> => {
+    const q = query(
+        collection(db, 'reparations'),
+        where('clientId', '==', clientId),
+        orderBy('createdAt', 'desc')
+    )
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Reparation))
+}
+
+export const getReparationsByVehicule = async (vehiculeId: string): Promise<Reparation[]> => {
+    const q = query(
+        collection(db, 'reparations'),
+        where('vehiculeId', '==', vehiculeId),
+        orderBy('createdAt', 'desc')
+    )
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Reparation))
+}
+
+export const getReparationsEnCours = async (garageId: string): Promise<Reparation[]> => {
+    const q = query(
+        collection(db, 'reparations'),
+        where('garageId', '==', garageId),
+        where('statut', 'in', ['en_attente', 'en_cours']),
+        orderBy('createdAt', 'desc')
+    )
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Reparation))
+}
+
+export const getReparationsUrgentes = async (garageId: string): Promise<Reparation[]> => {
+    const q = query(
+        collection(db, 'reparations'),
+        where('garageId', '==', garageId),
+        where('priorite', '==', 'urgent'),
+        where('statut', 'in', ['en_attente', 'en_cours'])
+    )
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Reparation))
+}
+
+export const deleteReparation = async (reparationId: string) => {
+    await deleteDoc(doc(db, 'reparations', reparationId))
+}
+
 // ============================================
 // DOCUMENTS (Devis / Factures)
 // ============================================
