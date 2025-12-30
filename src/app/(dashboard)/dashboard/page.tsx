@@ -92,15 +92,15 @@ export default function DashboardPage() {
         { icon: Calendar, label: "RDV", href: "/schedule/new", color: "bg-cyan-100 text-cyan-600" },
     ]
 
-    // Actions pour le FAB mobile (plus détaillées)
+    // Actions pour le FAB mobile (grille 4x2)
     const fabActions = [
-        { icon: Users, label: "Nouveau client", description: "Ajouter un client", href: "/clients/new", color: "bg-blue-500" },
-        { icon: Car, label: "Nouveau véhicule", description: "Enregistrer un véhicule", href: "/vehicles/new", color: "bg-emerald-500" },
-        { icon: Wrench, label: "Nouvelle réparation", description: "Créer une intervention", href: "/repairs/new", color: "bg-amber-500" },
-        { icon: FileText, label: "Nouveau devis", description: "Établir un devis", href: "/invoices/new?type=devis", color: "bg-violet-500" },
-        { icon: Receipt, label: "Nouvelle facture", description: "Créer une facture", href: "/invoices/new?type=facture", color: "bg-rose-500" },
-        { icon: Calendar, label: "Nouveau RDV", description: "Planifier un rendez-vous", href: "/schedule/new", color: "bg-cyan-500" },
-        { icon: Package, label: "Ajouter au stock", description: "Entrée de stock", href: "/inventory/new", color: "bg-orange-500" },
+        { icon: Users, shortLabel: "Client", href: "/clients/new", color: "bg-blue-500" },
+        { icon: Car, shortLabel: "Véhicule", href: "/vehicles/new", color: "bg-emerald-500" },
+        { icon: Wrench, shortLabel: "Réparation", href: "/repairs/new", color: "bg-amber-500" },
+        { icon: FileText, shortLabel: "Devis", href: "/invoices/new?type=devis", color: "bg-violet-500" },
+        { icon: Receipt, shortLabel: "Facture", href: "/invoices/new?type=facture", color: "bg-rose-500" },
+        { icon: Calendar, shortLabel: "RDV", href: "/schedule/new", color: "bg-cyan-500" },
+        { icon: Package, shortLabel: "Stock", href: "/inventory/new", color: "bg-orange-500" },
     ]
 
     if (loading) {
@@ -330,56 +330,66 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            {/* Mobile FAB Menu - Overlay */}
+            {/* Mobile FAB - Bottom Sheet */}
             {fabOpen && (
-                <div
-                    className="sm:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 animate-in fade-in duration-200"
-                    onClick={() => setFabOpen(false)}
-                />
-            )}
-
-            {/* Mobile FAB Menu - Actions */}
-            <div className={cn(
-                "sm:hidden fixed bottom-20 right-4 z-50 flex flex-col-reverse gap-3 transition-all duration-300",
-                fabOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
-            )}>
-                {fabActions.map((action, index) => (
-                    <Link
-                        key={action.label}
-                        href={action.href}
+                <>
+                    {/* Overlay */}
+                    <div
+                        className="sm:hidden fixed inset-0 bg-black/40 z-40"
                         onClick={() => setFabOpen(false)}
-                        className="flex items-center gap-3 animate-in slide-in-from-bottom-2 fade-in"
-                        style={{ animationDelay: `${index * 50}ms` }}
-                    >
-                        <div className="bg-white rounded-xl shadow-lg py-2.5 px-4 flex-1 border border-zinc-100">
-                            <p className="text-sm font-medium text-zinc-900">{action.label}</p>
-                            <p className="text-xs text-zinc-500">{action.description}</p>
+                    />
+
+                    {/* Bottom Sheet */}
+                    <div className="sm:hidden fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom duration-300">
+                        {/* Handle */}
+                        <div className="flex justify-center pt-3 pb-2">
+                            <div className="w-10 h-1 bg-zinc-200 rounded-full" />
                         </div>
-                        <div className={cn(
-                            "w-12 h-12 rounded-full flex items-center justify-center shadow-lg",
-                            action.color
-                        )}>
-                            <action.icon className="h-5 w-5 text-white" />
+
+                        {/* Header */}
+                        <div className="px-5 pb-4 border-b border-zinc-100">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-semibold text-zinc-900">Créer</h3>
+                                <button
+                                    onClick={() => setFabOpen(false)}
+                                    className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center"
+                                >
+                                    <X className="h-4 w-4 text-zinc-500" />
+                                </button>
+                            </div>
                         </div>
-                    </Link>
-                ))}
-            </div>
+
+                        {/* Grid d'actions */}
+                        <div className="grid grid-cols-4 gap-1 p-4 pb-8">
+                            {fabActions.map((action) => (
+                                <Link
+                                    key={action.shortLabel}
+                                    href={action.href}
+                                    onClick={() => setFabOpen(false)}
+                                    className="flex flex-col items-center gap-2 py-3 rounded-xl active:bg-zinc-50"
+                                >
+                                    <div className={cn(
+                                        "w-14 h-14 rounded-2xl flex items-center justify-center",
+                                        action.color
+                                    )}>
+                                        <action.icon className="h-6 w-6 text-white" />
+                                    </div>
+                                    <span className="text-xs font-medium text-zinc-700 text-center leading-tight">
+                                        {action.shortLabel}
+                                    </span>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                </>
+            )}
 
             {/* Mobile FAB Button */}
             <button
-                onClick={() => setFabOpen(!fabOpen)}
-                className={cn(
-                    "sm:hidden fixed right-4 bottom-20 w-14 h-14 rounded-full shadow-lg flex items-center justify-center z-50 transition-all duration-300",
-                    fabOpen
-                        ? "bg-white text-zinc-900 rotate-45"
-                        : "bg-zinc-900 text-white hover:bg-zinc-800"
-                )}
+                onClick={() => setFabOpen(true)}
+                className="sm:hidden fixed right-4 bottom-20 w-14 h-14 bg-zinc-900 text-white rounded-full shadow-lg flex items-center justify-center z-30 active:scale-95 transition-transform"
             >
-                {fabOpen ? (
-                    <X className="h-6 w-6" />
-                ) : (
-                    <Plus className="h-6 w-6" />
-                )}
+                <Plus className="h-6 w-6" />
             </button>
         </div>
     )
