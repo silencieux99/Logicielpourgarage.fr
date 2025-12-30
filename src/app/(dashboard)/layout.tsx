@@ -8,15 +8,15 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     const { isCollapsed } = useSidebar()
 
     return (
-        <div className="min-h-screen bg-zinc-50">
+        <div className="min-h-screen bg-zinc-50/50">
             <Sidebar />
 
             <main className={cn(
-                "pt-14 pb-20 md:pt-0 md:pb-0 min-h-screen transition-all duration-300",
-                "md:pl-[72px]",
-                isCollapsed ? "lg:pl-[72px]" : "lg:pl-[260px]"
+                "pt-12 pb-16 md:pt-0 md:pb-0 min-h-screen transition-all duration-300",
+                "md:pl-[56px]",
+                isCollapsed ? "lg:pl-[64px]" : "lg:pl-[240px]"
             )}>
-                <div className="p-4 sm:p-6 lg:p-8 max-w-7xl">
+                <div className="p-3 sm:p-4 lg:p-6 max-w-6xl">
                     {children}
                 </div>
             </main>
