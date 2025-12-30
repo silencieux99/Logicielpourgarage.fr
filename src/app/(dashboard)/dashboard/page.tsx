@@ -14,7 +14,10 @@ import {
     AlertTriangle,
     ChevronRight,
     ArrowUpRight,
-    Loader2
+    Loader2,
+    X,
+    Package,
+    Receipt
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -40,10 +43,32 @@ export default function DashboardPage() {
     const [stats, setStats] = useState<DashboardStats | null>(null)
     const [recentItems, setRecentItems] = useState<RecentItem[]>([])
     const [lowStockCount, setLowStockCount] = useState(0)
+    const [fabOpen, setFabOpen] = useState(false)
 
     useEffect(() => {
         loadDashboard()
     }, [])
+
+    // Fermer le FAB quand on scroll
+    useEffect(() => {
+        const handleScroll = () => {
+            if (fabOpen) setFabOpen(false)
+        }
+        window.addEventListener('scroll', handleScroll)
+        return () => window.removeEventListener('scroll', handleScroll)
+    }, [fabOpen])
+
+    // Bloquer le scroll quand FAB ouvert
+    useEffect(() => {
+        if (fabOpen) {
+            document.body.style.overflow = 'hidden'
+        } else {
+            document.body.style.overflow = ''
+        }
+        return () => {
+            document.body.style.overflow = ''
+        }
+    }, [fabOpen])
 
     const loadDashboard = async () => {
         setLoading(true)
@@ -65,6 +90,17 @@ export default function DashboardPage() {
         { icon: Wrench, label: "Réparation", href: "/repairs/new", color: "bg-amber-100 text-amber-600" },
         { icon: FileText, label: "Devis", href: "/invoices/new?type=devis", color: "bg-violet-100 text-violet-600" },
         { icon: Calendar, label: "RDV", href: "/schedule/new", color: "bg-cyan-100 text-cyan-600" },
+    ]
+
+    // Actions pour le FAB mobile (plus détaillées)
+    const fabActions = [
+        { icon: Users, label: "Nouveau client", description: "Ajouter un client", href: "/clients/new", color: "bg-blue-500" },
+        { icon: Car, label: "Nouveau véhicule", description: "Enregistrer un véhicule", href: "/vehicles/new", color: "bg-emerald-500" },
+        { icon: Wrench, label: "Nouvelle réparation", description: "Créer une intervention", href: "/repairs/new", color: "bg-amber-500" },
+        { icon: FileText, label: "Nouveau devis", description: "Établir un devis", href: "/invoices/new?type=devis", color: "bg-violet-500" },
+        { icon: Receipt, label: "Nouvelle facture", description: "Créer une facture", href: "/invoices/new?type=facture", color: "bg-rose-500" },
+        { icon: Calendar, label: "Nouveau RDV", description: "Planifier un rendez-vous", href: "/schedule/new", color: "bg-cyan-500" },
+        { icon: Package, label: "Ajouter au stock", description: "Entrée de stock", href: "/inventory/new", color: "bg-orange-500" },
     ]
 
     if (loading) {
@@ -294,9 +330,56 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            {/* Mobile FAB */}
-            <button className="sm:hidden fixed right-4 bottom-20 w-14 h-14 bg-zinc-900 hover:bg-zinc-800 text-white rounded-full shadow-lg flex items-center justify-center z-30">
-                <Plus className="h-6 w-6" />
+            {/* Mobile FAB Menu - Overlay */}
+            {fabOpen && (
+                <div
+                    className="sm:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 animate-in fade-in duration-200"
+                    onClick={() => setFabOpen(false)}
+                />
+            )}
+
+            {/* Mobile FAB Menu - Actions */}
+            <div className={cn(
+                "sm:hidden fixed bottom-20 right-4 z-50 flex flex-col-reverse gap-3 transition-all duration-300",
+                fabOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
+            )}>
+                {fabActions.map((action, index) => (
+                    <Link
+                        key={action.label}
+                        href={action.href}
+                        onClick={() => setFabOpen(false)}
+                        className="flex items-center gap-3 animate-in slide-in-from-bottom-2 fade-in"
+                        style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                        <div className="bg-white rounded-xl shadow-lg py-2.5 px-4 flex-1 border border-zinc-100">
+                            <p className="text-sm font-medium text-zinc-900">{action.label}</p>
+                            <p className="text-xs text-zinc-500">{action.description}</p>
+                        </div>
+                        <div className={cn(
+                            "w-12 h-12 rounded-full flex items-center justify-center shadow-lg",
+                            action.color
+                        )}>
+                            <action.icon className="h-5 w-5 text-white" />
+                        </div>
+                    </Link>
+                ))}
+            </div>
+
+            {/* Mobile FAB Button */}
+            <button
+                onClick={() => setFabOpen(!fabOpen)}
+                className={cn(
+                    "sm:hidden fixed right-4 bottom-20 w-14 h-14 rounded-full shadow-lg flex items-center justify-center z-50 transition-all duration-300",
+                    fabOpen
+                        ? "bg-white text-zinc-900 rotate-45"
+                        : "bg-zinc-900 text-white hover:bg-zinc-800"
+                )}
+            >
+                {fabOpen ? (
+                    <X className="h-6 w-6" />
+                ) : (
+                    <Plus className="h-6 w-6" />
+                )}
             </button>
         </div>
     )
