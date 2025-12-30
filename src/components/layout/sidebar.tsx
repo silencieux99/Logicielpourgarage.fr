@@ -21,7 +21,9 @@ import {
     X,
     ChevronLeft,
     ChevronRight,
-    Search
+    Search,
+    Hammer,
+    GraduationCap
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useSidebar } from "@/lib/sidebar-context"
@@ -36,6 +38,8 @@ const navigation = [
     { name: "Stock", href: "/inventory", icon: Package },
     { name: "Analytiques", href: "/analytics", icon: BarChart3 },
     { name: "Messages", href: "/messages", icon: MessageSquare },
+    { name: "Outils", href: "/outils", icon: Hammer },
+    { name: "Tutoriaux", href: "/tutoriaux", icon: GraduationCap },
 ]
 
 const secondaryNav = [
