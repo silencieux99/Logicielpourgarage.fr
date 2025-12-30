@@ -93,27 +93,41 @@ export default function NewVehiclePage() {
     }
 
     const searchByPlaque = async () => {
-        if (!formData.plaque || formData.plaque.length < 7) return
+        const plaque = formData.plaque.trim()
+
+        // Basic validation - French plates are 7-9 characters
+        if (!plaque || plaque.length < 5) {
+            console.log('Plaque trop courte:', plaque)
+            return
+        }
 
         setIsSearching(true)
-        try {
-            const cleanPlate = formData.plaque.replace(/\s+/g, '-')
-            const response = await fetch(`/api/vehicle-lookup?type=plate&value=${encodeURIComponent(cleanPlate)}`)
 
-            if (response.ok) {
-                const result = await response.json()
-                if (result.success && result.data) {
-                    const vehicle = result.data
-                    setFormData(prev => ({
-                        ...prev,
-                        marque: vehicle.make || prev.marque,
-                        modele: vehicle.model || prev.modele,
-                        version: vehicle.fullName || prev.version,
-                        annee: vehicle.year || prev.annee,
-                        carburant: mapFuelType(vehicle.fuel) || prev.carburant,
-                        vin: vehicle.vin || prev.vin,
-                    }))
-                }
+        try {
+            // Format: ensure dashes for French plates
+            const cleanPlate = plaque.toUpperCase().replace(/\s+/g, '-')
+            console.log('Recherche plaque:', cleanPlate)
+
+            const response = await fetch(`/api/vehicle-lookup?type=plate&value=${encodeURIComponent(cleanPlate)}`)
+            const result = await response.json()
+
+            console.log('API response:', result)
+
+            if (result.success && result.data) {
+                const vehicle = result.data
+                setFormData(prev => ({
+                    ...prev,
+                    marque: vehicle.make || prev.marque,
+                    modele: vehicle.model || prev.modele,
+                    version: vehicle.fullName || prev.version,
+                    annee: vehicle.year || prev.annee,
+                    carburant: mapFuelType(vehicle.fuel) || prev.carburant,
+                    vin: vehicle.vin || prev.vin,
+                }))
+                console.log('Véhicule trouvé:', vehicle.make, vehicle.model)
+            } else {
+                console.log('Véhicule non trouvé:', result.error)
+                // Could show a toast notification here
             }
         } catch (error) {
             console.error("Erreur recherche plaque:", error)
