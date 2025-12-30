@@ -326,19 +326,7 @@ export function Sidebar() {
                 )
             }
 
-            {/* Mobile Header */}
-            <header className="md:hidden fixed top-0 left-0 right-0 h-24 bg-white/95 backdrop-blur-sm border-b border-zinc-100 z-40 flex items-center justify-between px-3 safe-area-top">
-                <Link href="/dashboard" className="flex items-center">
-                    <img
-                        src="/GaragePROlogo.png"
-                        alt="GaragePro"
-                        className="h-20 w-auto"
-                    />
-                </Link>
-                <button className="p-1.5 hover:bg-zinc-100 rounded-lg transition-colors">
-                    <Search className="h-4 w-4 text-zinc-600" />
-                </button>
-            </header>
+            {/* Mobile Header - Removed to avoid masking content */}
         </>
     )
 }
