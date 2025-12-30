@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import {
@@ -26,7 +26,7 @@ interface LigneDocument {
     tauxTVA: number
 }
 
-export default function NewInvoicePage() {
+function NewInvoiceContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const type = searchParams.get("type") || "devis"
@@ -182,7 +182,7 @@ export default function NewInvoicePage() {
                                 <div className="col-span-1"></div>
                             </div>
 
-                            {lignes.map((ligne, index) => (
+                            {lignes.map((ligne) => (
                                 <div key={ligne.id} className="grid sm:grid-cols-12 gap-3 p-3 bg-zinc-50 rounded-xl">
                                     <div className="sm:col-span-6">
                                         <input
@@ -346,5 +346,21 @@ export default function NewInvoicePage() {
                 </div>
             </div>
         </div>
+    )
+}
+
+function LoadingFallback() {
+    return (
+        <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+        </div>
+    )
+}
+
+export default function NewInvoicePage() {
+    return (
+        <Suspense fallback={<LoadingFallback />}>
+            <NewInvoiceContent />
+        </Suspense>
     )
 }
