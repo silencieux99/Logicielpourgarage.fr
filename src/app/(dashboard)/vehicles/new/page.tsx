@@ -90,16 +90,26 @@ export default function NewVehiclePage() {
 
         setIsSearching(true)
         try {
-            const response = await fetch(`/api/vehicle-lookup?plate=${formData.plaque}`)
+            // Format plate for API
+            const cleanPlate = formData.plaque.replace(/\s+/g, '-')
+            const response = await fetch(`/api/vehicle-lookup?type=plate&value=${encodeURIComponent(cleanPlate)}`)
+
             if (response.ok) {
-                const data = await response.json()
-                if (data.vehicle) {
+                const result = await response.json()
+                console.log('API Response:', result)
+
+                if (result.success && result.data) {
+                    const vehicle = result.data
+
+                    // Map API response to form fields
                     setFormData(prev => ({
                         ...prev,
-                        marque: data.vehicle.make || prev.marque,
-                        modele: data.vehicle.model || prev.modele,
-                        annee: data.vehicle.year || prev.annee,
-                        carburant: data.vehicle.fuelType || prev.carburant,
+                        marque: vehicle.make || prev.marque,
+                        modele: vehicle.model || prev.modele,
+                        version: vehicle.fullName || prev.version,
+                        annee: vehicle.year || prev.annee,
+                        carburant: mapFuelType(vehicle.fuel) || prev.carburant,
+                        vin: vehicle.vin || prev.vin,
                     }))
                 }
             }
@@ -109,6 +119,20 @@ export default function NewVehiclePage() {
             setIsSearching(false)
         }
     }
+
+    // Map API fuel types to form dropdown values
+    const mapFuelType = (apiFuel: string | undefined): string => {
+        if (!apiFuel) return ''
+        const fuelMap: Record<string, string> = {
+            'Diesel': 'Diesel',
+            'Essence': 'Essence',
+            'Electrique': 'Électrique',
+            'Hybride': 'Hybride',
+            'GPL': 'GPL',
+        }
+        return fuelMap[apiFuel] || apiFuel
+    }
+
 
     const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'avant' | 'apres') => {
         const fileList = e.target.files
