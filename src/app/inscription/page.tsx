@@ -1,7 +1,9 @@
 "use client"
 
-import Link from "next/link"
 import { useState } from "react"
+import Link from "next/link"
+import Image from "next/image"
+import { useRouter } from "next/navigation"
 import {
     ArrowRight,
     ArrowLeft,
@@ -112,12 +114,13 @@ export default function InscriptionPage() {
         <div className="min-h-screen bg-zinc-50">
             {/* Header */}
             <header className="bg-white border-b border-zinc-200">
-                <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center">
-                            <span className="text-white font-bold text-sm">G</span>
-                        </div>
-                        <span className="text-[16px] font-bold text-zinc-900">GaragePro</span>
+                <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 flex items-center justify-between">
+                    <Link href="/" className="flex items-center">
+                        <img
+                            src="/GaragePROlogo.png"
+                            alt="GaragePro"
+                            className="h-20 sm:h-24 w-auto"
+                        />
                     </Link>
 
                     <Link href="/connexion" className="text-[14px] text-zinc-600 hover:text-zinc-900">

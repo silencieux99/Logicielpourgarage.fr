@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import {
   CheckCircle2,
   ArrowRight,
@@ -63,12 +64,15 @@ export default function HomePage() {
     <div className="min-h-screen bg-white">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-zinc-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">G</span>
-            </div>
-            <span className="text-[16px] font-bold text-zinc-900">GaragePro</span>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-20 sm:h-22 md:h-24 flex items-center justify-between">
+          <Link href="/" className="flex items-center">
+            <img
+              src="/GaragePROlogo.png"
+              alt="GaragePro"
+              width="300"
+              height="75"
+              className="w-[180px] sm:w-[220px] md:w-[260px] h-auto"
+            />
           </Link>
 
           <div className="hidden md:flex items-center gap-8">
@@ -113,7 +117,7 @@ export default function HomePage() {
       </nav>
 
       {/* Hero */}
-      <section className="pt-28 sm:pt-32 pb-16 sm:pb-24 px-4 sm:px-6">
+      <section className="pt-28 sm:pt-32 md:pt-36 pb-16 sm:pb-24 px-4 sm:px-6">
         <div className="max-w-3xl mx-auto text-center">
           <p className="inline-block px-3 py-1.5 bg-zinc-100 rounded-full text-zinc-700 text-[13px] font-medium mb-6">
             Démo gratuite • Sans carte bancaire
@@ -346,11 +350,14 @@ export default function HomePage() {
       <footer className="py-8 sm:py-10 px-4 sm:px-6 border-t border-zinc-100">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 bg-zinc-900 rounded-md flex items-center justify-center">
-                <span className="text-white font-bold text-xs">G</span>
-              </div>
-              <span className="text-[14px] font-semibold text-zinc-900">GaragePro</span>
+            <div className="flex items-center">
+              <img
+                src="/GaragePROlogo.png"
+                alt="GaragePro"
+                width="240"
+                height="60"
+                className="w-[160px] sm:w-[200px] h-auto"
+              />
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-[13px] text-zinc-500">

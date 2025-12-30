@@ -1,4 +1,5 @@
 import { Metadata } from "next"
+import Image from "next/image"
 
 export const metadata: Metadata = {
     title: "Suivi des Réparations Garage | GaragePro",
@@ -11,11 +12,16 @@ export default function SuiviReparationsPage() {
         <div className="min-h-screen bg-white">
             <nav className="border-b border-zinc-100">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-                    <a href="/" className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center">
-                            <span className="text-white font-bold text-sm">G</span>
+                    <a href="/" className="flex items-center">
+                        <div className="relative h-10 w-32">
+                            <Image
+                                src="/GaragePROlogo.png"
+                                alt="GaragePro"
+                                fill
+                                className="object-contain object-left"
+                                priority
+                            />
                         </div>
-                        <span className="text-[16px] font-bold text-zinc-900">GaragePro</span>
                     </a>
                     <a href="/tarifs" className="h-9 px-4 bg-zinc-900 text-white text-[14px] font-medium rounded-lg">
                         Voir les tarifs

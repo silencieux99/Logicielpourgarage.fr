@@ -1,5 +1,6 @@
 import { Metadata } from "next"
 import Link from "next/link"
+import Image from "next/image"
 
 export const metadata: Metadata = {
     title: "Fonctionnalités Logiciel Garage Automobile | GaragePro",
@@ -50,12 +51,13 @@ export default function FonctionnalitesPage() {
     return (
         <div className="min-h-screen bg-white">
             <nav className="border-b border-zinc-100">
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center">
-                            <span className="text-white font-bold text-sm">G</span>
-                        </div>
-                        <span className="text-[16px] font-bold text-zinc-900">GaragePro</span>
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 h-24 sm:h-28 md:h-32 flex items-center justify-between">
+                    <Link href="/" className="flex items-center">
+                        <img
+                            src="/GaragePROlogo.png"
+                            alt="GaragePro"
+                            className="h-20 sm:h-24 md:h-28 w-auto"
+                        />
                     </Link>
                     <Link href="/tarifs" className="h-9 px-4 bg-zinc-900 text-white text-[14px] font-medium rounded-lg flex items-center">
                         Voir les tarifs

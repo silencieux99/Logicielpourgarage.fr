@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { useState } from "react"
 import { ArrowLeft, Loader2, CheckCircle2, Mail } from "lucide-react"
 
@@ -23,11 +24,12 @@ export default function MotDePasseOubliePage() {
             <div className="w-full max-w-md">
                 {/* Logo */}
                 <div className="mb-8 text-center">
-                    <Link href="/" className="inline-flex items-center gap-2.5">
-                        <div className="w-10 h-10 bg-zinc-900 rounded-xl flex items-center justify-center">
-                            <span className="text-white font-bold">G</span>
-                        </div>
-                        <span className="text-[18px] font-bold text-zinc-900">GaragePro</span>
+                    <Link href="/" className="inline-flex justify-center">
+                        <img
+                            src="/GaragePROlogo.png"
+                            alt="GaragePro"
+                            className="h-24 sm:h-28 w-auto"
+                        />
                     </Link>
                 </div>
 

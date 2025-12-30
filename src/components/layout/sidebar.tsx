@@ -83,31 +83,18 @@ export function Sidebar() {
             >
                 {/* Logo */}
                 <div className={cn(
-                    "h-14 flex items-center border-b border-zinc-50 transition-all duration-300",
-                    isCollapsed ? "justify-center px-0" : "px-4"
+                    "h-28 flex items-center border-b border-zinc-50 transition-all duration-300",
+                    isCollapsed ? "justify-center px-0" : "px-3"
                 )}>
-                    <Link href="/dashboard" className="flex items-center gap-2">
-                        {isCollapsed ? (
-                            <div className="relative w-8 h-8">
-                                <Image
-                                    src="/petitlogo.png"
-                                    alt="GaragePro"
-                                    fill
-                                    className="object-contain"
-                                    priority
-                                />
-                            </div>
-                        ) : (
-                            <div className="relative w-36 h-10">
-                                <Image
-                                    src="/GaragePROlogo.png"
-                                    alt="GaragePro"
-                                    fill
-                                    className="object-contain object-left"
-                                    priority
-                                />
-                            </div>
-                        )}
+                    <Link href="/dashboard" className="flex items-center">
+                        <img
+                            src="/GaragePROlogo.png"
+                            alt="GaragePro"
+                            className={cn(
+                                "w-auto transition-all duration-300",
+                                isCollapsed ? "h-20" : "h-24"
+                            )}
+                        />
                     </Link>
                 </div>
 
@@ -206,11 +193,11 @@ export function Sidebar() {
             </aside>
 
             {/* Tablet Sidebar */}
-            <aside className="hidden md:flex lg:hidden flex-col fixed left-0 top-0 h-screen w-[56px] bg-white border-r border-zinc-100 z-40">
-                <div className="h-14 flex items-center justify-center border-b border-zinc-50">
-                    <Link href="/dashboard" className="relative w-8 h-8">
+            <aside className="hidden md:flex lg:hidden flex-col fixed left-0 top-0 h-screen w-[64px] bg-white border-r border-zinc-100 z-40">
+                <div className="h-20 flex items-center justify-center border-b border-zinc-50">
+                    <Link href="/dashboard" className="relative w-14 h-14">
                         <Image
-                            src="/petitlogo.png"
+                            src="/GaragePROlogo.png"
                             alt="GaragePro"
                             fill
                             className="object-contain"
@@ -340,12 +327,13 @@ export function Sidebar() {
             }
 
             {/* Mobile Header */}
-            <header className="md:hidden fixed top-0 left-0 right-0 h-12 bg-white/95 backdrop-blur-sm border-b border-zinc-100 z-40 flex items-center justify-between px-3 safe-area-top">
-                <Link href="/dashboard" className="flex items-center gap-2">
-                    <div className="w-7 h-7 bg-zinc-900 rounded-lg flex items-center justify-center">
-                        <span className="text-white font-semibold text-[10px]">G</span>
-                    </div>
-                    <span className="text-sm font-semibold text-zinc-900">GaragePro</span>
+            <header className="md:hidden fixed top-0 left-0 right-0 h-24 bg-white/95 backdrop-blur-sm border-b border-zinc-100 z-40 flex items-center justify-between px-3 safe-area-top">
+                <Link href="/dashboard" className="flex items-center">
+                    <img
+                        src="/GaragePROlogo.png"
+                        alt="GaragePro"
+                        className="h-20 w-auto"
+                    />
                 </Link>
                 <button className="p-1.5 hover:bg-zinc-100 rounded-lg transition-colors">
                     <Search className="h-4 w-4 text-zinc-600" />
