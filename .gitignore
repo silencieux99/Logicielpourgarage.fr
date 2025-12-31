@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+# firebase-admin-key.json
 
 # debug
 npm-debug.log*
@@ -31,8 +32,13 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
+.env
+.env.local
+.env*.local
 !.env.example
+
+# Firebase Admin SDK - KEEP SECRET
+firebase-admin-key.json
 
 # vercel
 .vercel
@@ -41,9 +47,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# prisma
 /src/generated/prisma
-
-/src/generated/prisma
-
-# Firebase Admin SDK - KEEP SECRET
-firebase-admin-key.json
