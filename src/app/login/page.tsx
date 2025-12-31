@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import {
@@ -18,7 +18,7 @@ import { signIn, signUp, resetPassword } from "@/lib/auth"
 
 type Mode = "login" | "signup" | "reset"
 
-export default function LoginPage() {
+function LoginForm() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const [mode, setMode] = useState<Mode>("login")
@@ -34,13 +34,13 @@ export default function LoginPage() {
     useEffect(() => {
         const emailParam = searchParams.get('email')
         const subscribeParam = searchParams.get('subscribe')
-        
+
         // Si intention d'abonnement, rediriger vers la page d'inscription complète
         if (subscribeParam === 'true') {
             router.push('/inscription')
             return
         }
-        
+
         if (emailParam) {
             setEmail(emailParam)
         }
@@ -253,5 +253,17 @@ export default function LoginPage() {
                 <div className="absolute -top-32 -left-32 w-64 h-64 rounded-full bg-zinc-800/30" />
             </div>
         </div>
+    )
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+            </div>
+        }>
+            <LoginForm />
+        </Suspense>
     )
 }
