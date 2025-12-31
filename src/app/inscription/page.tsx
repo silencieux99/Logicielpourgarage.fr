@@ -178,7 +178,7 @@ export default function InscriptionPage() {
     }
 
     return (
-        <div className="min-h-screen bg-zinc-50">
+        <div className="min-h-screen bg-zinc-50 pb-24 sm:pb-0">
             {/* Header */}
             <header className="bg-white border-b border-zinc-200">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 flex items-center justify-between">
@@ -318,22 +318,23 @@ export default function InscriptionPage() {
                             </div>
 
                             {/* CP + Ville */}
-                            <div className="grid grid-cols-3 gap-4">
-                                <div>
-                                    <label className="block text-[13px] sm:text-[14px] font-medium text-zinc-700 mb-2">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+                                <div className="col-span-1">
+                                    <label className="block text-[13px] sm:text-[14px] font-medium text-zinc-700 mb-1.5 sm:mb-2">
                                         Code postal <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="text"
+                                        inputMode="numeric"
                                         value={formData.codePostal}
                                         onChange={(e) => updateField("codePostal", e.target.value)}
                                         placeholder="75001"
                                         maxLength={5}
-                                        className="w-full h-11 sm:h-12 px-3 sm:px-4 bg-white border border-zinc-300 rounded-lg sm:rounded-xl text-[14px] sm:text-[15px] placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent"
+                                        className="w-full h-12 px-3 sm:px-4 bg-white border border-zinc-300 rounded-xl text-[15px] sm:text-[15px] placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent"
                                     />
                                 </div>
-                                <div className="col-span-2">
-                                    <label className="block text-[13px] sm:text-[14px] font-medium text-zinc-700 mb-2">
+                                <div className="col-span-1 sm:col-span-2">
+                                    <label className="block text-[13px] sm:text-[14px] font-medium text-zinc-700 mb-1.5 sm:mb-2">
                                         Ville <span className="text-red-500">*</span>
                                     </label>
                                     <input
@@ -341,7 +342,7 @@ export default function InscriptionPage() {
                                         value={formData.ville}
                                         onChange={(e) => updateField("ville", e.target.value)}
                                         placeholder="Paris"
-                                        className="w-full h-11 sm:h-12 px-3 sm:px-4 bg-white border border-zinc-300 rounded-lg sm:rounded-xl text-[14px] sm:text-[15px] placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent"
+                                        className="w-full h-12 px-3 sm:px-4 bg-white border border-zinc-300 rounded-xl text-[15px] sm:text-[15px] placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent"
                                     />
                                 </div>
                             </div>
@@ -615,32 +616,32 @@ export default function InscriptionPage() {
                             </div>
 
                             {/* CGU */}
-                            <div className="space-y-3 pt-4 border-t border-zinc-100">
-                                <div className="flex items-start gap-3">
+                            <div className="space-y-4 pt-4 border-t border-zinc-100">
+                                <label htmlFor="cgu" className="flex items-start gap-3 cursor-pointer active:bg-zinc-50 -mx-2 px-2 py-2 rounded-lg">
                                     <input
                                         type="checkbox"
                                         id="cgu"
                                         checked={formData.acceptCGU}
                                         onChange={(e) => updateField("acceptCGU", e.target.checked)}
-                                        className="w-5 h-5 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 mt-0.5"
+                                        className="w-6 h-6 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 mt-0.5 flex-shrink-0"
                                     />
-                                    <label htmlFor="cgu" className="text-[13px] text-zinc-600">
-                                        J'accepte les <a href="#" className="text-zinc-900 font-medium hover:underline">conditions générales d'utilisation</a> et la <a href="#" className="text-zinc-900 font-medium hover:underline">politique de confidentialité</a> <span className="text-red-500">*</span>
-                                    </label>
-                                </div>
+                                    <span className="text-[13px] sm:text-[14px] text-zinc-600 leading-relaxed">
+                                        J'accepte les <a href="#" className="text-zinc-900 font-medium underline">CGU</a> et la <a href="#" className="text-zinc-900 font-medium underline">politique de confidentialité</a> <span className="text-red-500">*</span>
+                                    </span>
+                                </label>
 
-                                <div className="flex items-start gap-3">
+                                <label htmlFor="newsletter" className="flex items-start gap-3 cursor-pointer active:bg-zinc-50 -mx-2 px-2 py-2 rounded-lg">
                                     <input
                                         type="checkbox"
                                         id="newsletter"
                                         checked={formData.acceptNewsletter}
                                         onChange={(e) => updateField("acceptNewsletter", e.target.checked)}
-                                        className="w-5 h-5 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 mt-0.5"
+                                        className="w-6 h-6 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 mt-0.5 flex-shrink-0"
                                     />
-                                    <label htmlFor="newsletter" className="text-[13px] text-zinc-600">
-                                        Je souhaite recevoir des conseils et actualités par email (optionnel)
-                                    </label>
-                                </div>
+                                    <span className="text-[13px] sm:text-[14px] text-zinc-600 leading-relaxed">
+                                        Recevoir des conseils par email (optionnel)
+                                    </span>
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -702,53 +703,94 @@ export default function InscriptionPage() {
                     </div>
                 )}
 
-                {/* Navigation */}
+                {/* Navigation - Fixed on mobile */}
                 {currentStep < 4 && (
-                    <div className="flex items-center justify-between mt-6 sm:mt-8">
-                        {currentStep > 1 ? (
-                            <button
-                                onClick={prevStep}
-                                className="h-10 sm:h-12 px-4 sm:px-6 text-zinc-700 text-[14px] sm:text-[15px] font-medium rounded-lg sm:rounded-xl flex items-center gap-1.5 sm:gap-2 hover:bg-zinc-100 transition-colors"
-                            >
-                                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-                                <span className="hidden sm:inline">Retour</span>
-                                <span className="sm:hidden">Retour</span>
-                            </button>
-                        ) : (
-                            <div></div>
-                        )}
+                    <>
+                        {/* Desktop navigation */}
+                        <div className="hidden sm:flex items-center justify-between mt-8">
+                            {currentStep > 1 ? (
+                                <button
+                                    onClick={prevStep}
+                                    className="h-12 px-6 text-zinc-700 text-[15px] font-medium rounded-xl flex items-center gap-2 hover:bg-zinc-100 transition-colors"
+                                >
+                                    <ArrowLeft className="h-5 w-5" />
+                                    Retour
+                                </button>
+                            ) : (
+                                <div></div>
+                            )}
 
-                        {currentStep < 3 ? (
-                            <button
-                                onClick={nextStep}
-                                disabled={!canProceed()}
-                                className="h-10 sm:h-12 px-5 sm:px-8 bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-300 disabled:cursor-not-allowed text-white text-[14px] sm:text-[15px] font-semibold rounded-lg sm:rounded-xl flex items-center gap-1.5 sm:gap-2 transition-colors"
-                            >
-                                Continuer
-                                <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
-                            </button>
-                        ) : (
-                            <button
-                                onClick={handleSubmit}
-                                disabled={!canProceed() || isLoading}
-                                className="h-10 sm:h-12 px-5 sm:px-8 bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-300 disabled:cursor-not-allowed text-white text-[14px] sm:text-[15px] font-semibold rounded-lg sm:rounded-xl flex items-center gap-1.5 sm:gap-2 transition-colors"
-                            >
-                                {isLoading ? (
-                                    <>
-                                        <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
-                                        <span className="hidden sm:inline">Création en cours...</span>
-                                        <span className="sm:hidden">Création...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <span className="hidden sm:inline">Créer mon compte</span>
-                                        <span className="sm:hidden">Créer</span>
-                                        <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
-                                    </>
-                                )}
-                            </button>
-                        )}
-                    </div>
+                            {currentStep < 3 ? (
+                                <button
+                                    onClick={nextStep}
+                                    disabled={!canProceed()}
+                                    className="h-12 px-8 bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-300 disabled:cursor-not-allowed text-white text-[15px] font-semibold rounded-xl flex items-center gap-2 transition-colors"
+                                >
+                                    Continuer
+                                    <ArrowRight className="h-5 w-5" />
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={handleSubmit}
+                                    disabled={!canProceed() || isLoading}
+                                    className="h-12 px-8 bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-300 disabled:cursor-not-allowed text-white text-[15px] font-semibold rounded-xl flex items-center gap-2 transition-colors"
+                                >
+                                    {isLoading ? (
+                                        <>
+                                            <Loader2 className="h-5 w-5 animate-spin" />
+                                            Création en cours...
+                                        </>
+                                    ) : (
+                                        <>
+                                            Créer mon compte
+                                            <ArrowRight className="h-5 w-5" />
+                                        </>
+                                    )}
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Mobile fixed bottom navigation */}
+                        <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-200 px-4 py-3 flex items-center gap-3 z-50">
+                            {currentStep > 1 && (
+                                <button
+                                    onClick={prevStep}
+                                    className="h-12 w-12 bg-zinc-100 text-zinc-700 rounded-xl flex items-center justify-center active:bg-zinc-200 transition-colors flex-shrink-0"
+                                >
+                                    <ArrowLeft className="h-5 w-5" />
+                                </button>
+                            )}
+
+                            {currentStep < 3 ? (
+                                <button
+                                    onClick={nextStep}
+                                    disabled={!canProceed()}
+                                    className="flex-1 h-12 bg-zinc-900 active:bg-zinc-800 disabled:bg-zinc-300 disabled:cursor-not-allowed text-white text-[15px] font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
+                                >
+                                    Continuer
+                                    <ArrowRight className="h-5 w-5" />
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={handleSubmit}
+                                    disabled={!canProceed() || isLoading}
+                                    className="flex-1 h-12 bg-zinc-900 active:bg-zinc-800 disabled:bg-zinc-300 disabled:cursor-not-allowed text-white text-[15px] font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
+                                >
+                                    {isLoading ? (
+                                        <>
+                                            <Loader2 className="h-5 w-5 animate-spin" />
+                                            Création...
+                                        </>
+                                    ) : (
+                                        <>
+                                            Créer mon compte
+                                            <ArrowRight className="h-5 w-5" />
+                                        </>
+                                    )}
+                                </button>
+                            )}
+                        </div>
+                    </>
                 )}
             </main>
         </div>
