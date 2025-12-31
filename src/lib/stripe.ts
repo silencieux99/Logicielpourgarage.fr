@@ -3,12 +3,12 @@ import { loadStripe } from '@stripe/stripe-js'
 
 // Stripe server-side instance
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2025-12-15.clover',
   typescript: true,
 })
 
 // Stripe client-side instance
-let stripePromise: Promise<Stripe | null>
+let stripePromise: ReturnType<typeof loadStripe>
 export const getStripe = () => {
   if (!stripePromise) {
     stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
