@@ -1,0 +1,33 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper function pour vérifier si l'utilisateur est authentifié
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    // Logos des garages
+    match /garages/{garageId}/logo/{fileName} {
+      allow read: if true; // Les logos sont publics
+      allow write: if isSignedIn(); // Seuls les utilisateurs authentifiés peuvent uploader
+      allow delete: if isSignedIn();
+    }
+    
+    // Documents (PDF des factures/devis)
+    match /garages/{garageId}/documents/{fileName} {
+      allow read, write: if isSignedIn();
+    }
+    
+    // Photos de véhicules
+    match /garages/{garageId}/vehicles/{vehicleId}/{fileName} {
+      allow read, write: if isSignedIn();
+    }
+    
+    // Pièces jointes diverses
+    match /garages/{garageId}/attachments/{fileName} {
+      allow read, write: if isSignedIn();
+    }
+  }
+}

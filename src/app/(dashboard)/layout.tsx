@@ -1,11 +1,38 @@
 "use client"
 
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Sidebar } from "@/components/layout/sidebar"
 import { SidebarProvider, useSidebar } from "@/lib/sidebar-context"
+import { useAuth } from "@/lib/auth-context"
 import { cn } from "@/lib/utils"
+import { Loader2 } from "lucide-react"
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
+    const router = useRouter()
+    const { user, loading } = useAuth()
     const { isCollapsed } = useSidebar()
+
+    // Protéger toutes les routes du dashboard
+    useEffect(() => {
+        if (!loading && !user) {
+            router.push('/login')
+        }
+    }, [user, loading, router])
+
+    // Afficher un loader pendant la vérification
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-zinc-50">
+                <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+            </div>
+        )
+    }
+
+    // Ne rien afficher si pas connecté (redirection en cours)
+    if (!user) {
+        return null
+    }
 
     return (
         <div className="min-h-screen bg-zinc-50/50">

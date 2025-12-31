@@ -60,36 +60,24 @@ const faqs = [
 ]
 
 // Composant Modal Checkout
-function CheckoutModal({ isOpen, onClose, plan }: { isOpen: boolean; onClose: () => void; plan: 'monthly' | 'annual' }) {
+function CheckoutModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
-  const [step, setStep] = useState<'email' | 'payment'>('email')
+  const [error, setError] = useState<string | null>(null)
 
-  const price = plan === 'monthly' ? 59.99 : 47.99
-  const totalAnnual = plan === 'annual' ? 575.88 : null
-
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (email) {
-      setStep('payment')
-    }
-  }
-
-  const handlePayment = async () => {
     setLoading(true)
-    // TODO: Intégrer Stripe Checkout
-    // const response = await fetch('/api/create-checkout-session', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ email, plan })
-    // })
-    // const { url } = await response.json()
-    // window.location.href = url
+    setError(null)
 
-    // Pour l'instant, rediriger vers signup
-    setTimeout(() => {
-      window.location.href = `/login?email=${encodeURIComponent(email)}&plan=${plan}`
-    }, 500)
+    try {
+      // Pour l'instant, rediriger vers l'inscription
+      // Le paiement se fera après la création du compte
+      window.location.href = `/inscription`
+    } catch (err: any) {
+      setError(err.message || 'Une erreur est survenue')
+      setLoading(false)
+    }
   }
 
   if (!isOpen) return null
@@ -104,87 +92,61 @@ function CheckoutModal({ isOpen, onClose, plan }: { isOpen: boolean; onClose: ()
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-zinc-400">Abonnement Pro</p>
-                <p className="text-2xl font-bold">{price}€ <span className="text-sm font-normal text-zinc-400">HT/mois</span></p>
+                <p className="text-2xl font-bold">59,99€ <span className="text-sm font-normal text-zinc-400">HT/mois</span></p>
               </div>
               <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
                 <X className="h-5 w-5" />
               </button>
             </div>
-            {plan === 'annual' && (
-              <div className="mt-3 flex items-center gap-2">
-                <span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs font-medium rounded">
-                  20% d'économie
-                </span>
-                <span className="text-sm text-zinc-400">Facturé {totalAnnual}€/an</span>
-              </div>
-            )}
+            <div className="mt-3 flex items-center gap-2">
+              <span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs font-medium rounded">
+                Accès complet
+              </span>
+              <span className="text-sm text-zinc-400">59,99€/mois</span>
+            </div>
           </div>
 
           {/* Content */}
           <div className="p-6">
-            {step === 'email' && (
-              <form onSubmit={handleEmailSubmit}>
-                <p className="text-sm text-zinc-600 mb-4">
-                  Entrez votre email pour commencer
-                </p>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="vous@exemple.fr"
-                  required
-                  className="w-full h-12 px-4 border border-zinc-300 rounded-xl text-[15px] mb-4 focus:outline-none focus:ring-2 focus:ring-zinc-900"
-                />
-                <button
-                  type="submit"
-                  className="w-full h-12 bg-zinc-900 hover:bg-zinc-800 text-white text-[15px] font-semibold rounded-xl transition-colors"
-                >
-                  Continuer
-                </button>
-              </form>
-            )}
-
-            {step === 'payment' && (
-              <div>
-                <p className="text-sm text-zinc-600 mb-4">
-                  Vous allez être redirigé vers notre page de paiement sécurisé.
-                </p>
-
-                {/* Résumé */}
-                <div className="bg-zinc-50 rounded-xl p-4 mb-4">
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-zinc-600">Plan Pro {plan === 'annual' ? 'Annuel' : 'Mensuel'}</span>
-                    <span className="font-medium">{price}€/mois</span>
-                  </div>
-                  {plan === 'annual' && (
-                    <div className="flex justify-between text-sm text-emerald-600">
-                      <span>Économie</span>
-                      <span className="font-medium">-144€/an</span>
-                    </div>
-                  )}
+            <form onSubmit={handleCheckout}>
+              <p className="text-sm text-zinc-600 mb-4">
+                Entrez votre email pour vous inscrire
+              </p>
+              
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+                  {error}
                 </div>
+              )}
 
-                <button
-                  onClick={handlePayment}
-                  disabled={loading}
-                  className="w-full h-12 bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-400 text-white text-[15px] font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
-                >
-                  {loading ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <>
-                      <CreditCard className="h-5 w-5" />
-                      Payer avec Stripe
-                    </>
-                  )}
-                </button>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="vous@exemple.fr"
+                required
+                className="w-full h-12 px-4 border border-zinc-300 rounded-xl text-[15px] mb-4 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+              />
+              
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full h-12 bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-400 text-white text-[15px] font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
+              >
+                {loading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <>
+                    <Shield className="h-5 w-5" />
+                    Commencer gratuitement
+                  </>
+                )}
+              </button>
 
-                <p className="text-xs text-zinc-400 text-center mt-4 flex items-center justify-center gap-2">
-                  <Shield className="h-4 w-4" />
-                  Paiement sécurisé par Stripe
-                </p>
-              </div>
-            )}
+              <p className="text-xs text-zinc-400 text-center mt-4">
+                Paiement sécurisé par Stripe • Sans engagement
+              </p>
+            </form>
 
             {/* Features */}
             <div className="mt-6 pt-6 border-t border-zinc-100">
@@ -208,10 +170,8 @@ function CheckoutModal({ isOpen, onClose, plan }: { isOpen: boolean; onClose: ()
 export default function HomePage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
-  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('monthly')
 
-  const openCheckout = (plan: 'monthly' | 'annual') => {
-    setSelectedPlan(plan)
+  const openCheckout = () => {
     setCheckoutOpen(true)
   }
 
@@ -221,13 +181,12 @@ export default function HomePage() {
       <CheckoutModal
         isOpen={checkoutOpen}
         onClose={() => setCheckoutOpen(false)}
-        plan={selectedPlan}
       />
 
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-zinc-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-20 sm:h-22 md:h-24 flex items-center justify-between">
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex items-center -ml-4 mt-3">
             <img
               src="/GaragePROlogo.png"
               alt="GaragePro"
@@ -247,7 +206,7 @@ export default function HomePage() {
             <Link href="/login" className="text-[14px] font-medium text-zinc-600 hover:text-zinc-900 px-3 py-2">
               Connexion
             </Link>
-            <Link href="/login" className="h-9 px-4 bg-zinc-900 text-white text-[14px] font-medium rounded-lg flex items-center transition-colors hover:bg-zinc-800">
+            <Link href="/inscription" className="h-9 px-4 bg-zinc-900 text-white text-[14px] font-medium rounded-lg flex items-center transition-colors hover:bg-zinc-800">
               Essai gratuit
             </Link>
           </div>
@@ -267,10 +226,10 @@ export default function HomePage() {
             <a href="#pricing" className="block text-[15px] text-zinc-700 py-2" onClick={() => setMobileMenuOpen(false)}>Tarifs</a>
             <a href="#faq" className="block text-[15px] text-zinc-700 py-2" onClick={() => setMobileMenuOpen(false)}>FAQ</a>
             <div className="pt-3 border-t border-zinc-100 space-y-2">
-              <Link href="/login" className="block w-full h-11 bg-zinc-100 text-zinc-900 text-[15px] font-medium rounded-lg text-center leading-[44px]">
-                Connexion
+              <Link href="/inscription" className="block w-full h-11 bg-zinc-100 text-zinc-900 text-[15px] font-medium rounded-lg text-center leading-[44px]">
+                Commencer gratuitement
               </Link>
-              <Link href="/login" className="block w-full h-11 bg-zinc-900 text-white text-[15px] font-medium rounded-lg text-center leading-[44px]">
+              <Link href="/inscription" className="block w-full h-11 bg-zinc-900 text-white text-[15px] font-medium rounded-lg text-center leading-[44px]">
                 Essai gratuit
               </Link>
             </div>
@@ -282,7 +241,7 @@ export default function HomePage() {
       <section className="pt-28 sm:pt-32 md:pt-36 pb-16 sm:pb-24 px-4 sm:px-6">
         <div className="max-w-3xl mx-auto text-center">
           <p className="inline-block px-3 py-1.5 bg-zinc-100 rounded-full text-zinc-700 text-[13px] font-medium mb-6">
-            Essai gratuit 14 jours • Sans carte bancaire
+            Version gratuite • 5 clients & 5 véhicules
           </p>
 
           <h1 className="text-[32px] sm:text-[44px] lg:text-[52px] font-bold text-zinc-900 leading-[1.15] tracking-tight mb-5">
@@ -294,7 +253,7 @@ export default function HomePage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">
-            <Link href="/login" className="w-full sm:w-auto h-12 px-6 bg-zinc-900 text-white text-[15px] font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors">
+            <Link href="/inscription" className="w-full sm:w-auto h-12 px-6 bg-zinc-900 text-white text-[15px] font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors">
               Démarrer l'essai gratuit
               <ArrowRight className="h-4 w-4" />
             </Link>
@@ -431,39 +390,14 @@ export default function HomePage() {
               </div>
 
               <button
-                onClick={() => openCheckout('monthly')}
+                onClick={openCheckout}
                 className="w-full h-11 bg-white hover:bg-zinc-100 text-zinc-900 text-[14px] font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors"
               >
                 <Shield className="h-4 w-4" />
                 S'abonner maintenant
               </button>
 
-              <p className="text-[11px] text-zinc-500 mt-3 text-center">Paiement sécurisé Stripe</p>
-            </div>
-          </div>
-
-          {/* Plan annuel */}
-          <div className="mt-6 bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-2xl p-6 sm:p-8 text-white">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <h3 className="text-xl font-bold">Plan Annuel</h3>
-                  <span className="px-2 py-0.5 bg-white/20 text-white text-xs font-bold rounded">-20%</span>
-                </div>
-                <p className="text-emerald-100">Économisez 144€/an avec le paiement annuel</p>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="text-right">
-                  <p className="text-2xl font-bold">47,99€</p>
-                  <p className="text-sm text-emerald-200">HT/mois</p>
-                </div>
-                <button
-                  onClick={() => openCheckout('annual')}
-                  className="h-11 px-6 bg-white text-emerald-600 text-[14px] font-semibold rounded-lg hover:bg-emerald-50 transition-colors"
-                >
-                  Choisir
-                </button>
-              </div>
+              <p className="text-[11px] text-zinc-500 mt-3 text-center">Paiement sécurisé Stripe • Sans engagement</p>
             </div>
           </div>
         </div>
@@ -522,15 +456,15 @@ export default function HomePage() {
             Prêt à simplifier votre gestion ?
           </h2>
           <p className="text-[15px] sm:text-[17px] text-zinc-400 mb-8">
-            Essayez gratuitement pendant 14 jours. Sans carte bancaire.
+            Commencez gratuitement avec 5 clients et 5 véhicules. Passez au Pro quand vous voulez.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link href="/login" className="w-full sm:w-auto h-12 px-8 bg-white text-zinc-900 text-[15px] font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-zinc-100 transition-colors">
+            <Link href="/inscription" className="w-full sm:w-auto h-12 px-8 bg-white text-zinc-900 text-[15px] font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-zinc-100 transition-colors">
               Démarrer l'essai gratuit
               <ArrowRight className="h-4 w-4" />
             </Link>
             <button
-              onClick={() => openCheckout('monthly')}
+              onClick={openCheckout}
               className="w-full sm:w-auto h-12 px-8 bg-zinc-800 text-white text-[15px] font-semibold rounded-lg flex items-center justify-center gap-2 border border-zinc-700 hover:bg-zinc-700 transition-colors"
             >
               S'abonner au Pro

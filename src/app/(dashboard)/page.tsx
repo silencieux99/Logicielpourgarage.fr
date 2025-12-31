@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
     Plus,
     Car,
@@ -20,6 +21,7 @@ import {
     Receipt
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/lib/auth-context"
 
 interface DashboardStats {
     clientsTotal: number
@@ -39,15 +41,26 @@ interface RecentItem {
 }
 
 export default function DashboardPage() {
+    const router = useRouter()
+    const { user, garage, loading: authLoading } = useAuth()
     const [loading, setLoading] = useState(true)
     const [stats, setStats] = useState<DashboardStats | null>(null)
     const [recentItems, setRecentItems] = useState<RecentItem[]>([])
     const [lowStockCount, setLowStockCount] = useState(0)
     const [fabOpen, setFabOpen] = useState(false)
 
+    // Rediriger si pas connecté
     useEffect(() => {
-        loadDashboard()
-    }, [])
+        if (!authLoading && !user) {
+            router.push('/login')
+        }
+    }, [user, authLoading, router])
+
+    useEffect(() => {
+        if (garage?.id) {
+            loadDashboard()
+        }
+    }, [garage?.id])
 
     // Fermer le FAB quand on scroll
     useEffect(() => {

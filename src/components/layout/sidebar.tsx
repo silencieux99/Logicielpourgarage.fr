@@ -2,8 +2,8 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { usePathname } from "next/navigation"
-import { useEffect, useState } from "react"
+import { usePathname, useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
 import {
     LayoutDashboard,
     Users,
@@ -12,7 +12,8 @@ import {
     FileText,
     Calendar,
     Package,
-    BarChart3,
+    TrendingUp,
+    BookOpen,
     MessageSquare,
     Settings,
     HelpCircle,
@@ -27,6 +28,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useSidebar } from "@/lib/sidebar-context"
+import { signOut } from "@/lib/auth"
 
 const navigation = [
     { name: "Tableau de bord", href: "/dashboard", icon: LayoutDashboard },
@@ -36,7 +38,7 @@ const navigation = [
     { name: "Factures", href: "/invoices", icon: FileText },
     { name: "Agenda", href: "/schedule", icon: Calendar },
     { name: "Stock", href: "/inventory", icon: Package },
-    { name: "Analytiques", href: "/analytics", icon: BarChart3 },
+    { name: "Analytiques", href: "/analytics", icon: TrendingUp },
     { name: "Messages", href: "/messages", icon: MessageSquare },
     { name: "Outils", href: "/outils", icon: Hammer },
     { name: "Tutoriaux", href: "/tutoriaux", icon: GraduationCap },
@@ -57,8 +59,18 @@ const mobileNavItems = [
 
 export function Sidebar() {
     const pathname = usePathname()
+    const router = useRouter()
     const { isCollapsed, toggleSidebar } = useSidebar()
     const [showMoreMenu, setShowMoreMenu] = useState(false)
+
+    const handleLogout = async () => {
+        try {
+            await signOut()
+            router.push('/login')
+        } catch (error) {
+            console.error('Erreur déconnexion:', error)
+        }
+    }
 
     useEffect(() => {
         setShowMoreMenu(false)
@@ -319,7 +331,10 @@ export function Sidebar() {
                                     )
                                 })}
                                 <div className="pt-3 mt-3 border-t border-zinc-100">
-                                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
+                                    <button 
+                                        onClick={handleLogout}
+                                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                                    >
                                         <LogOut className="h-4 w-4" />
                                         <span>Déconnexion</span>
                                     </button>

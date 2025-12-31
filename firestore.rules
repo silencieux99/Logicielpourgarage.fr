@@ -1,0 +1,61 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function pour vérifier si l'utilisateur est authentifié
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    // Helper function pour vérifier si l'utilisateur possède le garage
+    function isGarageOwner(garageId) {
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/garages/$(garageId)) &&
+             get(/databases/$(database)/documents/garages/$(garageId)).data.userId == request.auth.uid;
+    }
+    
+    // Garages - L'utilisateur peut lire/écrire uniquement ses propres garages
+    match /garages/{garageId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Configuration du garage
+    match /garageConfigs/{configId} {
+      allow read, write: if isSignedIn() && isGarageOwner(resource.data.garageId);
+    }
+    
+    // Clients - Accessible uniquement par le propriétaire du garage
+    match /clients/{clientId} {
+      allow read, write: if isSignedIn() && isGarageOwner(resource.data.garageId);
+    }
+    
+    // Véhicules
+    match /vehicules/{vehiculeId} {
+      allow read, write: if isSignedIn() && isGarageOwner(resource.data.garageId);
+    }
+    
+    // Réparations
+    match /reparations/{reparationId} {
+      allow read, write: if isSignedIn() && isGarageOwner(resource.data.garageId);
+    }
+    
+    // Documents (devis/factures)
+    match /documents/{documentId} {
+      allow read, write: if isSignedIn() && isGarageOwner(resource.data.garageId);
+    }
+    
+    // Articles (stock)
+    match /articles/{articleId} {
+      allow read, write: if isSignedIn() && isGarageOwner(resource.data.garageId);
+    }
+    
+    // Rendez-vous
+    match /rendezvous/{rdvId} {
+      allow read, write: if isSignedIn() && isGarageOwner(resource.data.garageId);
+    }
+  }
+}
