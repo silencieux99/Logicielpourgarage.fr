@@ -200,8 +200,12 @@ export interface RendezVous {
 // ============================================
 
 export const createGarage = async (data: Omit<Garage, 'id' | 'createdAt' | 'updatedAt'>) => {
+    // Filtrer les valeurs undefined car Firebase ne les accepte pas
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined)
+    )
     const docRef = await addDoc(collection(db, 'garages'), {
-        ...data,
+        ...cleanData,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now()
     })
