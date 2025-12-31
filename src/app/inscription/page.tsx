@@ -105,20 +105,24 @@ export default function InscriptionPage() {
             const user = await signUp(formData.email, formData.password)
 
             // 2. Sauvegarder les données du garage dans Firestore
-            await createGarage({
+            // Note: Firebase n'accepte pas les valeurs undefined, on filtre les champs vides
+            const garageData: any = {
                 userId: user.uid,
                 nom: formData.nomGarage,
                 statutJuridique: formData.statutJuridique,
-                siret: formData.siret || undefined,
-                numeroTVA: formData.numeroTVA || undefined,
                 adresse: formData.adresse,
                 codePostal: formData.codePostal,
                 ville: formData.ville,
-                telephone: formData.telephone || undefined,
                 email: formData.email,
-                siteWeb: formData.siteWeb || undefined,
-                effectif: formData.effectif || undefined,
-            })
+            }
+            // Ajouter les champs optionnels seulement s'ils ont une valeur
+            if (formData.siret) garageData.siret = formData.siret
+            if (formData.numeroTVA) garageData.numeroTVA = formData.numeroTVA
+            if (formData.telephone) garageData.telephone = formData.telephone
+            if (formData.siteWeb) garageData.siteWeb = formData.siteWeb
+            if (formData.effectif) garageData.effectif = formData.effectif
+
+            await createGarage(garageData)
 
             // 3. Sauvegarder les données temporaires pour l'onboarding
             if (typeof window !== 'undefined') {
