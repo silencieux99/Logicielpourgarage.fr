@@ -68,6 +68,19 @@ interface GarageWithDetails {
     vehiculesCount: number
 }
 
+interface ClientWithGarage {
+    id: string
+    prenom: string
+    nom: string
+    email?: string
+    telephone?: string
+    ville?: string
+    garageId: string
+    garageName: string
+    isVIP: boolean
+    createdAt: Timestamp
+}
+
 export default function AdminPage() {
     const router = useRouter()
     const { user, loading: authLoading } = useAuth()
@@ -79,7 +92,9 @@ export default function AdminPage() {
     const [selectedGarage, setSelectedGarage] = useState<GarageWithDetails | null>(null)
     const [refreshing, setRefreshing] = useState(false)
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-    const [activeTab, setActiveTab] = useState<'overview' | 'garages'>('overview')
+    const [activeTab, setActiveTab] = useState<'overview' | 'garages' | 'clients'>('overview')
+    const [clients, setClients] = useState<ClientWithGarage[]>([])
+    const [clientSearchTerm, setClientSearchTerm] = useState("")
 
     // Vérifier si l'utilisateur est admin
     useEffect(() => {
@@ -155,6 +170,29 @@ export default function AdminPage() {
                 garagesThisMonth
             })
 
+            // Charger tous les clients avec leur garage
+            const clientsData: ClientWithGarage[] = []
+            for (const clientDoc of clientsSnap.docs) {
+                const data = clientDoc.data()
+                const garage = garagesData.find(g => g.id === data.garageId)
+                clientsData.push({
+                    id: clientDoc.id,
+                    prenom: data.prenom || '',
+                    nom: data.nom || '',
+                    email: data.email,
+                    telephone: data.telephone,
+                    ville: data.ville,
+                    garageId: data.garageId,
+                    garageName: garage?.nom || 'Garage inconnu',
+                    isVIP: data.isVIP || false,
+                    createdAt: data.createdAt
+                })
+            }
+            setClients(clientsData.sort((a, b) => {
+                if (!a.createdAt || !b.createdAt) return 0
+                return b.createdAt.toMillis() - a.createdAt.toMillis()
+            }))
+
         } catch (error) {
             console.error('Erreur chargement admin:', error)
         } finally {
@@ -202,6 +240,13 @@ export default function AdminPage() {
         g.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
         g.ville.toLowerCase().includes(searchTerm.toLowerCase()) ||
         g.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+
+    const filteredClients = clients.filter(c =>
+        c.prenom.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+        c.nom.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+        c.email?.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+        c.garageName.toLowerCase().includes(clientSearchTerm.toLowerCase())
     )
 
     const formatDate = (timestamp: Timestamp | undefined) => {
@@ -258,6 +303,15 @@ export default function AdminPage() {
                             >
                                 Garages
                             </button>
+                            <button
+                                onClick={() => setActiveTab('clients')}
+                                className={cn(
+                                    "text-sm font-medium transition-colors",
+                                    activeTab === 'clients' ? "text-white" : "text-zinc-400 hover:text-white"
+                                )}
+                            >
+                                Clients
+                            </button>
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -307,6 +361,15 @@ export default function AdminPage() {
                             )}
                         >
                             Garages ({stats?.totalGarages || 0})
+                        </button>
+                        <button
+                            onClick={() => { setActiveTab('clients'); setMobileMenuOpen(false) }}
+                            className={cn(
+                                "w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                                activeTab === 'clients' ? "bg-zinc-800 text-white" : "text-zinc-400"
+                            )}
+                        >
+                            Clients ({stats?.totalClients || 0})
                         </button>
                     </div>
                 )}
@@ -503,6 +566,76 @@ export default function AdminPage() {
                                 {filteredGarages.length === 0 && (
                                     <div className="p-8 text-center text-zinc-500">
                                         {searchTerm ? 'Aucun résultat' : 'Aucun garage'}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Clients Tab */}
+                {activeTab === 'clients' && (
+                    <div className="space-y-4">
+                        {/* Search */}
+                        <div className="relative">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500" />
+                            <input
+                                type="text"
+                                value={clientSearchTerm}
+                                onChange={(e) => setClientSearchTerm(e.target.value)}
+                                placeholder="Rechercher un client..."
+                                className="w-full h-12 pl-12 pr-4 bg-zinc-900 border border-zinc-800 rounded-xl text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-700"
+                            />
+                        </div>
+
+                        {/* Clients List */}
+                        <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+                            <div className="p-4 border-b border-zinc-800">
+                                <p className="text-sm text-zinc-400">{filteredClients.length} client(s)</p>
+                            </div>
+                            <div className="divide-y divide-zinc-800 max-h-[60vh] overflow-y-auto">
+                                {filteredClients.map(client => (
+                                    <div
+                                        key={client.id}
+                                        className="p-4 sm:p-5 hover:bg-zinc-800/50 transition-colors"
+                                    >
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <p className="font-medium">{client.prenom} {client.nom}</p>
+                                                    {client.isVIP && (
+                                                        <span className="px-1.5 py-0.5 bg-amber-500/20 text-amber-400 text-[10px] font-bold rounded">VIP</span>
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-zinc-500">
+                                                    <span className="flex items-center gap-1">
+                                                        <Building2 className="h-3 w-3" />
+                                                        {client.garageName}
+                                                    </span>
+                                                    {client.email && (
+                                                        <span className="flex items-center gap-1">
+                                                            <Mail className="h-3 w-3" />
+                                                            {client.email}
+                                                        </span>
+                                                    )}
+                                                    {client.telephone && (
+                                                        <span className="flex items-center gap-1">
+                                                            <Phone className="h-3 w-3" />
+                                                            {client.telephone}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="flex gap-4 mt-2 text-xs text-zinc-500">
+                                                    {client.ville && <span>{client.ville}</span>}
+                                                    <span>{formatDate(client.createdAt)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {filteredClients.length === 0 && (
+                                    <div className="p-8 text-center text-zinc-500">
+                                        {clientSearchTerm ? 'Aucun résultat' : 'Aucun client'}
                                     </div>
                                 )}
                             </div>

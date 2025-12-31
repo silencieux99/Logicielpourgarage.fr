@@ -112,7 +112,7 @@ function CheckoutModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
               <p className="text-sm text-zinc-600 mb-4">
                 Entrez votre email pour vous inscrire
               </p>
-              
+
               {error && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
                   {error}
@@ -127,7 +127,7 @@ function CheckoutModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                 required
                 className="w-full h-12 px-4 border border-zinc-300 rounded-xl text-[15px] mb-4 focus:outline-none focus:ring-2 focus:ring-zinc-900"
               />
-              
+
               <button
                 type="submit"
                 disabled={loading}
@@ -226,8 +226,8 @@ export default function HomePage() {
             <a href="#pricing" className="block text-[15px] text-zinc-700 py-2" onClick={() => setMobileMenuOpen(false)}>Tarifs</a>
             <a href="#faq" className="block text-[15px] text-zinc-700 py-2" onClick={() => setMobileMenuOpen(false)}>FAQ</a>
             <div className="pt-3 border-t border-zinc-100 space-y-2">
-              <Link href="/inscription" className="block w-full h-11 bg-zinc-100 text-zinc-900 text-[15px] font-medium rounded-lg text-center leading-[44px]">
-                Commencer gratuitement
+              <Link href="/login" className="block w-full h-11 bg-zinc-100 text-zinc-900 text-[15px] font-medium rounded-lg text-center leading-[44px]">
+                Connexion
               </Link>
               <Link href="/inscription" className="block w-full h-11 bg-zinc-900 text-white text-[15px] font-medium rounded-lg text-center leading-[44px]">
                 Essai gratuit
