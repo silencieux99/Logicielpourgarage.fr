@@ -160,7 +160,8 @@ export default function InscriptionPage() {
                 // On continue même si l'email échoue
             }
 
-            setCurrentStep(4)
+            // L'utilisateur est automatiquement connecté après signUp, on redirige vers le dashboard
+            router.push('/')
         } catch (err: any) {
             console.error('Erreur inscription:', err)
             if (err.code === 'auth/email-already-in-use') {
