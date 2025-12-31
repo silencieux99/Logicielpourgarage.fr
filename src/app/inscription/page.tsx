@@ -89,11 +89,18 @@ export default function InscriptionPage() {
     }
 
     const nextStep = () => {
-        if (currentStep < 4) setCurrentStep(currentStep + 1)
+        if (currentStep < 4) {
+            setCurrentStep(currentStep + 1)
+            // Scroll vers le haut sur mobile
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+        }
     }
 
     const prevStep = () => {
-        if (currentStep > 1) setCurrentStep(currentStep - 1)
+        if (currentStep > 1) {
+            setCurrentStep(currentStep - 1)
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+        }
     }
 
     const handleSubmit = async () => {
@@ -653,56 +660,76 @@ export default function InscriptionPage() {
 
                 {/* Step 4 - Confirmation */}
                 {currentStep === 4 && (
-                    <div className="animate-fade-in text-center py-6 sm:py-8">
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4 sm:mb-6">
-                            <Check className="h-8 w-8 sm:h-10 sm:w-10 text-emerald-600" />
+                    <div className="animate-fade-in max-w-lg mx-auto">
+                        {/* Header minimaliste */}
+                        <div className="text-center mb-8 sm:mb-10">
+                            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-zinc-900 flex items-center justify-center mx-auto mb-5">
+                                <Check className="h-7 w-7 sm:h-8 sm:w-8 text-white" />
+                            </div>
+                            <h1 className="text-[22px] sm:text-[26px] font-bold text-zinc-900 mb-2">
+                                Compte créé avec succès
+                            </h1>
+                            <p className="text-[14px] sm:text-[15px] text-zinc-500">
+                                {formData.nomGarage} est prêt à être utilisé
+                            </p>
                         </div>
 
-                        <h1 className="text-[24px] sm:text-[28px] lg:text-[32px] font-bold text-zinc-900 mb-2 sm:mb-3 px-4">
-                            Bienvenue, {formData.prenom} !
-                        </h1>
+                        {/* Card principale */}
+                        <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden mb-6">
+                            {/* Récapitulatif */}
+                            <div className="p-5 sm:p-6 border-b border-zinc-100">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-xl bg-zinc-100 flex items-center justify-center flex-shrink-0">
+                                        <Building2 className="h-6 w-6 text-zinc-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[15px] font-semibold text-zinc-900">{formData.nomGarage}</p>
+                                        <p className="text-[13px] text-zinc-500">{formData.ville} • Plan Gratuit</p>
+                                    </div>
+                                </div>
+                            </div>
 
-                        <p className="text-[15px] sm:text-[16px] text-zinc-600 max-w-md mx-auto mb-6 sm:mb-8 px-4">
-                            Votre compte <strong>{formData.nomGarage}</strong> a été créé avec succès.
-                        </p>
-
-                        <div className="bg-blue-50 border border-blue-200 rounded-xl sm:rounded-2xl p-4 sm:p-6 max-w-md mx-auto mb-6 sm:mb-8 mx-4">
-                            <div className="flex items-start gap-3">
-                                <Mail className="h-6 w-6 text-blue-600 flex-shrink-0 mt-0.5" />
-                                <div className="text-left">
-                                    <p className="text-[14px] font-medium text-blue-900 mb-1">
-                                        Vérifiez votre email
-                                    </p>
-                                    <p className="text-[13px] text-blue-700">
-                                        Un email de confirmation a été envoyé à <strong>{formData.email}</strong>.
-                                        Cliquez sur le lien pour activer votre compte.
-                                    </p>
+                            {/* Prochaines étapes */}
+                            <div className="p-5 sm:p-6 space-y-4">
+                                <p className="text-[13px] font-medium text-zinc-400 uppercase tracking-wide">Prochaines étapes</p>
+                                <div className="space-y-3">
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-6 h-6 rounded-full bg-zinc-900 text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</div>
+                                        <div>
+                                            <p className="text-[14px] font-medium text-zinc-900">Personnalisez vos documents</p>
+                                            <p className="text-[13px] text-zinc-500">Logo, mentions légales, numérotation...</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-6 h-6 rounded-full bg-zinc-200 text-zinc-600 text-[11px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</div>
+                                        <div>
+                                            <p className="text-[14px] font-medium text-zinc-900">Ajoutez votre premier client</p>
+                                            <p className="text-[13px] text-zinc-500">Et son véhicule pour commencer</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-6 h-6 rounded-full bg-zinc-200 text-zinc-600 text-[11px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</div>
+                                        <div>
+                                            <p className="text-[14px] font-medium text-zinc-900">Créez votre premier devis</p>
+                                            <p className="text-[13px] text-zinc-500">Générez un document professionnel</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="bg-emerald-50 border border-emerald-200 rounded-xl sm:rounded-2xl p-4 sm:p-5 max-w-md mx-auto mb-6 sm:mb-8 mx-4">
-                            <div className="text-center">
-                                <p className="text-[14px] font-medium text-emerald-900 mb-2">
-                                    🎉 Version gratuite activée
-                                </p>
-                                <p className="text-[13px] text-emerald-700">
-                                    Vous pouvez gérer jusqu'à <strong>5 clients</strong> et <strong>5 véhicules</strong> gratuitement.
-                                    Passez au plan Pro pour débloquer toutes les fonctionnalités.
-                                </p>
-                            </div>
-                        </div>
-
+                        {/* Bouton CTA */}
                         <Link
-                            href="/dashboard"
-                            className="inline-flex h-11 sm:h-12 px-6 sm:px-8 bg-zinc-900 hover:bg-zinc-800 text-white text-[14px] sm:text-[15px] font-semibold rounded-lg sm:rounded-xl items-center gap-2 transition-colors"
+                            href="/"
+                            className="w-full h-12 sm:h-14 bg-zinc-900 hover:bg-zinc-800 text-white text-[15px] font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
                         >
                             Accéder à mon espace
-                            <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
+                            <ArrowRight className="h-5 w-5" />
                         </Link>
 
-                        <p className="text-[12px] sm:text-[13px] text-zinc-500 mt-4 sm:mt-6 px-4">
-                            Vous pourrez personnaliser vos paramètres de facturation et passer au plan Pro à tout moment
+                        {/* Info version gratuite */}
+                        <p className="text-[12px] sm:text-[13px] text-zinc-400 text-center mt-4">
+                            Version gratuite • 5 clients • 5 véhicules • Sans engagement
                         </p>
                     </div>
                 )}
