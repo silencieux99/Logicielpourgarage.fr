@@ -3,10 +3,10 @@ import { adminDb } from '@/lib/firebase-admin'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
 
     // Récupérer la facture
     const invoiceDoc = await adminDb.collection('invoices').doc(id).get()
