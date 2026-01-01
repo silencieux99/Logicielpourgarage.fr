@@ -730,7 +730,7 @@ export default function InscriptionPage() {
 
                         {/* Bouton CTA */}
                         <Link
-                            href="/settings"
+                            href="/dashboard"
                             className="w-full h-12 sm:h-14 bg-zinc-900 hover:bg-zinc-800 text-white text-[15px] font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
                         >
                             Configurer mon garage

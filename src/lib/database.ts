@@ -15,6 +15,14 @@ import {
 } from 'firebase/firestore'
 import { db } from './firebase'
 
+// ⚠️ IMPORTANT SECURITY WARNING ⚠️
+// This file accesses Firestore directly from the Client Side.
+// It is CRITICAL to have robust Firestore Security Rules (firestore.rules) enabled.
+// Without rules, anyone can read/write your database.
+//
+// TODO: Ensure firestore.rules are deployed and restrict access based on request.auth
+
+
 // ============================================
 // TYPES
 // ============================================

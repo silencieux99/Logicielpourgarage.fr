@@ -9,9 +9,23 @@ import {
     FileText,
     ArrowUpRight,
     ArrowDownRight,
+    ArrowUpRight,
+    ArrowDownRight,
     Loader2
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    PieChart,
+    Pie,
+    Cell
+} from "recharts"
 
 const periodes = [
     { id: "7d", label: "7 jours" },
@@ -61,6 +75,38 @@ export default function AnalyticsPage() {
             console.error("Erreur chargement analytics:", error)
         } finally {
             setLoading(false)
+            // MOCK DATA FOR DEMO
+            if (periode === '7d') {
+                setChartData(Array.from({ length: 7 }, (_, i) => ({
+                    label: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'][i],
+                    value: Math.floor(Math.random() * 1500)
+                })))
+            } else {
+                setChartData(Array.from({ length: 30 }, (_, i) => ({
+                    label: `${i + 1}`,
+                    value: Math.floor(Math.random() * 1500)
+                })))
+            }
+            setStats({
+                chiffreAffaires: 12500,
+                chiffreAffairesChange: 12,
+                reparations: 45,
+                reparationsChange: 5,
+                nouveauxClients: 8,
+                nouveauxClientsChange: -2,
+                devisAcceptes: 85,
+                devisAcceptesChange: 3
+            })
+            setTopClients([
+                { nom: "Jean Dupont", ca: 1200 },
+                { nom: "Société Transport", ca: 3500 },
+                { nom: "Marie Martin", ca: 800 },
+            ])
+            setTopMarques([
+                { marque: "Renault", count: 12 },
+                { marque: "Peugeot", count: 8 },
+                { marque: "Volkswagen", count: 5 },
+            ])
         }
     }
 
@@ -157,11 +203,30 @@ export default function AnalyticsPage() {
                     <div className="grid lg:grid-cols-2 gap-6">
                         <div className="bg-white rounded-2xl border border-zinc-200 p-6">
                             <h2 className="text-lg font-semibold text-zinc-900 mb-6">Chiffre d'affaires</h2>
-                            <div className="h-64 flex items-center justify-center text-zinc-400">
-                                <div className="text-center">
-                                    <TrendingUp className="h-12 w-12 mx-auto mb-2 text-zinc-300" />
-                                    <p className="text-sm">Pas encore de données</p>
-                                </div>
+                            <div className="h-64">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={chartData}>
+                                        <XAxis
+                                            dataKey="label"
+                                            stroke="#888888"
+                                            fontSize={12}
+                                            tickLine={false}
+                                            axisLine={false}
+                                        />
+                                        <YAxis
+                                            stroke="#888888"
+                                            fontSize={12}
+                                            tickLine={false}
+                                            axisLine={false}
+                                            tickFormatter={(value) => `${value}€`}
+                                        />
+                                        <Tooltip
+                                            contentStyle={{ background: '#fff', border: '1px solid #e4e4e7', borderRadius: '8px' }}
+                                            cursor={{ fill: '#f4f4f5' }}
+                                        />
+                                        <Bar dataKey="value" fill="#18181b" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
                             </div>
                         </div>
 
@@ -230,19 +295,30 @@ export default function AnalyticsPage() {
                     <div className="grid lg:grid-cols-2 gap-6">
                         <div className="bg-white rounded-2xl border border-zinc-200 p-6">
                             <h2 className="text-lg font-semibold text-zinc-900 mb-6">Chiffre d'affaires</h2>
-                            <div className="h-64 flex items-end gap-2">
-                                {chartData.map((day, i) => (
-                                    <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                                        <div
-                                            className="w-full bg-zinc-900 rounded-t-lg transition-all hover:bg-zinc-700"
-                                            style={{
-                                                height: `${(day.value / maxChartValue) * 100}%`,
-                                                minHeight: day.value > 0 ? '8px' : '0'
-                                            }}
+                            <div className="h-64">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={chartData}>
+                                        <XAxis
+                                            dataKey="label"
+                                            stroke="#888888"
+                                            fontSize={12}
+                                            tickLine={false}
+                                            axisLine={false}
                                         />
-                                        <span className="text-xs text-zinc-500">{day.label}</span>
-                                    </div>
-                                ))}
+                                        <YAxis
+                                            stroke="#888888"
+                                            fontSize={12}
+                                            tickLine={false}
+                                            axisLine={false}
+                                            tickFormatter={(value) => `${value}€`}
+                                        />
+                                        <Tooltip
+                                            contentStyle={{ background: '#fff', border: '1px solid #e4e4e7', borderRadius: '8px' }}
+                                            cursor={{ fill: '#f4f4f5' }}
+                                        />
+                                        <Bar dataKey="value" fill="#18181b" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
                             </div>
                         </div>
 
