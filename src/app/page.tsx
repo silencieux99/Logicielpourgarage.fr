@@ -14,7 +14,9 @@ import {
   CreditCard
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useAuth } from "@/lib/auth-context"
+import { useRouter } from "next/navigation"
 
 const features = [
   { title: "Gestion clients", description: "Centralisez toutes les informations de vos clients et leur historique." },
@@ -168,11 +170,29 @@ function CheckoutModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
 }
 
 export default function HomePage() {
+  const router = useRouter()
+  const { user, loading } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
 
+  // Rediriger les utilisateurs connectés vers le dashboard
+  useEffect(() => {
+    if (!loading && user) {
+      router.push('/dashboard')
+    }
+  }, [user, loading, router])
+
   const openCheckout = () => {
     setCheckoutOpen(true)
+  }
+
+  // Afficher un loader pendant la vérification de l'authentification
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+      </div>
+    )
   }
 
   return (

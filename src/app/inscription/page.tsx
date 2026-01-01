@@ -160,8 +160,11 @@ export default function InscriptionPage() {
                 // On continue même si l'email échoue
             }
 
-            // L'utilisateur est automatiquement connecté après signUp, on redirige vers le dashboard
-            router.push('/')
+            // 5. Afficher la page de confirmation
+            setCurrentStep(4)
+
+            // Note: L'utilisateur est automatiquement connecté après signUp
+            // La redirection vers le dashboard se fera depuis le bouton de l'étape 4
         } catch (err: any) {
             console.error('Erreur inscription:', err)
             if (err.code === 'auth/email-already-in-use') {
@@ -721,7 +724,7 @@ export default function InscriptionPage() {
 
                         {/* Bouton CTA */}
                         <Link
-                            href="/"
+                            href="/dashboard"
                             className="w-full h-12 sm:h-14 bg-zinc-900 hover:bg-zinc-800 text-white text-[15px] font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
                         >
                             Accéder à mon espace
