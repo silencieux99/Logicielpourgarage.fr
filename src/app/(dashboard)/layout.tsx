@@ -11,7 +11,7 @@ import { Loader2 } from "lucide-react"
 function DashboardContent({ children }: { children: React.ReactNode }) {
     const router = useRouter()
     const { user, loading } = useAuth()
-    const { isCollapsed } = useSidebar()
+    const { isCollapsed, tabletExpanded } = useSidebar()
 
     // Protéger toutes les routes du dashboard
     useEffect(() => {
@@ -40,7 +40,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
             <main className={cn(
                 "pb-24 md:pb-0 min-h-screen transition-all duration-300",
-                "md:pl-[56px]",
+                tabletExpanded ? "md:pl-[200px]" : "md:pl-[64px]",
                 isCollapsed ? "lg:pl-[64px]" : "lg:pl-[240px]"
             )}>
                 <div className="p-3 sm:p-4 lg:p-6 max-w-6xl">

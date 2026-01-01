@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils"
 import { signUp } from "@/lib/auth"
 import { createGarage, createGarageConfig } from "@/lib/database"
 import { Timestamp } from "firebase/firestore"
+import { useAuth } from "@/lib/auth-context"
 
 const steps = [
     { id: 1, title: "Entreprise", icon: Building2 },
@@ -48,6 +49,7 @@ const effectifs = [
 
 export default function InscriptionPage() {
     const router = useRouter()
+    const { refreshGarage } = useAuth()
     const [currentStep, setCurrentStep] = useState(1)
     const [isLoading, setIsLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
@@ -138,7 +140,12 @@ export default function InscriptionPage() {
             await createGarageConfig({ garageId })
             console.log('✅ Inscription - Config créée')
 
-            // 4. Sauvegarder les données temporaires pour l'onboarding
+            // 4. Forcer le rechargement des données du garage dans le contexte
+            console.log('🔄 Inscription - Rechargement des données du garage...')
+            await refreshGarage()
+            console.log('✅ Inscription - Données rechargées')
+
+            // 5. Sauvegarder les données temporaires pour l'onboarding
             if (typeof window !== 'undefined') {
                 sessionStorage.setItem('onboarding_data', JSON.stringify({
                     civilite: formData.civilite,
@@ -151,7 +158,7 @@ export default function InscriptionPage() {
                 }))
             }
 
-            // 5. Envoyer l'email de bienvenue
+            // 6. Envoyer l'email de bienvenue
             try {
                 await fetch('/api/email/send-welcome', {
                     method: 'POST',
@@ -167,7 +174,7 @@ export default function InscriptionPage() {
                 // On continue même si l'email échoue
             }
 
-            // 6. Afficher la page de confirmation
+            // 7. Afficher la page de confirmation
             setCurrentStep(4)
 
             // Scroll vers le haut immédiatement pour afficher la confirmation
