@@ -49,6 +49,9 @@ export default function SettingsPage() {
     const avatarInputRef = useRef<HTMLInputElement>(null)
     const logoInputRef = useRef<HTMLInputElement>(null)
 
+    // Ref pour le contenu mobile
+    const mobileContentRef = useRef<HTMLDivElement>(null)
+
     // Upload hooks
     const {
         files: avatarFiles,
@@ -108,7 +111,10 @@ export default function SettingsPage() {
 
     // Charger les données du garage et de l'utilisateur
     useEffect(() => {
+        console.log('🔍 Settings - Chargement des données:', { user: !!user, garage: !!garage, config: !!config })
+
         if (user) {
+            console.log('👤 User:', user.email)
             setProfileData({
                 prenom: "",
                 nom: "",
@@ -118,6 +124,7 @@ export default function SettingsPage() {
         }
 
         if (garage) {
+            console.log('🏢 Garage data:', garage)
             setGarageData({
                 nom: garage.nom || "",
                 siret: garage.siret || "",
@@ -132,6 +139,7 @@ export default function SettingsPage() {
         }
 
         if (config) {
+            console.log('⚙️ Config data:', config)
             setDocumentSettings({
                 prefixeDevis: config.prefixeDevis || "D",
                 prefixeFacture: config.prefixeFacture || "F",
@@ -145,9 +153,12 @@ export default function SettingsPage() {
         }
     }, [user, garage, config])
 
-    // Scroll automatique vers le haut lors du changement de section (surtout utile sur mobile)
+    // Scroll automatique vers le contenu lors du changement de section (surtout utile sur mobile)
     useEffect(() => {
-        window.scrollTo({ top: 0, behavior: 'instant' })
+        // Sur mobile, scroller vers le contenu
+        if (mobileContentRef.current) {
+            mobileContentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
     }, [activeSection])
 
     const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -916,7 +927,7 @@ export default function SettingsPage() {
             </div>
 
             {/* Mobile: Selected section content */}
-            <div className="lg:hidden bg-white rounded-2xl border border-zinc-200 p-6">
+            <div ref={mobileContentRef} className="lg:hidden bg-white rounded-2xl border border-zinc-200 p-6">
                 {renderContent()}
                 <div className="flex justify-end pt-6 mt-6 border-t border-zinc-200">
                     <button

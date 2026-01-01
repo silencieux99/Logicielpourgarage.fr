@@ -28,12 +28,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true)
 
     const loadGarageData = async (userId: string) => {
+        console.log('🔄 AuthContext - Chargement des données pour userId:', userId)
         const garageData = await getGarageByUserId(userId)
+        console.log('🏢 AuthContext - Garage chargé:', garageData)
         setGarage(garageData)
 
         if (garageData?.id) {
             const configData = await getGarageConfig(garageData.id)
+            console.log('⚙️ AuthContext - Config chargée:', configData)
             setConfig(configData)
+        } else {
+            console.log('⚠️ AuthContext - Pas de garage trouvé pour cet utilisateur')
         }
     }
 
