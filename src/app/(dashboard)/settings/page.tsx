@@ -26,6 +26,8 @@ import {
     X
 } from "lucide-react"
 import { useUpload } from "@/hooks/use-upload"
+import { useAuth } from "@/lib/auth-context"
+import { useEffect } from "react"
 
 const settingsSections = [
     { id: "profil", label: "Mon profil", icon: User, description: "Informations personnelles" },
@@ -38,7 +40,8 @@ const settingsSections = [
 ]
 
 export default function SettingsPage() {
-    const [activeSection, setActiveSection] = useState("profil")
+    const { user, garage, config } = useAuth()
+    const [activeSection, setActiveSection] = useState("garage") // Commencer sur "Mon garage" pour l'onboarding
     const [isSaving, setIsSaving] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
 
@@ -102,6 +105,50 @@ export default function SettingsPage() {
         emailFacture: true,
         rappelDelai: 24,
     })
+
+    // Charger les données du garage et de l'utilisateur
+    useEffect(() => {
+        if (user) {
+            setProfileData({
+                prenom: "",
+                nom: "",
+                email: user.email || "",
+                telephone: "",
+            })
+        }
+
+        if (garage) {
+            setGarageData({
+                nom: garage.nom || "",
+                siret: garage.siret || "",
+                tva: garage.numeroTVA || "",
+                adresse: garage.adresse || "",
+                codePostal: garage.codePostal || "",
+                ville: garage.ville || "",
+                telephone: garage.telephone || "",
+                email: garage.email || "",
+                siteWeb: garage.siteWeb || "",
+            })
+        }
+
+        if (config) {
+            setDocumentSettings({
+                prefixeDevis: config.prefixeDevis || "D",
+                prefixeFacture: config.prefixeFacture || "F",
+                prochainNumeroDevis: config.prochainNumeroDevis || 1,
+                prochainNumeroFacture: config.prochainNumeroFacture || 1,
+                mentionsLegales: config.mentionsLegales || "En cas de retard de paiement, une pénalité de 3 fois le taux d'intérêt légal sera appliquée.",
+                conditionsGenerales: "",
+                tauxHoraire: config.tauxHoraireMO || 55,
+                tauxTVA: config.tauxTVA || 20,
+            })
+        }
+    }, [user, garage, config])
+
+    // Scroll automatique vers le haut lors du changement de section (surtout utile sur mobile)
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'instant' })
+    }, [activeSection])
 
     const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files

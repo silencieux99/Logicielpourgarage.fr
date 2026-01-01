@@ -175,24 +175,8 @@ export default function HomePage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
 
-  // Rediriger les utilisateurs connectés vers le dashboard
-  useEffect(() => {
-    if (!loading && user) {
-      router.push('/dashboard')
-    }
-  }, [user, loading, router])
-
   const openCheckout = () => {
     setCheckoutOpen(true)
-  }
-
-  // Afficher un loader pendant la vérification de l'authentification
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
-      </div>
-    )
   }
 
   return (

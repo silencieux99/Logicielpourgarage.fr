@@ -17,7 +17,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { signUp } from "@/lib/auth"
-import { createGarage } from "@/lib/database"
+import { createGarage, createGarageConfig } from "@/lib/database"
 import { Timestamp } from "firebase/firestore"
 
 const steps = [
@@ -91,15 +91,15 @@ export default function InscriptionPage() {
     const nextStep = () => {
         if (currentStep < 4) {
             setCurrentStep(currentStep + 1)
-            // Scroll vers le haut sur mobile
-            window.scrollTo({ top: 0, behavior: 'smooth' })
+            // Scroll vers le haut immédiatement
+            setTimeout(() => window.scrollTo({ top: 0, behavior: 'instant' }), 0)
         }
     }
 
     const prevStep = () => {
         if (currentStep > 1) {
             setCurrentStep(currentStep - 1)
-            window.scrollTo({ top: 0, behavior: 'smooth' })
+            setTimeout(() => window.scrollTo({ top: 0, behavior: 'instant' }), 0)
         }
     }
 
@@ -129,9 +129,12 @@ export default function InscriptionPage() {
             if (formData.siteWeb) garageData.siteWeb = formData.siteWeb
             if (formData.effectif) garageData.effectif = formData.effectif
 
-            await createGarage(garageData)
+            const garageId = await createGarage(garageData)
 
-            // 3. Sauvegarder les données temporaires pour l'onboarding
+            // 3. Créer la configuration du garage avec les valeurs par défaut
+            await createGarageConfig({ garageId })
+
+            // 4. Sauvegarder les données temporaires pour l'onboarding
             if (typeof window !== 'undefined') {
                 sessionStorage.setItem('onboarding_data', JSON.stringify({
                     civilite: formData.civilite,
@@ -144,7 +147,7 @@ export default function InscriptionPage() {
                 }))
             }
 
-            // 4. Envoyer l'email de bienvenue
+            // 5. Envoyer l'email de bienvenue
             try {
                 await fetch('/api/email/send-welcome', {
                     method: 'POST',
@@ -160,8 +163,11 @@ export default function InscriptionPage() {
                 // On continue même si l'email échoue
             }
 
-            // 5. Afficher la page de confirmation
+            // 6. Afficher la page de confirmation
             setCurrentStep(4)
+
+            // Scroll vers le haut immédiatement pour afficher la confirmation
+            setTimeout(() => window.scrollTo({ top: 0, behavior: 'instant' }), 0)
 
             // Note: L'utilisateur est automatiquement connecté après signUp
             // La redirection vers le dashboard se fera depuis le bouton de l'étape 4
@@ -700,8 +706,8 @@ export default function InscriptionPage() {
                                     <div className="flex items-start gap-3">
                                         <div className="w-6 h-6 rounded-full bg-zinc-900 text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</div>
                                         <div>
-                                            <p className="text-[14px] font-medium text-zinc-900">Personnalisez vos documents</p>
-                                            <p className="text-[13px] text-zinc-500">Logo, mentions légales, numérotation...</p>
+                                            <p className="text-[14px] font-medium text-zinc-900">Complétez les informations de votre garage</p>
+                                            <p className="text-[13px] text-zinc-500">Logo, coordonnées, mentions légales...</p>
                                         </div>
                                     </div>
                                     <div className="flex items-start gap-3">
@@ -724,10 +730,10 @@ export default function InscriptionPage() {
 
                         {/* Bouton CTA */}
                         <Link
-                            href="/dashboard"
+                            href="/settings"
                             className="w-full h-12 sm:h-14 bg-zinc-900 hover:bg-zinc-800 text-white text-[15px] font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
                         >
-                            Accéder à mon espace
+                            Configurer mon garage
                             <ArrowRight className="h-5 w-5" />
                         </Link>
 
