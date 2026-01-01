@@ -28,6 +28,7 @@ import {
 import { useUpload } from "@/hooks/use-upload"
 import { useAuth } from "@/lib/auth-context"
 import { useEffect } from "react"
+import { getGarageByUserId, getGarageConfig, Garage, GarageConfig } from "@/lib/database"
 
 const settingsSections = [
     { id: "profil", label: "Mon profil", icon: User, description: "Informations personnelles" },
@@ -40,7 +41,7 @@ const settingsSections = [
 ]
 
 export default function SettingsPage() {
-    const { user, garage, config } = useAuth()
+    const { user, garage, config, loading } = useAuth()
     const [activeSection, setActiveSection] = useState("garage") // Commencer sur "Mon garage" pour l'onboarding
     const [isSaving, setIsSaving] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
@@ -111,47 +112,63 @@ export default function SettingsPage() {
 
     // Charger les données du garage et de l'utilisateur
     useEffect(() => {
-        console.log('🔍 Settings - Chargement des données:', { user: !!user, garage: !!garage, config: !!config })
+        const loadInitialData = async () => {
+            if (!user) return;
 
-        if (user) {
-            console.log('👤 User:', user.email)
-            setProfileData({
-                prenom: "",
-                nom: "",
+            console.log('🔄 Settings - Chargement direct des données pour:', user.email);
+
+            // 1. Initialiser les données du profil
+            setProfileData(prev => ({
+                ...prev,
                 email: user.email || "",
-                telephone: "",
-            })
-        }
+            }));
 
-        if (garage) {
-            console.log('🏢 Garage data:', garage)
-            setGarageData({
-                nom: garage.nom || "",
-                siret: garage.siret || "",
-                tva: garage.numeroTVA || "",
-                adresse: garage.adresse || "",
-                codePostal: garage.codePostal || "",
-                ville: garage.ville || "",
-                telephone: garage.telephone || "",
-                email: garage.email || "",
-                siteWeb: garage.siteWeb || "",
-            })
-        }
+            try {
+                // 2. Charger le garage directement depuis Firestore
+                const garageDataFetched = await getGarageByUserId(user.uid);
+                console.log('🏢 Settings - Garage récupéré:', garageDataFetched);
 
-        if (config) {
-            console.log('⚙️ Config data:', config)
-            setDocumentSettings({
-                prefixeDevis: config.prefixeDevis || "D",
-                prefixeFacture: config.prefixeFacture || "F",
-                prochainNumeroDevis: config.prochainNumeroDevis || 1,
-                prochainNumeroFacture: config.prochainNumeroFacture || 1,
-                mentionsLegales: config.mentionsLegales || "En cas de retard de paiement, une pénalité de 3 fois le taux d'intérêt légal sera appliquée.",
-                conditionsGenerales: "",
-                tauxHoraire: config.tauxHoraireMO || 55,
-                tauxTVA: config.tauxTVA || 20,
-            })
+                if (garageDataFetched) {
+                    setGarageData({
+                        nom: garageDataFetched.nom || "",
+                        siret: garageDataFetched.siret || "",
+                        tva: garageDataFetched.numeroTVA || "",
+                        adresse: garageDataFetched.adresse || "",
+                        codePostal: garageDataFetched.codePostal || "",
+                        ville: garageDataFetched.ville || "",
+                        telephone: garageDataFetched.telephone || "",
+                        email: garageDataFetched.email || "",
+                        siteWeb: garageDataFetched.siteWeb || "",
+                    });
+
+                    // 3. Charger la config directement depuis Firestore (seulement si l'ID existe)
+                    if (garageDataFetched.id) {
+                        const configDataFetched = await getGarageConfig(garageDataFetched.id);
+                        console.log('⚙️ Settings - Config récupérée:', configDataFetched);
+
+                        if (configDataFetched) {
+                            setDocumentSettings({
+                                prefixeDevis: configDataFetched.prefixeDevis || "D",
+                                prefixeFacture: configDataFetched.prefixeFacture || "F",
+                                prochainNumeroDevis: configDataFetched.prochainNumeroDevis || 1,
+                                prochainNumeroFacture: configDataFetched.prochainNumeroFacture || 1,
+                                mentionsLegales: configDataFetched.mentionsLegales || "En cas de retard de paiement, une pénalité de 3 fois le taux d'intérêt légal sera appliquée.",
+                                conditionsGenerales: "",
+                                tauxHoraire: configDataFetched.tauxHoraireMO || 55,
+                                tauxTVA: configDataFetched.tauxTVA || 20,
+                            });
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('❌ Settings - Erreur chargement direct:', err);
+            }
+        };
+
+        if (!loading) {
+            loadInitialData();
         }
-    }, [user, garage, config])
+    }, [user, loading])
 
     // Scroll automatique vers le contenu lors du changement de section (surtout utile sur mobile)
     useEffect(() => {

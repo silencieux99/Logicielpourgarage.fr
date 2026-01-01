@@ -131,21 +131,10 @@ export default function InscriptionPage() {
             if (formData.siteWeb) garageData.siteWeb = formData.siteWeb
             if (formData.effectif) garageData.effectif = formData.effectif
 
-            console.log('💾 Inscription - Création du garage:', garageData)
             const garageId = await createGarage(garageData)
-            console.log('✅ Inscription - Garage créé avec ID:', garageId)
-
-            // 3. Créer la configuration du garage avec les valeurs par défaut
-            console.log('⚙️ Inscription - Création de la config pour garageId:', garageId)
             await createGarageConfig({ garageId })
-            console.log('✅ Inscription - Config créée')
 
-            // 4. Forcer le rechargement des données du garage dans le contexte
-            console.log('🔄 Inscription - Rechargement des données du garage...')
-            await refreshGarage()
-            console.log('✅ Inscription - Données rechargées')
-
-            // 5. Sauvegarder les données temporaires pour l'onboarding
+            // 4. Sauvegarder les données temporaires pour l'onboarding
             if (typeof window !== 'undefined') {
                 sessionStorage.setItem('onboarding_data', JSON.stringify({
                     civilite: formData.civilite,
