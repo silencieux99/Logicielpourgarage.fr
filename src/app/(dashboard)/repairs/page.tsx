@@ -204,6 +204,92 @@ export default function RepairsPage() {
                 </div>
 
                 {/* Mobile Stats */}
+                <div className="sm:hidden flex gap-2 overflow-x-auto pb-2 -mx-4 px-4">
+                    {[
+                        { label: "Attente", value: enAttente, color: "bg-amber-100 text-amber-700" },
+                        { label: "En cours", value: enCours, color: "bg-blue-100 text-blue-700" },
+                        { label: "Terminées", value: terminees, color: "bg-emerald-100 text-emerald-700" },
+                    ].map(stat => (
+                        <div key={stat.label} className={cn("px-4 py-2 rounded-xl flex items-center gap-2 whitespace-nowrap", stat.color)}>
+                            <span className="text-lg font-bold">{stat.value}</span>
+                            <span className="text-sm">{stat.label}</span>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Search & Filters */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                        <input
+                            type="text"
+                            placeholder="Rechercher par plaque, client, description..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full h-10 sm:h-11 pl-10 pr-4 bg-white border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                        />
+                    </div>
+                    <div className="flex gap-2">
+                        <div className="flex gap-1 p-1 bg-zinc-100 rounded-xl overflow-x-auto">
+                            {[
+                                { id: "all", label: "Toutes" },
+                                { id: "en_attente", label: "Attente" },
+                                { id: "en_cours", label: "En cours" },
+                                { id: "termine", label: "Terminées" },
+                            ].map(filter => (
+                                <button
+                                    key={filter.id}
+                                    onClick={() => setFilterStatus(filter.id as any)}
+                                    className={cn(
+                                        "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap",
+                                        filterStatus === filter.id ? "bg-white shadow-sm text-zinc-900" : "text-zinc-600 hover:text-zinc-900"
+                                    )}
+                                >
+                                    {filter.label}
+                                </button>
+                            ))}
+                        </div>
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value as any)}
+                            className="h-10 px-3 bg-white border border-zinc-200 rounded-xl text-sm focus:outline-none hidden sm:block"
+                        >
+                            <option value="date">Plus récentes</option>
+                            <option value="priority">Par priorité</option>
+                            <option value="amount">Par montant</option>
+                        </select>
+                        <div className="flex bg-zinc-100 rounded-xl p-1 gap-1">
+                            <button
+                                onClick={() => setViewMode("list")}
+                                className={cn(
+                                    "p-2 rounded-lg transition-colors",
+                                    viewMode === "list" ? "bg-white shadow-sm text-zinc-900" : "text-zinc-500 hover:text-zinc-900"
+                                )}
+                                title="Vue liste"
+                            >
+                                <Filter className="h-4 w-4 rotate-90" />
+                            </button>
+                            <button
+                                onClick={() => setViewMode("board")}
+                                className={cn(
+                                    "p-2 rounded-lg transition-colors",
+                                    viewMode === "board" ? "bg-white shadow-sm text-zinc-900" : "text-zinc-500 hover:text-zinc-900"
+                                )}
+                                title="Vue tableau"
+                            >
+                                <TrendingUp className="h-4 w-4 rotate-90" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Content Logic */}
+            {loading ? (
+                <div className="flex items-center justify-center py-20">
+                    <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+                </div>
+            ) : !garage?.id ? (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
                     <AlertCircle className="h-8 w-8 text-amber-500 mx-auto mb-3" />
                     <h3 className="text-lg font-semibold text-amber-900 mb-2">Configuration requise</h3>
@@ -214,7 +300,7 @@ export default function RepairsPage() {
                         Configurer mon garage
                     </Link>
                 </div>
-                ) : filteredRepairs.length === 0 ? (
+            ) : filteredRepairs.length === 0 ? (
                 <div className="bg-white rounded-xl sm:rounded-2xl border border-zinc-200 p-8 sm:p-16 text-center">
                     <div className="w-16 h-16 rounded-2xl bg-zinc-100 flex items-center justify-center mx-auto mb-4">
                         <Wrench className="h-8 w-8 text-zinc-400" />
@@ -237,11 +323,19 @@ export default function RepairsPage() {
                         </Link>
                     )}
                 </div>
-                ) : (
+            ) : (
+                <>
+                    {/* List View */}
+                    {viewMode === "list" && (
+                        <div className="space-y-3">
+                            {filteredRepairs.map((repair) => (
+                                <RepairCard key={repair.id} repair={repair} />
+                            ))}
+                        </div>
+                    )}
 
-                {/* Kanban View */}
-                {
-                    viewMode === "board" && !loading && garage?.id && (
+                    {/* Kanban View */}
+                    {viewMode === "board" && !loading && garage?.id && (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 overflow-x-auto pb-6">
                             {/* Colonne En attente */}
                             <div className="min-w-[300px] flex flex-col gap-4">
@@ -303,17 +397,17 @@ export default function RepairsPage() {
                                 </div>
                             </div>
                         </div>
-                    )
-                }
+                    )}
 
-
-                {/* Mobile FAB */}
-                <Link
-                    href="/repairs/new"
-                    className="md:hidden fixed right-4 bottom-20 w-14 h-14 bg-zinc-900 hover:bg-zinc-800 text-white rounded-full shadow-lg flex items-center justify-center z-30 active:scale-95 transition-transform"
-                >
-                    <Plus className="h-6 w-6" />
-                </Link>
-            </div >
-            )
-    }
+                    {/* Mobile FAB */}
+                    <Link
+                        href="/repairs/new"
+                        className="md:hidden fixed right-4 bottom-20 w-14 h-14 bg-zinc-900 hover:bg-zinc-800 text-white rounded-full shadow-lg flex items-center justify-center z-30 active:scale-95 transition-transform"
+                    >
+                        <Plus className="h-6 w-6" />
+                    </Link>
+                </>
+            )}
+        </div>
+    )
+}

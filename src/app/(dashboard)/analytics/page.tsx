@@ -9,8 +9,6 @@ import {
     FileText,
     ArrowUpRight,
     ArrowDownRight,
-    ArrowUpRight,
-    ArrowDownRight,
     Loader2
 } from "lucide-react"
 import { cn } from "@/lib/utils"
