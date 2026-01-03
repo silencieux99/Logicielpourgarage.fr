@@ -16,9 +16,6 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
-import { loadStripe } from "@stripe/stripe-js"
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "")
 
 const features = [
     "Clients illimités",
@@ -81,14 +78,11 @@ export default function UpgradePage() {
                 throw new Error(data.error)
             }
 
-            // Rediriger vers Stripe Checkout
+            // Rediriger vers Stripe Checkout via l'URL retournée
             if (data.url) {
                 window.location.href = data.url
-            } else if (data.sessionId) {
-                const stripe = await stripePromise
-                if (stripe) {
-                    await stripe.redirectToCheckout({ sessionId: data.sessionId })
-                }
+            } else {
+                throw new Error("Aucune URL de paiement reçue")
             }
         } catch (err: any) {
             console.error("Erreur checkout:", err)
