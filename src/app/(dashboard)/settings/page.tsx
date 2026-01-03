@@ -23,12 +23,15 @@ import {
     Smartphone,
     Save,
     Loader2,
-    X
+    X,
+    Hash,
+    Euro,
+    Zap
 } from "lucide-react"
 import { useUpload } from "@/hooks/use-upload"
 import { useAuth } from "@/lib/auth-context"
 import { getGarageByUserId, getGarageConfig, updateGarage, updateGarageConfig, createGarageConfig } from "@/lib/database"
-import { InvoiceTemplate, InvoiceTemplateData } from "@/components/InvoiceTemplate"
+import { InvoiceTemplate } from "@/components/InvoiceTemplate"
 
 const settingsSections = [
     { id: "profil", label: "Mon profil", icon: User, description: "Informations personnelles" },
@@ -221,7 +224,7 @@ export default function SettingsPage() {
             let currentConfig = await getGarageConfig(currentGarage.id)
             if (!currentConfig || !currentConfig.id) {
                 // Créer la config si elle n'existe pas
-                const configId = await createGarageConfig({
+                await createGarageConfig({
                     garageId: currentGarage.id,
                     prefixeDevis: documentSettings.prefixeDevis,
                     prefixeFacture: documentSettings.prefixeFacture,
@@ -233,7 +236,6 @@ export default function SettingsPage() {
                     emailNotifications: notificationSettings.emailRappelRDV,
                     smsRappels: notificationSettings.smsRappelRDV,
                 })
-                console.log('✅ Config créée:', configId)
             } else {
                 // Mettre à jour la config existante
                 await updateGarageConfig(currentConfig.id, {
@@ -408,39 +410,78 @@ export default function SettingsPage() {
                             <p className="text-sm text-zinc-500">Configuration des devis et factures avec aperçu en temps réel</p>
                         </div>
 
-                        <div className="grid xl:grid-cols-2 gap-6">
-                            {/* Configuration */}
-                            <div className="space-y-4">
-                                <div className="bg-zinc-50 rounded-xl p-4">
-                                    <h3 className="text-sm font-semibold text-zinc-900 mb-4">Numérotation</h3>
+                        <div className="grid xl:grid-cols-2 gap-8">
+                            <div className="space-y-6">
+                                <div className="bg-white rounded-2xl border border-zinc-200 p-6">
+                                    <h3 className="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+                                        <Hash className="h-4 w-4 text-zinc-400" />
+                                        Numérotation
+                                    </h3>
                                     <div className="space-y-4">
                                         <div>
-                                            <label className="block text-xs font-medium text-zinc-600 mb-1">Préfixe devis</label>
+                                            <label className="block text-xs font-medium text-zinc-600 mb-1.5">Préfixe et prochain numéro (Devis)</label>
                                             <div className="flex gap-2">
-                                                <input type="text" value={documentSettings.prefixeDevis} onChange={(e) => setDocumentSettings({ ...documentSettings, prefixeDevis: e.target.value })} className="w-20 h-10 px-3 border border-zinc-300 rounded-lg text-sm text-center bg-white" />
-                                                <input type="number" value={documentSettings.prochainNumeroDevis} onChange={(e) => setDocumentSettings({ ...documentSettings, prochainNumeroDevis: parseInt(e.target.value) || 1 })} className="flex-1 h-10 px-3 border border-zinc-300 rounded-lg text-sm bg-white" />
+                                                <input
+                                                    type="text"
+                                                    value={documentSettings.prefixeDevis}
+                                                    onChange={(e) => setDocumentSettings({ ...documentSettings, prefixeDevis: e.target.value })}
+                                                    className="w-20 h-11 px-3 border border-zinc-300 rounded-xl text-sm text-center bg-white font-mono uppercase"
+                                                    placeholder="DEV"
+                                                />
+                                                <input
+                                                    type="number"
+                                                    value={documentSettings.prochainNumeroDevis}
+                                                    onChange={(e) => setDocumentSettings({ ...documentSettings, prochainNumeroDevis: parseInt(e.target.value) || 1 })}
+                                                    className="flex-1 h-11 px-4 border border-zinc-300 rounded-xl text-sm bg-white"
+                                                />
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-medium text-zinc-600 mb-1">Préfixe facture</label>
+                                            <label className="block text-xs font-medium text-zinc-600 mb-1.5">Préfixe et prochain numéro (Facture)</label>
                                             <div className="flex gap-2">
-                                                <input type="text" value={documentSettings.prefixeFacture} onChange={(e) => setDocumentSettings({ ...documentSettings, prefixeFacture: e.target.value })} className="w-20 h-10 px-3 border border-zinc-300 rounded-lg text-sm text-center bg-white" />
-                                                <input type="number" value={documentSettings.prochainNumeroFacture} onChange={(e) => setDocumentSettings({ ...documentSettings, prochainNumeroFacture: parseInt(e.target.value) || 1 })} className="flex-1 h-10 px-3 border border-zinc-300 rounded-lg text-sm bg-white" />
+                                                <input
+                                                    type="text"
+                                                    value={documentSettings.prefixeFacture}
+                                                    onChange={(e) => setDocumentSettings({ ...documentSettings, prefixeFacture: e.target.value })}
+                                                    className="w-20 h-11 px-3 border border-zinc-300 rounded-xl text-sm text-center bg-white font-mono uppercase"
+                                                    placeholder="FAC"
+                                                />
+                                                <input
+                                                    type="number"
+                                                    value={documentSettings.prochainNumeroFacture}
+                                                    onChange={(e) => setDocumentSettings({ ...documentSettings, prochainNumeroFacture: parseInt(e.target.value) || 1 })}
+                                                    className="flex-1 h-11 px-4 border border-zinc-300 rounded-xl text-sm bg-white"
+                                                />
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="bg-zinc-50 rounded-xl p-4">
-                                    <h3 className="text-sm font-semibold text-zinc-900 mb-4">Tarification par défaut</h3>
-                                    <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-white rounded-2xl border border-zinc-200 p-6">
+                                    <h3 className="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+                                        <Euro className="h-4 w-4 text-zinc-400" />
+                                        Tarification par défaut
+                                    </h3>
+                                    <div className="grid sm:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-medium text-zinc-600 mb-1">Taux horaire MO (€ HT)</label>
-                                            <input type="number" value={documentSettings.tauxHoraire} onChange={(e) => setDocumentSettings({ ...documentSettings, tauxHoraire: parseFloat(e.target.value) || 0 })} className="w-full h-10 px-3 border border-zinc-300 rounded-lg text-sm bg-white" />
+                                            <label className="block text-xs font-medium text-zinc-600 mb-1.5">Taux horaire MO (€ HT)</label>
+                                            <div className="relative">
+                                                <input
+                                                    type="number"
+                                                    value={documentSettings.tauxHoraire}
+                                                    onChange={(e) => setDocumentSettings({ ...documentSettings, tauxHoraire: parseFloat(e.target.value) || 0 })}
+                                                    className="w-full h-11 pl-10 pr-4 border border-zinc-300 rounded-xl text-sm bg-white"
+                                                />
+                                                <Euro className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                                            </div>
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-medium text-zinc-600 mb-1">TVA par défaut (%)</label>
-                                            <select value={documentSettings.tauxTVA} onChange={(e) => setDocumentSettings({ ...documentSettings, tauxTVA: parseFloat(e.target.value) })} className="w-full h-10 px-3 border border-zinc-300 rounded-lg text-sm bg-white">
+                                            <label className="block text-xs font-medium text-zinc-600 mb-1.5">TVA par défaut (%)</label>
+                                            <select
+                                                value={documentSettings.tauxTVA}
+                                                onChange={(e) => setDocumentSettings({ ...documentSettings, tauxTVA: parseFloat(e.target.value) })}
+                                                className="w-full h-11 px-4 border border-zinc-300 rounded-xl text-sm bg-white appearance-none"
+                                            >
                                                 <option value={20}>20%</option>
                                                 <option value={10}>10%</option>
                                                 <option value={5.5}>5.5%</option>
@@ -450,67 +491,79 @@ export default function SettingsPage() {
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-zinc-700 mb-2">Mentions légales</label>
+                                <div className="bg-white rounded-2xl border border-zinc-200 p-6">
+                                    <h3 className="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+                                        <FileText className="h-4 w-4 text-zinc-400" />
+                                        Mentions légales
+                                    </h3>
                                     <textarea
                                         value={documentSettings.mentionsLegales}
                                         onChange={(e) => setDocumentSettings({ ...documentSettings, mentionsLegales: e.target.value })}
                                         rows={4}
-                                        className="w-full px-4 py-3 border border-zinc-300 rounded-xl text-sm resize-none bg-white"
+                                        className="w-full px-4 py-3 border border-zinc-300 rounded-xl text-sm resize-none bg-white focus:ring-2 focus:ring-zinc-900 focus:border-zinc-900 outline-none transition-all"
                                         placeholder="Mentions légales apparaissant en bas de vos documents..."
                                     />
+                                    <p className="mt-2 text-[11px] text-zinc-500">Ex: Membre d'une association agréée, le règlement par chèque est accepté.</p>
                                 </div>
                             </div>
 
-                            {/* Live Preview */}
                             <div className="relative">
-                                <div className="sticky top-4">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                        <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Aperçu en temps réel</span>
+                                <div className="xl:sticky xl:top-24">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                            <span className="text-xs font-semibold text-zinc-500 uppercase tracking-widest">Aperçu direct</span>
+                                        </div>
+                                        <span className="text-[10px] text-zinc-400 sm:hidden italic">Faites glisser pour voir tout le document</span>
                                     </div>
 
-                                    <InvoiceTemplate
-                                        data={{
-                                            type: "facture",
-                                            numero: `${documentSettings.prefixeFacture}-${String(documentSettings.prochainNumeroFacture).padStart(5, '0')}`,
-                                            dateEmission: today,
-                                            dateEcheance: dueDate,
-                                            garage: {
-                                                nom: garageData.nom || "Votre Garage",
-                                                adresse: garageData.adresse || "12 rue Exemple",
-                                                codePostal: garageData.codePostal || "75000",
-                                                ville: garageData.ville || "Paris",
-                                                telephone: garageData.telephone,
-                                                email: garageData.email,
-                                                siret: garageData.siret,
-                                                tva: garageData.tva,
-                                                logo: logoUrl
-                                            },
-                                            client: {
-                                                nom: "Client Exemple",
-                                                adresse: "123 Avenue du Client",
-                                                codePostal: "75001",
-                                                ville: "Paris"
-                                            },
-                                            lignes: [
-                                                { designation: "Main d'œuvre - Révision", description: "Forfait vidange + contrôles", quantite: "2h", prixUnitaireHT: documentSettings.tauxHoraire },
-                                                { designation: "Filtre à huile", description: "Réf: FH-2024-X", quantite: 1, prixUnitaireHT: 25 },
-                                                { designation: "Huile moteur 5W40", description: "5 litres - Synthétique", quantite: 1, prixUnitaireHT: 65 }
-                                            ],
-                                            totalHT: exampleHT,
-                                            tauxTVA: documentSettings.tauxTVA,
-                                            totalTVA: exampleTVA,
-                                            totalTTC: exampleTTC,
-                                            mentionsLegales: documentSettings.mentionsLegales
-                                        }}
-                                        scale={0.9}
-                                    />
+                                    <div className="w-full overflow-x-auto pb-4 scrollbar-hide">
+                                        <div className="min-w-[400px] sm:min-w-0">
+                                            <InvoiceTemplate
+                                                data={{
+                                                    type: "facture",
+                                                    numero: `${documentSettings.prefixeFacture}-${String(documentSettings.prochainNumeroFacture).padStart(5, '0')}`,
+                                                    dateEmission: today,
+                                                    dateEcheance: dueDate,
+                                                    garage: {
+                                                        nom: garageData.nom || "Votre Garage",
+                                                        adresse: garageData.adresse || "12 rue Exemple",
+                                                        codePostal: garageData.codePostal || "75000",
+                                                        ville: garageData.ville || "Paris",
+                                                        telephone: garageData.telephone,
+                                                        email: garageData.email,
+                                                        siret: garageData.siret,
+                                                        tva: garageData.tva,
+                                                        logo: logoUrl
+                                                    },
+                                                    client: {
+                                                        nom: "Client Exemple",
+                                                        adresse: "123 Avenue du Client",
+                                                        codePostal: "75001",
+                                                        ville: "Paris"
+                                                    },
+                                                    lignes: [
+                                                        { designation: "Main d'œuvre - Révision", description: "Forfait vidange + contrôles", quantite: "2h", prixUnitaireHT: documentSettings.tauxHoraire },
+                                                        { designation: "Filtre à huile", description: "Réf: FH-2024-X", quantite: 1, prixUnitaireHT: 25 },
+                                                        { designation: "Huile moteur 5W40", description: "5 litres - Synthétique", quantite: 1, prixUnitaireHT: 65 }
+                                                    ],
+                                                    totalHT: exampleHT,
+                                                    tauxTVA: documentSettings.tauxTVA,
+                                                    totalTVA: exampleTVA,
+                                                    totalTTC: exampleTTC,
+                                                    mentionsLegales: documentSettings.mentionsLegales
+                                                }}
+                                                scale={0.8}
+                                            />
+                                        </div>
+                                    </div>
 
-                                    {/* Devis preview hint */}
-                                    <div className="mt-4 text-center">
-                                        <p className="text-xs text-zinc-400">
-                                            Le devis utilisera le préfixe <span className="font-mono font-semibold text-zinc-600">{documentSettings.prefixeDevis}-{String(documentSettings.prochainNumeroDevis).padStart(5, '0')}</span>
+                                    <div className="mt-6 p-4 bg-zinc-100 rounded-xl border border-zinc-200">
+                                        <p className="text-xs text-zinc-600 flex items-start gap-3">
+                                            <Zap className="h-4 w-4 text-zinc-400 mt-0.5" />
+                                            <span>
+                                                Vos devis utiliseront le préfixe <span className="font-mono font-bold text-zinc-900">{documentSettings.prefixeDevis}-{String(documentSettings.prochainNumeroDevis).padStart(5, '0')}</span>
+                                            </span>
                                         </p>
                                     </div>
                                 </div>
@@ -686,7 +739,8 @@ export default function SettingsPage() {
                         </div>
                     </div>
                 )
-            default: return null
+            default:
+                return null
         }
     }
 
@@ -740,47 +794,23 @@ export default function SettingsPage() {
                             {isSaving ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                             ) : saveStatus === 'success' ? (
-                                <Check className="h-4 w-4" />
+                                <>
+                                    <Check className="h-4 w-4" />
+                                    Enregistré
+                                </>
                             ) : saveStatus === 'error' ? (
-                                <X className="h-4 w-4" />
+                                <>
+                                    <X className="h-4 w-4" />
+                                    Erreur
+                                </>
                             ) : (
-                                <Save className="h-4 w-4" />
+                                <>
+                                    <Save className="h-4 w-4" />
+                                    Enregistrer
+                                </>
                             )}
-                            {saveStatus === 'success' ? "Enregistré !" :
-                                saveStatus === 'error' ? "Erreur" :
-                                    "Enregistrer"}
                         </button>
                     </div>
-                </div>
-            </div>
-
-            {/* Content for mobile when a section is active */}
-            <div className="lg:hidden bg-white rounded-2xl border border-zinc-200 p-6">
-                {renderContent()}
-                <div className="flex justify-end pt-6 mt-6 border-t border-zinc-200">
-                    <button
-                        onClick={handleSave}
-                        disabled={isSaving || avatarUploading || logoUploading}
-                        className={cn(
-                            "h-11 px-6 text-sm font-semibold rounded-xl flex items-center gap-2 transition-all duration-300 disabled:opacity-50",
-                            saveStatus === 'success' ? "bg-emerald-600 hover:bg-emerald-700 text-white" :
-                                saveStatus === 'error' ? "bg-red-600 hover:bg-red-700 text-white" :
-                                    "bg-zinc-900 hover:bg-zinc-800 text-white"
-                        )}
-                    >
-                        {isSaving ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : saveStatus === 'success' ? (
-                            <Check className="h-4 w-4" />
-                        ) : saveStatus === 'error' ? (
-                            <X className="h-4 w-4" />
-                        ) : (
-                            <Save className="h-4 w-4" />
-                        )}
-                        {saveStatus === 'success' ? "Enregistré !" :
-                            saveStatus === 'error' ? "Erreur" :
-                                "Enregistrer"}
-                    </button>
                 </div>
             </div>
         </div>

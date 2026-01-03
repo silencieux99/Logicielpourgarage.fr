@@ -25,7 +25,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
-import { createClient, createVehicule, getVehicules, Vehicule, checkClientLimit } from "@/lib/database"
+import { createClient, createVehicule, updateVehicule, getVehicules, Vehicule, checkClientLimit } from "@/lib/database"
 
 interface Vehicle {
     id: string
@@ -37,9 +37,12 @@ interface Vehicle {
 
 interface NewVehicle {
     plaque: string
+    vin: string
     marque: string
     modele: string
+    version: string
     annee: number
+    couleur: string
     carburant: string
     kilometrage: number
 }
@@ -66,6 +69,7 @@ export default function NewClientPage() {
         adresse: "",
         codePostal: "",
         ville: "",
+        pays: "France",
         notes: "",
         isVIP: false,
         raisonSociale: "",
@@ -82,15 +86,23 @@ export default function NewClientPage() {
     const [vehicleSearch, setVehicleSearch] = useState("")
     const [newVehicle, setNewVehicle] = useState<NewVehicle>({
         plaque: "",
+        vin: "",
         marque: "",
         modele: "",
+        version: "",
         annee: new Date().getFullYear(),
+        couleur: "",
         carburant: "Essence",
         kilometrage: 0,
     })
 
     // After-save action
     const [afterSaveAction, setAfterSaveAction] = useState<"none" | "devis" | "reparation">("none")
+
+    // Scroll to top when step changes
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+    }, [step])
 
     // Load vehicles when mode changes to existing
     useEffect(() => {
@@ -159,21 +171,32 @@ export default function NewClientPage() {
                 adresse: formData.adresse || undefined,
                 codePostal: formData.codePostal || undefined,
                 ville: formData.ville || undefined,
+                pays: formData.pays || undefined,
                 notes: formData.notes || undefined,
                 isVIP: formData.isVIP
             })
 
-            // 2. Créer le véhicule si nouveau
+
+            // 2. Gérer le véhicule
             if (vehicleMode === "new" && newVehicle.plaque) {
+                // Créer un nouveau véhicule
                 await createVehicule({
                     garageId: garage.id,
                     clientId: clientId,
                     plaque: newVehicle.plaque.toUpperCase(),
+                    vin: newVehicle.vin || undefined,
                     marque: newVehicle.marque,
                     modele: newVehicle.modele,
+                    version: newVehicle.version || undefined,
                     annee: newVehicle.annee,
+                    couleur: newVehicle.couleur || undefined,
                     carburant: newVehicle.carburant,
                     kilometrage: newVehicle.kilometrage
+                })
+            } else if (vehicleMode === "existing" && selectedVehicleId) {
+                // Associer un véhicule existant au client
+                await updateVehicule(selectedVehicleId, {
+                    clientId: clientId
                 })
             }
 
@@ -494,6 +517,13 @@ export default function NewClientPage() {
                                         className="col-span-2 h-11 px-4 bg-white border border-zinc-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900"
                                     />
                                 </div>
+                                <input
+                                    type="text"
+                                    value={formData.pays}
+                                    onChange={(e) => updateField("pays", e.target.value)}
+                                    placeholder="France"
+                                    className="w-full h-11 px-4 bg-white border border-zinc-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                                />
                             </div>
                         </div>
 
@@ -656,6 +686,17 @@ export default function NewClientPage() {
                                             />
                                         </div>
                                         <div>
+                                            <label className="block text-sm font-medium text-zinc-700 mb-2">VIN</label>
+                                            <input
+                                                type="text"
+                                                value={newVehicle.vin}
+                                                onChange={(e) => updateVehicleField("vin", e.target.value.toUpperCase())}
+                                                placeholder="VF1XXXXXX00000000"
+                                                maxLength={17}
+                                                className="w-full h-11 px-4 bg-white border border-zinc-300 rounded-xl text-sm font-mono"
+                                            />
+                                        </div>
+                                        <div>
                                             <label className="block text-sm font-medium text-zinc-700 mb-2">Marque</label>
                                             <input
                                                 type="text"
@@ -675,6 +716,16 @@ export default function NewClientPage() {
                                                 className="w-full h-11 px-4 bg-white border border-zinc-300 rounded-xl text-sm"
                                             />
                                         </div>
+                                        <div className="sm:col-span-2">
+                                            <label className="block text-sm font-medium text-zinc-700 mb-2">Version</label>
+                                            <input
+                                                type="text"
+                                                value={newVehicle.version}
+                                                onChange={(e) => updateVehicleField("version", e.target.value)}
+                                                placeholder="1.5 dCi 90ch Zen"
+                                                className="w-full h-11 px-4 bg-white border border-zinc-300 rounded-xl text-sm"
+                                            />
+                                        </div>
                                         <div>
                                             <label className="block text-sm font-medium text-zinc-700 mb-2">Année</label>
                                             <input
@@ -683,6 +734,26 @@ export default function NewClientPage() {
                                                 onChange={(e) => updateVehicleField("annee", parseInt(e.target.value))}
                                                 className="w-full h-11 px-4 bg-white border border-zinc-300 rounded-xl text-sm"
                                             />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-zinc-700 mb-2">Couleur</label>
+                                            <select
+                                                value={newVehicle.couleur}
+                                                onChange={(e) => updateVehicleField("couleur", e.target.value)}
+                                                className="w-full h-11 px-4 bg-white border border-zinc-300 rounded-xl text-sm"
+                                            >
+                                                <option value="">Sélectionner</option>
+                                                <option>Blanc</option>
+                                                <option>Noir</option>
+                                                <option>Gris</option>
+                                                <option>Bleu</option>
+                                                <option>Rouge</option>
+                                                <option>Vert</option>
+                                                <option>Beige</option>
+                                                <option>Marron</option>
+                                                <option>Orange</option>
+                                                <option>Jaune</option>
+                                            </select>
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-zinc-700 mb-2">Carburant</label>

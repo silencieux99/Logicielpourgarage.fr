@@ -98,6 +98,7 @@ export interface Client {
     adresse?: string
     codePostal?: string
     ville?: string
+    pays?: string
     notes?: string
     isVIP: boolean
     createdAt: Timestamp
@@ -242,8 +243,11 @@ export const getGarageById = async (garageId: string): Promise<Garage | null> =>
 }
 
 export const updateGarage = async (garageId: string, data: Partial<Garage>) => {
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined)
+    )
     await updateDoc(doc(db, 'garages', garageId), {
-        ...data,
+        ...cleanData,
         updatedAt: Timestamp.now()
     })
 }
@@ -295,7 +299,10 @@ export const getGarageConfig = async (garageId: string): Promise<GarageConfig | 
 }
 
 export const updateGarageConfig = async (configId: string, data: Partial<GarageConfig>) => {
-    await updateDoc(doc(db, 'garageConfigs', configId), data)
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined)
+    )
+    await updateDoc(doc(db, 'garageConfigs', configId), cleanData)
 }
 
 // ============================================
@@ -303,8 +310,12 @@ export const updateGarageConfig = async (configId: string, data: Partial<GarageC
 // ============================================
 
 export const createClient = async (data: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => {
+    // Filtrer les valeurs undefined car Firebase ne les accepte pas
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined)
+    )
     const docRef = await addDoc(collection(db, 'clients'), {
-        ...data,
+        ...cleanData,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now()
     })
@@ -363,8 +374,12 @@ export const searchClients = async (garageId: string, searchTerm: string): Promi
 }
 
 export const updateClient = async (clientId: string, data: Partial<Client>) => {
+    // Filtrer les valeurs undefined car Firebase ne les accepte pas
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined)
+    )
     await updateDoc(doc(db, 'clients', clientId), {
-        ...data,
+        ...cleanData,
         updatedAt: Timestamp.now()
     })
 }
@@ -378,8 +393,11 @@ export const deleteClient = async (clientId: string) => {
 // ============================================
 
 export const createVehicule = async (data: Omit<Vehicule, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined)
+    )
     const docRef = await addDoc(collection(db, 'vehicules'), {
-        ...data,
+        ...cleanData,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now()
     })
@@ -419,8 +437,11 @@ export const getVehiculeByPlaque = async (garageId: string, plaque: string): Pro
 }
 
 export const updateVehicule = async (vehiculeId: string, data: Partial<Vehicule>) => {
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined)
+    )
     await updateDoc(doc(db, 'vehicules', vehiculeId), {
-        ...data,
+        ...cleanData,
         updatedAt: Timestamp.now()
     })
 }
@@ -434,8 +455,11 @@ export const deleteVehicule = async (vehiculeId: string) => {
 // ============================================
 
 export const createReparation = async (data: Omit<Reparation, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined)
+    )
     const docRef = await addDoc(collection(db, 'reparations'), {
-        ...data,
+        ...cleanData,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now()
     })
@@ -463,8 +487,11 @@ export const getReparations = async (garageId: string, statut?: string): Promise
 }
 
 export const updateReparation = async (reparationId: string, data: Partial<Reparation>) => {
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined)
+    )
     await updateDoc(doc(db, 'reparations', reparationId), {
-        ...data,
+        ...cleanData,
         updatedAt: Timestamp.now()
     })
 }
@@ -526,8 +553,11 @@ export const deleteReparation = async (reparationId: string) => {
 // ============================================
 
 export const createDocument = async (data: Omit<Document, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined)
+    )
     const docRef = await addDoc(collection(db, 'documents'), {
-        ...data,
+        ...cleanData,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now()
     })
@@ -559,8 +589,11 @@ export const getDocuments = async (garageId: string, type?: 'devis' | 'facture')
 // ============================================
 
 export const createArticle = async (data: Omit<Article, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined)
+    )
     const docRef = await addDoc(collection(db, 'articles'), {
-        ...data,
+        ...cleanData,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now()
     })
@@ -583,8 +616,11 @@ export const getArticlesLowStock = async (garageId: string): Promise<Article[]> 
 }
 
 export const updateArticle = async (articleId: string, data: Partial<Article>) => {
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined)
+    )
     await updateDoc(doc(db, 'articles', articleId), {
-        ...data,
+        ...cleanData,
         updatedAt: Timestamp.now()
     })
 }
@@ -594,8 +630,11 @@ export const updateArticle = async (articleId: string, data: Partial<Article>) =
 // ============================================
 
 export const createRendezVous = async (data: Omit<RendezVous, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined)
+    )
     const docRef = await addDoc(collection(db, 'rendezvous'), {
-        ...data,
+        ...cleanData,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now()
     })
@@ -628,8 +667,11 @@ export const getRendezVous = async (garageId: string, date?: Date): Promise<Rend
 }
 
 export const updateRendezVous = async (rdvId: string, data: Partial<RendezVous>) => {
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined)
+    )
     await updateDoc(doc(db, 'rendezvous', rdvId), {
-        ...data,
+        ...cleanData,
         updatedAt: Timestamp.now()
     })
 }
