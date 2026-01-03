@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import {
@@ -34,7 +34,20 @@ const testimonials = [
     { name: "Pierre D.", garage: "Mécanique Express", text: "Enfin un logiciel simple et efficace." },
 ]
 
+// Wrapper component with Suspense for useSearchParams
 export default function UpgradePage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+            </div>
+        }>
+            <UpgradePageContent />
+        </Suspense>
+    )
+}
+
+function UpgradePageContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const { user, garage } = useAuth()
