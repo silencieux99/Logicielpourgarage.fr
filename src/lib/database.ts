@@ -43,6 +43,12 @@ export interface Garage {
     siteWeb?: string
     effectif?: string
     logo?: string
+    // Subscription fields
+    plan: 'demo' | 'pro'
+    stripeCustomerId?: string
+    stripeSubscriptionId?: string
+    subscriptionStatus?: 'active' | 'past_due' | 'canceled' | 'unpaid' | 'trialing'
+    subscriptionCurrentPeriodEnd?: Timestamp
     createdAt: Timestamp
     updatedAt: Timestamp
 }
@@ -207,13 +213,14 @@ export interface RendezVous {
 // GARAGE
 // ============================================
 
-export const createGarage = async (data: Omit<Garage, 'id' | 'createdAt' | 'updatedAt'>) => {
+export const createGarage = async (data: Omit<Garage, 'id' | 'createdAt' | 'updatedAt' | 'plan'> & { plan?: 'demo' | 'pro' }) => {
     // Filtrer les valeurs undefined car Firebase ne les accepte pas
     const cleanData = Object.fromEntries(
         Object.entries(data).filter(([_, value]) => value !== undefined)
     )
     const docRef = await addDoc(collection(db, 'garages'), {
         ...cleanData,
+        plan: data.plan || 'demo', // Par défaut, tous les nouveaux garages sont en démo
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now()
     })
@@ -224,8 +231,14 @@ export const getGarageByUserId = async (userId: string): Promise<Garage | null> 
     const q = query(collection(db, 'garages'), where('userId', '==', userId), limit(1))
     const snapshot = await getDocs(q)
     if (snapshot.empty) return null
-    const doc = snapshot.docs[0]
-    return { id: doc.id, ...doc.data() } as Garage
+    const docData = snapshot.docs[0]
+    return { id: docData.id, ...docData.data() } as Garage
+}
+
+export const getGarageById = async (garageId: string): Promise<Garage | null> => {
+    const docSnap = await getDoc(doc(db, 'garages', garageId))
+    if (!docSnap.exists()) return null
+    return { id: docSnap.id, ...docSnap.data() } as Garage
 }
 
 export const updateGarage = async (garageId: string, data: Partial<Garage>) => {
@@ -647,3 +660,103 @@ export const getStats = async (garageId: string) => {
         devisEnAttente
     }
 }
+
+// ============================================
+// SUBSCRIPTION & LIMITS
+// ============================================
+
+const DEMO_LIMITS = {
+    clients: 5,
+    vehicules: 5
+}
+
+export const checkClientLimit = async (garageId: string): Promise<{ allowed: boolean; current: number; limit: number; isPro: boolean }> => {
+    const garage = await getGarageById(garageId)
+    if (!garage) throw new Error('Garage not found')
+
+    const isPro = garage.plan === 'pro' && garage.subscriptionStatus === 'active'
+    if (isPro) {
+        return { allowed: true, current: 0, limit: Infinity, isPro: true }
+    }
+
+    const clients = await getClients(garageId)
+    const current = clients.length
+    const allowed = current < DEMO_LIMITS.clients
+
+    return { allowed, current, limit: DEMO_LIMITS.clients, isPro: false }
+}
+
+export const checkVehiculeLimit = async (garageId: string): Promise<{ allowed: boolean; current: number; limit: number; isPro: boolean }> => {
+    const garage = await getGarageById(garageId)
+    if (!garage) throw new Error('Garage not found')
+
+    const isPro = garage.plan === 'pro' && garage.subscriptionStatus === 'active'
+    if (isPro) {
+        return { allowed: true, current: 0, limit: Infinity, isPro: true }
+    }
+
+    const vehicules = await getVehicules(garageId)
+    const current = vehicules.length
+    const allowed = current < DEMO_LIMITS.vehicules
+
+    return { allowed, current, limit: DEMO_LIMITS.vehicules, isPro: false }
+}
+
+export const getGarageLimits = async (garageId: string) => {
+    const garage = await getGarageById(garageId)
+    if (!garage) throw new Error('Garage not found')
+
+    const isPro = garage.plan === 'pro' && garage.subscriptionStatus === 'active'
+
+    const [clients, vehicules] = await Promise.all([
+        getClients(garageId),
+        getVehicules(garageId)
+    ])
+
+    return {
+        isPro,
+        plan: garage.plan || 'demo',
+        subscriptionStatus: garage.subscriptionStatus,
+        clients: {
+            current: clients.length,
+            limit: isPro ? Infinity : DEMO_LIMITS.clients,
+            remaining: isPro ? Infinity : Math.max(0, DEMO_LIMITS.clients - clients.length)
+        },
+        vehicules: {
+            current: vehicules.length,
+            limit: isPro ? Infinity : DEMO_LIMITS.vehicules,
+            remaining: isPro ? Infinity : Math.max(0, DEMO_LIMITS.vehicules - vehicules.length)
+        }
+    }
+}
+
+export const updateGarageSubscription = async (
+    garageId: string,
+    data: {
+        plan?: 'demo' | 'pro'
+        stripeCustomerId?: string
+        stripeSubscriptionId?: string
+        subscriptionStatus?: 'active' | 'past_due' | 'canceled' | 'unpaid' | 'trialing'
+        subscriptionCurrentPeriodEnd?: Timestamp
+    }
+) => {
+    await updateDoc(doc(db, 'garages', garageId), {
+        ...data,
+        updatedAt: Timestamp.now()
+    })
+}
+
+export const getGarageByStripeCustomerId = async (customerId: string): Promise<Garage | null> => {
+    const q = query(collection(db, 'garages'), where('stripeCustomerId', '==', customerId))
+    const snapshot = await getDocs(q)
+    if (snapshot.empty) return null
+    return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Garage
+}
+
+export const getGarageByStripeSubscriptionId = async (subscriptionId: string): Promise<Garage | null> => {
+    const q = query(collection(db, 'garages'), where('stripeSubscriptionId', '==', subscriptionId))
+    const snapshot = await getDocs(q)
+    if (snapshot.empty) return null
+    return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Garage
+}
+

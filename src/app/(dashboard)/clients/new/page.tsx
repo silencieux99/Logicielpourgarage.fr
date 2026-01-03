@@ -25,7 +25,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
-import { createClient, createVehicule, getVehicules, Vehicule } from "@/lib/database"
+import { createClient, createVehicule, getVehicules, Vehicule, checkClientLimit } from "@/lib/database"
 
 interface Vehicle {
     id: string
@@ -140,6 +140,14 @@ export default function NewClientPage() {
         setError(null)
 
         try {
+            // Vérifier la limite de clients
+            const clientLimit = await checkClientLimit(garage.id)
+            if (!clientLimit.allowed) {
+                setError(`Limite atteinte : ${clientLimit.current}/${clientLimit.limit} clients. Passez au plan Pro pour ajouter des clients illimités.`)
+                setIsLoading(false)
+                return
+            }
+
             // 1. Créer le client dans Firebase
             const clientId = await createClient({
                 garageId: garage.id,
@@ -218,6 +226,27 @@ export default function NewClientPage() {
                     />
                 ))}
             </div>
+
+            {/* Error Banner */}
+            {error && (
+                <div className="max-w-2xl bg-red-50 border border-red-200 rounded-xl p-4">
+                    <div className="flex items-start gap-3">
+                        <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                            <p className="text-sm font-medium text-red-800">{error}</p>
+                            {error.includes("Limite atteinte") && (
+                                <Link
+                                    href="/upgrade"
+                                    className="inline-flex items-center gap-1 mt-2 text-sm font-semibold text-red-700 hover:text-red-900 transition-colors"
+                                >
+                                    Passer au Pro
+                                    <ChevronRight className="h-4 w-4" />
+                                </Link>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="max-w-2xl">
                 {/* Step 1: Client Info */}
