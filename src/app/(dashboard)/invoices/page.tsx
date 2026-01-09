@@ -15,12 +15,14 @@ import {
     XCircle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/lib/auth-context"
+import { getGarageByUserId, getDocuments, getClients, Document as GarageDocument } from "@/lib/database"
 
 interface Invoice {
     id: string
     numero: string
     type: "devis" | "facture"
-    status: "brouillon" | "envoye" | "accepte" | "refuse" | "paye"
+    status: "brouillon" | "envoye" | "accepte" | "refuse" | "paye" | "en_retard"
     clientNom: string
     montantTTC: number
     createdAt: string
@@ -32,6 +34,7 @@ const statusConfig = {
     accepte: { label: "Accepté", color: "bg-emerald-100 text-emerald-700" },
     refuse: { label: "Refusé", color: "bg-red-100 text-red-700" },
     paye: { label: "Payé", color: "bg-emerald-100 text-emerald-700" },
+    en_retard: { label: "En retard", color: "bg-red-100 text-red-700" },
 }
 
 export default function InvoicesPage() {
@@ -40,15 +43,47 @@ export default function InvoicesPage() {
     const [searchQuery, setSearchQuery] = useState("")
     const [filterType, setFilterType] = useState<"all" | "devis" | "facture">("all")
 
+    const { user } = useAuth()
+
     useEffect(() => {
-        loadDocuments()
-    }, [])
+        if (user) {
+            loadDocuments()
+        }
+    }, [user])
 
     const loadDocuments = async () => {
+        if (!user) return
         setLoading(true)
         try {
-            // TODO: Load from Firebase
-            setDocuments([])
+            const garage = await getGarageByUserId(user.uid)
+            if (!garage || !garage.id) return
+
+            // Charger les documents et les clients en parallèle
+            const [docsData, clientsData] = await Promise.all([
+                getDocuments(garage.id),
+                getClients(garage.id)
+            ])
+
+            // Créer une map des clients pour un accès rapide
+            const clientsMap = new Map(clientsData.map(c => [c.id, c]))
+
+            // Formater les documents pour l'affichage
+            const formattedDocs: Invoice[] = docsData.map(doc => {
+                const client = doc.clientId ? clientsMap.get(doc.clientId) : null
+                const dateCreation = doc.createdAt?.toDate ? doc.createdAt.toDate() : new Date()
+
+                return {
+                    id: doc.id || "",
+                    numero: doc.numero,
+                    type: doc.type,
+                    status: doc.statut,
+                    clientNom: client?.nom || "Client inconnu",
+                    montantTTC: doc.montantTTC,
+                    createdAt: dateCreation.toISOString()
+                }
+            })
+
+            setDocuments(formattedDocs)
         } catch (error) {
             console.error("Erreur chargement documents:", error)
         } finally {

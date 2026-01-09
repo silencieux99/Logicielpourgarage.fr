@@ -12,17 +12,10 @@ export interface InvoiceLine {
 }
 
 export interface InvoiceTemplateData {
-    // Type de document
     type: "facture" | "devis"
-
-    // Numéro du document
     numero: string
-
-    // Dates
     dateEmission: Date | string
     dateEcheance?: Date | string
-
-    // Garage info
     garage: {
         nom: string
         adresse: string
@@ -34,8 +27,6 @@ export interface InvoiceTemplateData {
         tva?: string
         logo?: string
     }
-
-    // Client info
     client: {
         nom: string
         adresse?: string
@@ -43,31 +34,23 @@ export interface InvoiceTemplateData {
         ville?: string
         email?: string
     }
-
-    // Véhicule (optionnel)
     vehicule?: {
         plaque?: string
         marque?: string
         modele?: string
     }
-
-    // Lignes
     lignes: InvoiceLine[]
-
-    // Totaux
     totalHT: number
     tauxTVA: number
     totalTVA: number
     totalTTC: number
-
-    // Mentions
     mentionsLegales?: string
     notes?: string
 }
 
 interface InvoiceTemplateProps {
     data: InvoiceTemplateData
-    scale?: number // Pour réduire la taille dans les aperçus
+    scale?: number
     className?: string
 }
 
@@ -78,375 +61,362 @@ export function InvoiceTemplate({ data, scale = 1, className = "" }: InvoiceTemp
         return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
     }
 
-    const formatCurrency = (amount: number) => {
-        return amount.toFixed(2) + "€"
-    }
+    const formatCurrency = (amount: number) => amount.toFixed(2) + " €"
+
+    const isDevis = data.type === 'devis'
 
     return (
-        <div className={`relative group ${className}`}>
-            {/* Shadow layers for depth effect */}
-            <div className="absolute inset-0 bg-zinc-200 rounded-lg transform rotate-1 translate-y-1" />
-            <div className="absolute inset-0 bg-zinc-100 rounded-lg transform -rotate-0.5 translate-y-0.5" />
+        <div
+            className={`bg-white ${className}`}
+            style={{
+                width: '210mm',
+                minHeight: '297mm',
+                maxHeight: '297mm',
+                fontSize: `${10 * scale}px`,
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                overflow: 'hidden'
+            }}
+        >
+            {/* Top accent bar */}
+            <div
+                className="w-full"
+                style={{
+                    height: '4px',
+                    background: isDevis
+                        ? 'linear-gradient(90deg, #2563eb, #3b82f6, #2563eb)'
+                        : 'linear-gradient(90deg, #18181b, #3f3f46, #18181b)'
+                }}
+            />
 
-            {/* Main document */}
-            <div className="relative bg-white rounded-lg shadow-xl border border-zinc-200 overflow-hidden transform transition-transform duration-300 group-hover:scale-[1.005]">
-                {/* Colored header bar */}
-                <div className="h-2 bg-gradient-to-r from-zinc-900 via-zinc-700 to-zinc-900" />
-
-                <div className="p-6 space-y-5" style={{ fontSize: `${11 * scale}px` }}>
-                    {/* Header */}
-                    <div className="flex justify-between items-start">
-                        {/* Company Info */}
-                        <div className="flex gap-4 items-start">
-                            {data.garage.logo ? (
-                                <img
-                                    src={data.garage.logo}
-                                    alt="Logo"
-                                    className="w-14 h-14 object-contain rounded-lg border border-zinc-100"
-                                />
-                            ) : (
-                                <div className="w-14 h-14 bg-gradient-to-br from-zinc-100 to-zinc-200 rounded-lg flex items-center justify-center">
-                                    <Building2 className="w-7 h-7 text-zinc-400" />
-                                </div>
-                            )}
-                            <div>
-                                <p className="font-bold text-zinc-900" style={{ fontSize: `${14 * scale}px` }}>
-                                    {data.garage.nom || 'Votre Garage'}
-                                </p>
-                                <p className="text-zinc-500">{data.garage.adresse || '-'}</p>
-                                <p className="text-zinc-500">
-                                    {data.garage.codePostal || '-'} {data.garage.ville || ''}
-                                </p>
-                                {data.garage.telephone && <p className="text-zinc-500">Tél: {data.garage.telephone}</p>}
-                                {data.garage.siret && (
-                                    <p className="text-zinc-400 mt-1" style={{ fontSize: `${9 * scale}px` }}>
-                                        SIRET: {data.garage.siret}
-                                    </p>
-                                )}
+            <div style={{ padding: `${20 * scale}px ${24 * scale}px` }}>
+                {/* Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: `${16 * scale}px` }}>
+                    {/* Company */}
+                    <div style={{ display: 'flex', gap: `${12 * scale}px`, alignItems: 'flex-start' }}>
+                        {data.garage.logo ? (
+                            <img
+                                src={data.garage.logo}
+                                alt="Logo"
+                                style={{
+                                    width: `${40 * scale}px`,
+                                    height: `${40 * scale}px`,
+                                    objectFit: 'contain',
+                                    borderRadius: `${4 * scale}px`
+                                }}
+                            />
+                        ) : (
+                            <div style={{
+                                width: `${40 * scale}px`,
+                                height: `${40 * scale}px`,
+                                background: '#f4f4f5',
+                                borderRadius: `${4 * scale}px`,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <Building2 style={{ width: `${20 * scale}px`, height: `${20 * scale}px`, color: '#a1a1aa' }} />
                             </div>
-                        </div>
-
-                        {/* Invoice Info */}
-                        <div className="text-right">
-                            <div className={`inline-block text-white px-4 py-2 rounded-lg mb-2 ${data.type === 'facture' ? 'bg-zinc-900' : 'bg-blue-600'
-                                }`}>
-                                <p className="font-bold tracking-wide" style={{ fontSize: `${14 * scale}px` }}>
-                                    {data.type === 'facture' ? 'FACTURE' : 'DEVIS'}
-                                </p>
-                            </div>
-                            <p className="font-mono text-zinc-900 font-semibold" style={{ fontSize: `${13 * scale}px` }}>
-                                N° {data.numero}
+                        )}
+                        <div>
+                            <p style={{ fontWeight: 700, fontSize: `${12 * scale}px`, color: '#18181b', marginBottom: `${2 * scale}px` }}>
+                                {data.garage.nom || 'Garage'}
                             </p>
-                            <p className="text-zinc-500 mt-1">Date : {formatDate(data.dateEmission)}</p>
-                            {data.dateEcheance && (
-                                <p className="text-zinc-500">
-                                    {data.type === 'facture' ? 'Échéance' : 'Validité'} : {formatDate(data.dateEcheance)}
-                                </p>
-                            )}
+                            <p style={{ color: '#71717a', fontSize: `${9 * scale}px` }}>{data.garage.adresse}</p>
+                            <p style={{ color: '#71717a', fontSize: `${9 * scale}px` }}>{data.garage.codePostal} {data.garage.ville}</p>
+                            {data.garage.telephone && <p style={{ color: '#71717a', fontSize: `${9 * scale}px` }}>{data.garage.telephone}</p>}
                         </div>
                     </div>
 
-                    {/* Client & Vehicule */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-zinc-50 rounded-lg p-4">
-                            <p className="text-zinc-400 uppercase tracking-wide mb-1" style={{ fontSize: `${9 * scale}px` }}>
-                                {data.type === 'facture' ? 'Facturé à' : 'Devis pour'}
-                            </p>
-                            <p className="font-semibold text-zinc-900">{data.client.nom || 'Client'}</p>
-                            {data.client.adresse && <p className="text-zinc-600">{data.client.adresse}</p>}
-                            {(data.client.codePostal || data.client.ville) && (
-                                <p className="text-zinc-600">
-                                    {data.client.codePostal} {data.client.ville}
-                                </p>
-                            )}
-                            {data.client.email && (
-                                <p className="text-zinc-500 mt-1" style={{ fontSize: `${9 * scale}px` }}>
-                                    {data.client.email}
-                                </p>
-                            )}
+                    {/* Document info */}
+                    <div style={{ textAlign: 'right' }}>
+                        <div style={{
+                            display: 'inline-block',
+                            background: isDevis ? '#2563eb' : '#18181b',
+                            color: 'white',
+                            padding: `${6 * scale}px ${16 * scale}px`,
+                            borderRadius: `${4 * scale}px`,
+                            marginBottom: `${6 * scale}px`
+                        }}>
+                            <span style={{ fontWeight: 700, fontSize: `${12 * scale}px`, letterSpacing: '0.05em' }}>
+                                {isDevis ? 'DEVIS' : 'FACTURE'}
+                            </span>
                         </div>
+                        <p style={{ fontFamily: 'monospace', fontWeight: 600, fontSize: `${11 * scale}px`, color: '#18181b' }}>
+                            {data.numero}
+                        </p>
+                        <p style={{ color: '#71717a', fontSize: `${9 * scale}px`, marginTop: `${2 * scale}px` }}>
+                            {formatDate(data.dateEmission)}
+                        </p>
+                        {data.dateEcheance && (
+                            <p style={{ color: '#71717a', fontSize: `${9 * scale}px` }}>
+                                {isDevis ? 'Valide jusqu\'au' : 'Échéance'} {formatDate(data.dateEcheance)}
+                            </p>
+                        )}
+                    </div>
+                </div>
 
-                        {data.vehicule && (data.vehicule.plaque || data.vehicule.marque) && (
-                            <div className="bg-zinc-50 rounded-lg p-4">
-                                <p className="text-zinc-400 uppercase tracking-wide mb-1" style={{ fontSize: `${9 * scale}px` }}>
-                                    Véhicule
-                                </p>
-                                {data.vehicule.plaque && (
-                                    <p className="font-mono font-bold text-zinc-900">{data.vehicule.plaque}</p>
-                                )}
-                                {(data.vehicule.marque || data.vehicule.modele) && (
-                                    <p className="text-zinc-600">
-                                        {data.vehicule.marque} {data.vehicule.modele}
-                                    </p>
-                                )}
-                            </div>
+                {/* Client & Vehicle Row */}
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: data.vehicule?.plaque ? '1fr 1fr' : '1fr',
+                    gap: `${12 * scale}px`,
+                    marginBottom: `${16 * scale}px`
+                }}>
+                    <div style={{
+                        background: '#fafafa',
+                        padding: `${10 * scale}px ${12 * scale}px`,
+                        borderRadius: `${6 * scale}px`,
+                        border: '1px solid #e4e4e7'
+                    }}>
+                        <p style={{
+                            fontSize: `${8 * scale}px`,
+                            color: '#a1a1aa',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            marginBottom: `${4 * scale}px`
+                        }}>
+                            {isDevis ? 'Devis pour' : 'Facturé à'}
+                        </p>
+                        <p style={{ fontWeight: 600, color: '#18181b', fontSize: `${10 * scale}px` }}>{data.client.nom}</p>
+                        {data.client.adresse && <p style={{ color: '#52525b', fontSize: `${9 * scale}px` }}>{data.client.adresse}</p>}
+                        {(data.client.codePostal || data.client.ville) && (
+                            <p style={{ color: '#52525b', fontSize: `${9 * scale}px` }}>{data.client.codePostal} {data.client.ville}</p>
                         )}
                     </div>
 
-                    {/* Items Table */}
-                    <div className="border border-zinc-200 rounded-lg overflow-hidden">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="bg-zinc-50">
-                                    <th
-                                        className="text-left py-2.5 px-3 font-semibold text-zinc-600 uppercase"
-                                        style={{ fontSize: `${9 * scale}px` }}
-                                    >
-                                        Désignation
-                                    </th>
-                                    <th
-                                        className="text-center py-2.5 px-2 font-semibold text-zinc-600 uppercase w-16"
-                                        style={{ fontSize: `${9 * scale}px` }}
-                                    >
-                                        Qté
-                                    </th>
-                                    <th
-                                        className="text-right py-2.5 px-2 font-semibold text-zinc-600 uppercase w-20"
-                                        style={{ fontSize: `${9 * scale}px` }}
-                                    >
-                                        PU HT
-                                    </th>
-                                    <th
-                                        className="text-right py-2.5 px-3 font-semibold text-zinc-600 uppercase w-20"
-                                        style={{ fontSize: `${9 * scale}px` }}
-                                    >
-                                        Total HT
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-zinc-100">
-                                {data.lignes.map((ligne, index) => {
-                                    const qte = typeof ligne.quantite === 'string' ? parseFloat(ligne.quantite) || 0 : ligne.quantite
-                                    const totalLigne = ligne.totalHT ?? (qte * ligne.prixUnitaireHT)
-
-                                    return (
-                                        <tr key={ligne.id || index}>
-                                            <td className="py-2.5 px-3">
-                                                <p className="font-medium text-zinc-900">{ligne.designation || '-'}</p>
-                                                {ligne.description && (
-                                                    <p className="text-zinc-500" style={{ fontSize: `${9 * scale}px` }}>
-                                                        {ligne.description}
-                                                    </p>
-                                                )}
-                                            </td>
-                                            <td className="text-center py-2.5 px-2 text-zinc-700">
-                                                {ligne.quantite}
-                                            </td>
-                                            <td className="text-right py-2.5 px-2 text-zinc-700 font-mono">
-                                                {formatCurrency(ligne.prixUnitaireHT)}
-                                            </td>
-                                            <td className="text-right py-2.5 px-3 text-zinc-900 font-semibold font-mono">
-                                                {formatCurrency(totalLigne)}
-                                            </td>
-                                        </tr>
-                                    )
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* Totals */}
-                    <div className="flex justify-end">
-                        <div className="w-56 space-y-1.5">
-                            <div className="flex justify-between text-zinc-600">
-                                <span>Total HT</span>
-                                <span className="font-mono font-medium">{formatCurrency(data.totalHT)}</span>
-                            </div>
-                            <div className="flex justify-between text-zinc-600">
-                                <span>TVA ({data.tauxTVA}%)</span>
-                                <span className="font-mono font-medium">{formatCurrency(data.totalTVA)}</span>
-                            </div>
-                            <div className="flex justify-between pt-2 border-t-2 border-zinc-900">
-                                <span className="font-bold text-zinc-900" style={{ fontSize: `${13 * scale}px` }}>
-                                    Total TTC
-                                </span>
-                                <span className="font-bold text-zinc-900 font-mono" style={{ fontSize: `${13 * scale}px` }}>
-                                    {formatCurrency(data.totalTTC)}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Notes */}
-                    {data.notes && (
-                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                            <p className="text-amber-800" style={{ fontSize: `${10 * scale}px` }}>
-                                <span className="font-semibold">Note :</span> {data.notes}
+                    {data.vehicule?.plaque && (
+                        <div style={{
+                            background: '#fafafa',
+                            padding: `${10 * scale}px ${12 * scale}px`,
+                            borderRadius: `${6 * scale}px`,
+                            border: '1px solid #e4e4e7'
+                        }}>
+                            <p style={{
+                                fontSize: `${8 * scale}px`,
+                                color: '#a1a1aa',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em',
+                                marginBottom: `${4 * scale}px`
+                            }}>
+                                Véhicule
+                            </p>
+                            <p style={{
+                                fontFamily: 'monospace',
+                                fontWeight: 700,
+                                color: '#18181b',
+                                fontSize: `${11 * scale}px`,
+                                background: '#e4e4e7',
+                                padding: `${2 * scale}px ${6 * scale}px`,
+                                borderRadius: `${3 * scale}px`,
+                                display: 'inline-block'
+                            }}>
+                                {data.vehicule.plaque}
+                            </p>
+                            <p style={{ color: '#52525b', fontSize: `${9 * scale}px`, marginTop: `${2 * scale}px` }}>
+                                {data.vehicule.marque} {data.vehicule.modele}
                             </p>
                         </div>
                     )}
-
-                    {/* Legal Mentions */}
-                    {data.mentionsLegales && (
-                        <div className="pt-4 border-t border-zinc-100">
-                            <p className="text-zinc-400 leading-relaxed" style={{ fontSize: `${8 * scale}px` }}>
-                                {data.mentionsLegales}
-                            </p>
-                        </div>
-                    )}
-
-                    {/* Footer */}
-                    <div className="pt-3 flex items-center justify-between text-zinc-400" style={{ fontSize: `${9 * scale}px` }}>
-                        <span>{data.garage.email || ''}</span>
-                        {data.garage.tva && <span>N° TVA: {data.garage.tva}</span>}
-                    </div>
                 </div>
-            </div>
-        </div>
-    )
-}
 
-// Version pour l'impression/PDF
-export function InvoiceTemplatePrint({ data }: { data: InvoiceTemplateData }) {
-    const formatDate = (d: Date | string) => {
-        if (!d) return "-"
-        const date = typeof d === 'string' ? new Date(d) : d
-        return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
-    }
+                {/* Table */}
+                <table style={{
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    marginBottom: `${12 * scale}px`
+                }}>
+                    <thead>
+                        <tr style={{ background: '#18181b' }}>
+                            <th style={{
+                                textAlign: 'left',
+                                padding: `${8 * scale}px ${10 * scale}px`,
+                                fontSize: `${8 * scale}px`,
+                                fontWeight: 600,
+                                color: 'white',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em'
+                            }}>
+                                Désignation
+                            </th>
+                            <th style={{
+                                textAlign: 'center',
+                                padding: `${8 * scale}px`,
+                                fontSize: `${8 * scale}px`,
+                                fontWeight: 600,
+                                color: 'white',
+                                textTransform: 'uppercase',
+                                width: `${50 * scale}px`
+                            }}>
+                                Qté
+                            </th>
+                            <th style={{
+                                textAlign: 'right',
+                                padding: `${8 * scale}px`,
+                                fontSize: `${8 * scale}px`,
+                                fontWeight: 600,
+                                color: 'white',
+                                textTransform: 'uppercase',
+                                width: `${70 * scale}px`
+                            }}>
+                                P.U. HT
+                            </th>
+                            <th style={{
+                                textAlign: 'right',
+                                padding: `${8 * scale}px ${10 * scale}px`,
+                                fontSize: `${8 * scale}px`,
+                                fontWeight: 600,
+                                color: 'white',
+                                textTransform: 'uppercase',
+                                width: `${70 * scale}px`
+                            }}>
+                                Total HT
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data.lignes.map((ligne, index) => {
+                            const qte = typeof ligne.quantite === 'string' ? parseFloat(ligne.quantite) || 0 : ligne.quantite
+                            const totalLigne = ligne.totalHT ?? (qte * ligne.prixUnitaireHT)
+                            const isEven = index % 2 === 0
 
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount)
-    }
+                            return (
+                                <tr key={ligne.id || index} style={{ background: isEven ? '#fafafa' : 'white' }}>
+                                    <td style={{
+                                        padding: `${6 * scale}px ${10 * scale}px`,
+                                        borderBottom: '1px solid #e4e4e7'
+                                    }}>
+                                        <span style={{ fontWeight: 500, color: '#18181b' }}>{ligne.designation || '-'}</span>
+                                        {ligne.description && (
+                                            <span style={{
+                                                display: 'block',
+                                                color: '#71717a',
+                                                fontSize: `${8 * scale}px`
+                                            }}>
+                                                {ligne.description}
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td style={{
+                                        textAlign: 'center',
+                                        padding: `${6 * scale}px`,
+                                        color: '#52525b',
+                                        borderBottom: '1px solid #e4e4e7'
+                                    }}>
+                                        {ligne.quantite}
+                                    </td>
+                                    <td style={{
+                                        textAlign: 'right',
+                                        padding: `${6 * scale}px`,
+                                        color: '#52525b',
+                                        fontFamily: 'monospace',
+                                        borderBottom: '1px solid #e4e4e7'
+                                    }}>
+                                        {formatCurrency(ligne.prixUnitaireHT)}
+                                    </td>
+                                    <td style={{
+                                        textAlign: 'right',
+                                        padding: `${6 * scale}px ${10 * scale}px`,
+                                        fontWeight: 600,
+                                        color: '#18181b',
+                                        fontFamily: 'monospace',
+                                        borderBottom: '1px solid #e4e4e7'
+                                    }}>
+                                        {formatCurrency(totalLigne)}
+                                    </td>
+                                </tr>
+                            )
+                        })}
+                    </tbody>
+                </table>
 
-    return (
-        <div className="bg-white p-10 max-w-[800px] mx-auto" style={{ fontFamily: 'system-ui, sans-serif' }}>
-            {/* Header bar */}
-            <div className="h-1.5 bg-gradient-to-r from-zinc-900 via-zinc-700 to-zinc-900 rounded-full mb-8" />
-
-            {/* Header */}
-            <div className="flex justify-between items-start mb-8">
-                <div className="flex gap-4">
-                    {data.garage.logo ? (
-                        <img src={data.garage.logo} alt="Logo" className="w-16 h-16 object-contain" />
-                    ) : (
-                        <div className="w-16 h-16 bg-zinc-100 rounded-lg flex items-center justify-center">
-                            <span className="text-2xl font-bold text-zinc-400">
-                                {data.garage.nom?.charAt(0) || 'G'}
+                {/* Totals */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: `${12 * scale}px` }}>
+                    <div style={{ width: `${160 * scale}px` }}>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            padding: `${4 * scale}px 0`,
+                            color: '#52525b',
+                            fontSize: `${9 * scale}px`
+                        }}>
+                            <span>Total HT</span>
+                            <span style={{ fontFamily: 'monospace' }}>{formatCurrency(data.totalHT)}</span>
+                        </div>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            padding: `${4 * scale}px 0`,
+                            color: '#52525b',
+                            fontSize: `${9 * scale}px`
+                        }}>
+                            <span>TVA {data.tauxTVA}%</span>
+                            <span style={{ fontFamily: 'monospace' }}>{formatCurrency(data.totalTVA)}</span>
+                        </div>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            padding: `${8 * scale}px 0`,
+                            marginTop: `${4 * scale}px`,
+                            borderTop: `2px solid #18181b`,
+                            fontSize: `${11 * scale}px`
+                        }}>
+                            <span style={{ fontWeight: 700, color: '#18181b' }}>Total TTC</span>
+                            <span style={{ fontWeight: 700, color: '#18181b', fontFamily: 'monospace' }}>
+                                {formatCurrency(data.totalTTC)}
                             </span>
                         </div>
-                    )}
-                    <div>
-                        <h1 className="text-xl font-bold text-zinc-900">{data.garage.nom}</h1>
-                        <p className="text-sm text-zinc-600">{data.garage.adresse}</p>
-                        <p className="text-sm text-zinc-600">{data.garage.codePostal} {data.garage.ville}</p>
-                        {data.garage.telephone && <p className="text-sm text-zinc-600">Tél: {data.garage.telephone}</p>}
-                        {data.garage.siret && <p className="text-xs text-zinc-500 mt-1">SIRET: {data.garage.siret}</p>}
                     </div>
                 </div>
 
-                <div className="text-right">
-                    <div className={`inline-block text-white px-5 py-2 rounded-md mb-2 ${data.type === 'facture' ? 'bg-zinc-900' : 'bg-blue-600'
-                        }`}>
-                        <span className="text-lg font-bold tracking-wide">
-                            {data.type === 'facture' ? 'FACTURE' : 'DEVIS'}
-                        </span>
-                    </div>
-                    <p className="font-mono text-base font-semibold text-zinc-900">N° {data.numero}</p>
-                    <p className="text-sm text-zinc-600 mt-1">Date : {formatDate(data.dateEmission)}</p>
-                    {data.dateEcheance && (
-                        <p className="text-sm text-zinc-600">
-                            {data.type === 'facture' ? 'Échéance' : 'Validité'} : {formatDate(data.dateEcheance)}
+                {/* Notes */}
+                {data.notes && (
+                    <div style={{
+                        background: '#fef3c7',
+                        border: '1px solid #fcd34d',
+                        padding: `${8 * scale}px ${10 * scale}px`,
+                        borderRadius: `${4 * scale}px`,
+                        marginBottom: `${12 * scale}px`
+                    }}>
+                        <p style={{ fontSize: `${9 * scale}px`, color: '#92400e' }}>
+                            <strong>Note :</strong> {data.notes}
                         </p>
-                    )}
-                </div>
-            </div>
-
-            {/* Client */}
-            <div className="bg-zinc-50 p-4 rounded-lg mb-6">
-                <p className="text-xs text-zinc-500 uppercase tracking-wide mb-1">
-                    {data.type === 'facture' ? 'Facturé à' : 'Devis pour'}
-                </p>
-                <p className="font-semibold text-zinc-900">{data.client.nom}</p>
-                {data.client.adresse && <p className="text-sm text-zinc-600">{data.client.adresse}</p>}
-                {(data.client.codePostal || data.client.ville) && (
-                    <p className="text-sm text-zinc-600">{data.client.codePostal} {data.client.ville}</p>
+                    </div>
                 )}
-            </div>
 
-            {/* Table */}
-            <table className="w-full border-collapse mb-6">
-                <thead>
-                    <tr className="bg-zinc-100">
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-zinc-600 uppercase border border-zinc-200">
-                            Désignation
-                        </th>
-                        <th className="text-center py-3 px-3 text-xs font-semibold text-zinc-600 uppercase w-20 border border-zinc-200">
-                            Qté
-                        </th>
-                        <th className="text-right py-3 px-3 text-xs font-semibold text-zinc-600 uppercase w-24 border border-zinc-200">
-                            PU HT
-                        </th>
-                        <th className="text-right py-3 px-4 text-xs font-semibold text-zinc-600 uppercase w-24 border border-zinc-200">
-                            Total HT
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {data.lignes.map((ligne, index) => {
-                        const qte = typeof ligne.quantite === 'string' ? parseFloat(ligne.quantite) || 0 : ligne.quantite
-                        const totalLigne = ligne.totalHT ?? (qte * ligne.prixUnitaireHT)
-
-                        return (
-                            <tr key={ligne.id || index}>
-                                <td className="py-3 px-4 border border-zinc-200">
-                                    <p className="font-medium text-zinc-900">{ligne.designation}</p>
-                                    {ligne.description && (
-                                        <p className="text-sm text-zinc-500">{ligne.description}</p>
-                                    )}
-                                </td>
-                                <td className="text-center py-3 px-3 text-zinc-700 border border-zinc-200">
-                                    {ligne.quantite}
-                                </td>
-                                <td className="text-right py-3 px-3 text-zinc-700 font-mono border border-zinc-200">
-                                    {formatCurrency(ligne.prixUnitaireHT)}
-                                </td>
-                                <td className="text-right py-3 px-4 text-zinc-900 font-semibold font-mono border border-zinc-200">
-                                    {formatCurrency(totalLigne)}
-                                </td>
-                            </tr>
-                        )
-                    })}
-                </tbody>
-            </table>
-
-            {/* Totals */}
-            <div className="flex justify-end mb-8">
-                <div className="w-64 bg-zinc-50 p-4 rounded-lg">
-                    <div className="flex justify-between py-1 text-zinc-600">
-                        <span>Total HT</span>
-                        <span className="font-mono">{formatCurrency(data.totalHT)}</span>
+                {/* Legal Mentions - Compact */}
+                {data.mentionsLegales && (
+                    <div style={{
+                        borderTop: '1px solid #e4e4e7',
+                        paddingTop: `${8 * scale}px`,
+                        marginBottom: `${8 * scale}px`
+                    }}>
+                        <p style={{
+                            fontSize: `${7 * scale}px`,
+                            color: '#a1a1aa',
+                            lineHeight: 1.4
+                        }}>
+                            {data.mentionsLegales}
+                        </p>
                     </div>
-                    <div className="flex justify-between py-1 text-zinc-600">
-                        <span>TVA ({data.tauxTVA}%)</span>
-                        <span className="font-mono">{formatCurrency(data.totalTVA)}</span>
-                    </div>
-                    <div className="flex justify-between py-2 mt-2 border-t-2 border-zinc-900">
-                        <span className="text-lg font-bold text-zinc-900">Total TTC</span>
-                        <span className="text-lg font-bold text-zinc-900 font-mono">{formatCurrency(data.totalTTC)}</span>
-                    </div>
-                </div>
-            </div>
+                )}
 
-            {/* Notes */}
-            {data.notes && (
-                <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg mb-6">
-                    <p className="text-sm text-amber-800">
-                        <span className="font-semibold">Note :</span> {data.notes}
-                    </p>
+                {/* Footer - Minimal */}
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingTop: `${6 * scale}px`,
+                    borderTop: '1px solid #f4f4f5',
+                    fontSize: `${8 * scale}px`,
+                    color: '#a1a1aa'
+                }}>
+                    <span>{data.garage.email}</span>
+                    <span>
+                        {data.garage.siret && `SIRET: ${data.garage.siret}`}
+                        {data.garage.siret && data.garage.tva && ' • '}
+                        {data.garage.tva && `TVA: ${data.garage.tva}`}
+                    </span>
                 </div>
-            )}
-
-            {/* Legal Mentions */}
-            {data.mentionsLegales && (
-                <div className="border-t border-zinc-200 pt-6 mt-8">
-                    <p className="text-xs text-zinc-500 leading-relaxed">{data.mentionsLegales}</p>
-                </div>
-            )}
-
-            {/* Footer */}
-            <div className="mt-8 pt-4 border-t border-zinc-100 flex justify-between text-xs text-zinc-400">
-                <span>{data.garage.email}</span>
-                {data.garage.tva && <span>N° TVA: {data.garage.tva}</span>}
             </div>
         </div>
     )

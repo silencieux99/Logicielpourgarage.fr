@@ -224,14 +224,23 @@ export default function RepairDetailPage() {
             {/* Quick Actions */}
             <div className="flex flex-wrap gap-2">
                 {repair.statut === 'en_attente' && (
-                    <button
-                        onClick={() => updateStatus('en_cours')}
-                        disabled={updating}
-                        className="h-10 px-4 bg-blue-600 text-white text-sm font-medium rounded-xl flex items-center gap-2 hover:bg-blue-700 transition-colors"
-                    >
-                        <Play className="h-4 w-4" />
-                        Démarrer
-                    </button>
+                    <>
+                        <Link
+                            href={`/invoices/new?type=devis&reparationId=${repair.id}`}
+                            className="h-10 px-4 bg-amber-100 text-amber-700 text-sm font-medium rounded-xl flex items-center gap-2 hover:bg-amber-200 transition-colors"
+                        >
+                            <FileText className="h-4 w-4" />
+                            Créer devis
+                        </Link>
+                        <button
+                            onClick={() => updateStatus('en_cours')}
+                            disabled={updating}
+                            className="h-10 px-4 bg-blue-600 text-white text-sm font-medium rounded-xl flex items-center gap-2 hover:bg-blue-700 transition-colors"
+                        >
+                            <Play className="h-4 w-4" />
+                            Démarrer
+                        </button>
+                    </>
                 )}
                 {repair.statut === 'en_cours' && (
                     <>
@@ -305,33 +314,36 @@ export default function RepairDetailPage() {
                     {client && (
                         <div className="bg-white rounded-2xl border border-zinc-200 p-6">
                             <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-4">Client</h2>
-                            <Link href={`/clients/${client.id}`} className="flex items-center gap-4 p-4 bg-zinc-50 rounded-xl hover:bg-zinc-100 transition-colors">
-                                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-zinc-200 to-zinc-300 flex items-center justify-center">
-                                    <span className="text-lg font-bold text-zinc-600">
-                                        {client.prenom?.[0]}{client.nom?.[0]}
-                                    </span>
-                                </div>
-                                <div className="flex-1">
-                                    <p className="text-lg font-semibold text-zinc-900">
-                                        {client.civilite} {client.prenom} {client.nom}
-                                    </p>
-                                    {client.telephone && (
-                                        <p className="text-sm text-zinc-500">{client.telephone}</p>
-                                    )}
-                                </div>
-                                <div className="flex gap-2">
+                            <div className="flex items-center gap-4 p-4 bg-zinc-50 rounded-xl">
+                                <Link href={`/clients/${client.id}`} className="flex items-center gap-4 flex-1 hover:opacity-80 transition-opacity">
+                                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-zinc-200 to-zinc-300 flex items-center justify-center">
+                                        <span className="text-lg font-bold text-zinc-600">
+                                            {client.prenom?.[0]}{client.nom?.[0]}
+                                        </span>
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-lg font-semibold text-zinc-900">
+                                            {client.civilite} {client.prenom} {client.nom}
+                                        </p>
+                                        {client.telephone && (
+                                            <p className="text-sm text-zinc-500">{client.telephone}</p>
+                                        )}
+                                    </div>
+                                </Link>
+                                <div className="flex gap-2 items-center">
                                     {client.telephone && (
                                         <a
                                             href={`tel:${client.telephone}`}
-                                            onClick={(e) => e.stopPropagation()}
                                             className="p-2 bg-emerald-100 text-emerald-600 rounded-lg hover:bg-emerald-200 transition-colors"
                                         >
                                             <Phone className="h-4 w-4" />
                                         </a>
                                     )}
-                                    <ChevronRight className="h-5 w-5 text-zinc-400 self-center" />
+                                    <Link href={`/clients/${client.id}`} className="p-2 hover:bg-zinc-100 rounded-lg transition-colors">
+                                        <ChevronRight className="h-5 w-5 text-zinc-400" />
+                                    </Link>
                                 </div>
-                            </Link>
+                            </div>
                         </div>
                     )}
 

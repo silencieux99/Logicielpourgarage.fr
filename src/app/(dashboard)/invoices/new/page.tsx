@@ -16,12 +16,28 @@ import {
     Download,
     Eye,
     X,
-    Search
+    Search,
+    Printer
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
 import { InvoiceTemplate, InvoiceTemplateData } from "@/components/InvoiceTemplate"
-import { getGarageByUserId, getGarageConfig, getClients, getVehiculesByClient, Client, Vehicule } from "@/lib/database"
+import {
+    getGarageByUserId,
+    getGarageConfig,
+    getClients,
+    getVehiculesByClient,
+    getClient,
+    createDocument,
+    updateGarageConfig,
+    Client,
+    Vehicule,
+    Reparation,
+    LigneReparation,
+    Document as GarageDocument
+} from "@/lib/database"
+import { doc, getDoc, collection, query, where, getDocs, Timestamp } from "firebase/firestore"
+import { db } from "@/lib/firebase"
 
 interface LigneDocument {
     id: string
@@ -36,10 +52,14 @@ function NewInvoiceContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const type = (searchParams.get("type") || "devis") as "devis" | "facture"
+    const reparationId = searchParams.get("reparationId")
     const { user } = useAuth()
 
     const [isLoading, setIsLoading] = useState(false)
     const [showPreview, setShowPreview] = useState(true)
+    const [showPrintView, setShowPrintView] = useState(false)
+    const [garageId, setGarageId] = useState<string | null>(null)
+    const [configId, setConfigId] = useState<string | null>(null)
 
     // Garage et config
     const [garageData, setGarageData] = useState({
@@ -109,8 +129,10 @@ function NewInvoiceContent() {
                     setClients(clientsList)
 
                     if (garage.id) {
+                        setGarageId(garage.id)
                         const config = await getGarageConfig(garage.id)
                         if (config) {
+                            setConfigId(config.id || null)
                             setDocumentConfig({
                                 prefixeDevis: config.prefixeDevis || "D",
                                 prefixeFacture: config.prefixeFacture || "F",
@@ -151,6 +173,77 @@ function NewInvoiceContent() {
 
         loadVehicules()
     }, [selectedClient])
+
+    // Charger les données de réparation si reparationId est fourni
+    useEffect(() => {
+        const loadRepairData = async () => {
+            if (!reparationId || !user) return
+
+            try {
+                // Charger la réparation
+                const repairDoc = await getDoc(doc(db, 'reparations', reparationId))
+                if (!repairDoc.exists()) return
+
+                const repairData = repairDoc.data() as Reparation
+
+                // Charger et sélectionner le client
+                if (repairData.clientId) {
+                    const clientData = await getClient(repairData.clientId)
+                    if (clientData) {
+                        setSelectedClient(clientData)
+                        setFormData(prev => ({ ...prev, clientId: clientData.id || "" }))
+                    }
+                }
+
+                // Charger et sélectionner le véhicule
+                if (repairData.vehiculeId) {
+                    const vehiculeDoc = await getDoc(doc(db, 'vehicules', repairData.vehiculeId))
+                    if (vehiculeDoc.exists()) {
+                        const vehiculeData = { id: vehiculeDoc.id, ...vehiculeDoc.data() } as Vehicule
+                        setSelectedVehicule(vehiculeData)
+                        setFormData(prev => ({ ...prev, vehiculeId: vehiculeData.id || "" }))
+                    }
+                }
+
+                // Charger les lignes de réparation
+                const lignesQuery = query(
+                    collection(db, 'lignesReparation'),
+                    where('reparationId', '==', reparationId)
+                )
+                const lignesSnapshot = await getDocs(lignesQuery)
+
+                if (!lignesSnapshot.empty) {
+                    const repairLignes = lignesSnapshot.docs.map(d => {
+                        const data = d.data() as LigneReparation
+                        return {
+                            id: d.id,
+                            designation: data.designation,
+                            description: "",
+                            quantite: data.quantite,
+                            prixUnitaireHT: data.prixUnitaireHT,
+                            tauxTVA: data.tauxTVA || 20
+                        }
+                    })
+                    setLignes(repairLignes)
+                } else if (repairData.description) {
+                    // Si pas de lignes mais description, utiliser celle-ci
+                    setLignes([{
+                        id: "1",
+                        designation: repairData.description,
+                        description: "",
+                        quantite: 1,
+                        prixUnitaireHT: repairData.montantHT || 0,
+                        tauxTVA: 20
+                    }])
+                }
+
+            } catch (error) {
+                console.error("Erreur chargement réparation:", error)
+            }
+        }
+
+        loadRepairData()
+    }, [reparationId, user])
 
     const updateField = (field: string, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }))
@@ -236,10 +329,48 @@ function NewInvoiceContent() {
     }
 
     const handleSubmit = async (action: "save" | "send") => {
+        if (!garageId || !selectedClient?.id) return
+
         setIsLoading(true)
 
         try {
-            await new Promise(resolve => setTimeout(resolve, 1000))
+            // Créer le document - filtrer les champs undefined
+            const documentData = {
+                garageId,
+                clientId: selectedClient.id,
+                type,
+                numero: numeroDocument,
+                statut: action === 'send' ? 'envoye' : 'brouillon',
+                dateEmission: Timestamp.now(),
+                montantHT: totalHT,
+                montantTVA: totalTVA,
+                montantTTC: totalTTC,
+                ...(selectedVehicule?.id && { vehiculeId: selectedVehicule.id }),
+                ...(reparationId && { reparationId }),
+                ...(formData.dateEcheance && { dateEcheance: Timestamp.fromDate(new Date(formData.dateEcheance)) }),
+                ...(formData.notes && { notes: formData.notes })
+            } as Omit<GarageDocument, 'id' | 'createdAt' | 'updatedAt'>
+
+            const documentLignes = lignes.filter(l => l.designation).map(l => ({
+                designation: l.designation,
+                quantite: l.quantite,
+                prixUnitaireHT: l.prixUnitaireHT,
+                tauxTVA: l.tauxTVA,
+                montantHT: l.quantite * l.prixUnitaireHT,
+                ...(l.description && { description: l.description })
+            }))
+
+            await createDocument(documentData, documentLignes)
+
+            // Mettre à jour le prochain numéro
+            if (configId) {
+                if (type === 'devis') {
+                    await updateGarageConfig(configId, { prochainNumeroDevis: documentConfig.prochainNumeroDevis + 1 })
+                } else {
+                    await updateGarageConfig(configId, { prochainNumeroFacture: documentConfig.prochainNumeroFacture + 1 })
+                }
+            }
+
             router.push("/invoices")
         } catch (error) {
             console.error("Erreur:", error)
@@ -548,6 +679,21 @@ function NewInvoiceContent() {
                                     <Send className="h-4 w-4" />
                                     Envoyer au client
                                 </button>
+
+                                <button
+                                    onClick={() => {
+                                        setShowPrintView(true)
+                                        setTimeout(() => {
+                                            window.print()
+                                            setShowPrintView(false)
+                                        }, 100)
+                                    }}
+                                    disabled={!hasContent}
+                                    className="w-full h-12 bg-zinc-100 hover:bg-zinc-200 disabled:bg-zinc-50 text-zinc-700 disabled:text-zinc-400 text-sm font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
+                                >
+                                    <Printer className="h-4 w-4" />
+                                    Imprimer / PDF
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -659,6 +805,17 @@ function NewInvoiceContent() {
                         </div>
                     </div>
                 </>
+            )}
+
+            {/* Print View - Only visible during printing */}
+            {showPrintView && (
+                <div
+                    id="print-container"
+                    className="fixed inset-0 bg-white z-[9999] overflow-auto"
+                    style={{ padding: '20px' }}
+                >
+                    <InvoiceTemplate data={templateData} scale={1} />
+                </div>
             )}
         </div>
     )

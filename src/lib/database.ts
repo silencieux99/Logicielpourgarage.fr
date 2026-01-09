@@ -450,6 +450,12 @@ export const deleteVehicule = async (vehiculeId: string) => {
     await deleteDoc(doc(db, 'vehicules', vehiculeId))
 }
 
+export const getVehiculeById = async (vehiculeId: string): Promise<Vehicule | null> => {
+    const docSnap = await getDoc(doc(db, 'vehicules', vehiculeId))
+    if (!docSnap.exists()) return null
+    return { id: docSnap.id, ...docSnap.data() } as Vehicule
+}
+
 // ============================================
 // REPARATIONS
 // ============================================
@@ -546,42 +552,6 @@ export const getReparationsUrgentes = async (garageId: string): Promise<Reparati
 
 export const deleteReparation = async (reparationId: string) => {
     await deleteDoc(doc(db, 'reparations', reparationId))
-}
-
-// ============================================
-// DOCUMENTS (Devis / Factures)
-// ============================================
-
-export const createDocument = async (data: Omit<Document, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const cleanData = Object.fromEntries(
-        Object.entries(data).filter(([_, value]) => value !== undefined)
-    )
-    const docRef = await addDoc(collection(db, 'documents'), {
-        ...cleanData,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now()
-    })
-    return docRef.id
-}
-
-export const getDocuments = async (garageId: string, type?: 'devis' | 'facture'): Promise<Document[]> => {
-    let q = query(
-        collection(db, 'documents'),
-        where('garageId', '==', garageId),
-        orderBy('createdAt', 'desc')
-    )
-
-    if (type) {
-        q = query(
-            collection(db, 'documents'),
-            where('garageId', '==', garageId),
-            where('type', '==', type),
-            orderBy('createdAt', 'desc')
-        )
-    }
-
-    const snapshot = await getDocs(q)
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Document))
 }
 
 // ============================================
@@ -802,3 +772,77 @@ export const getGarageByStripeSubscriptionId = async (subscriptionId: string): P
     return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Garage
 }
 
+// ============================================
+// DOCUMENTS (DEVIS & FACTURES)
+// ============================================
+
+export interface LigneDocument {
+    id?: string
+    documentId?: string
+    designation: string
+    description?: string
+    quantite: number
+    prixUnitaireHT: number
+    tauxTVA: number
+    montantHT: number
+}
+
+export const createDocument = async (
+    data: Omit<Document, 'id' | 'createdAt' | 'updatedAt'>,
+    lignes: Omit<LigneDocument, 'id' | 'documentId'>[]
+): Promise<string> => {
+    const docRef = await addDoc(collection(db, 'documents'), {
+        ...data,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
+    })
+
+    // Créer les lignes du document
+    for (const ligne of lignes) {
+        await addDoc(collection(db, 'lignesDocument'), {
+            documentId: docRef.id,
+            ...ligne
+        })
+    }
+
+    return docRef.id
+}
+
+export const getDocuments = async (garageId: string, type?: 'devis' | 'facture'): Promise<Document[]> => {
+    let q = query(
+        collection(db, 'documents'),
+        where('garageId', '==', garageId),
+        orderBy('createdAt', 'desc')
+    )
+
+    if (type) {
+        q = query(
+            collection(db, 'documents'),
+            where('garageId', '==', garageId),
+            where('type', '==', type),
+            orderBy('createdAt', 'desc')
+        )
+    }
+
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Document))
+}
+
+export const getDocumentById = async (documentId: string): Promise<Document | null> => {
+    const docSnap = await getDoc(doc(db, 'documents', documentId))
+    if (!docSnap.exists()) return null
+    return { id: docSnap.id, ...docSnap.data() } as Document
+}
+
+export const getDocumentLignes = async (documentId: string): Promise<LigneDocument[]> => {
+    const q = query(collection(db, 'lignesDocument'), where('documentId', '==', documentId))
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as LigneDocument))
+}
+
+export const updateDocument = async (documentId: string, data: Partial<Document>): Promise<void> => {
+    await updateDoc(doc(db, 'documents', documentId), {
+        ...data,
+        updatedAt: Timestamp.now()
+    })
+}
