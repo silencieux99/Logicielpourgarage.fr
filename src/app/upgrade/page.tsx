@@ -6,40 +6,28 @@ import { useRouter, useSearchParams } from "next/navigation"
 import {
     ArrowLeft,
     Check,
-    CreditCard,
     Loader2,
-    Shield,
-    Zap,
-    Lock,
-    Star,
-    ChevronRight
+    Sparkles,
+    ArrowRight
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
 
 const features = [
-    "Clients illimités",
-    "Véhicules illimités",
-    "Factures & devis illimités",
-    "Support prioritaire 7j/7",
-    "Export Excel & PDF",
-    "Rappels SMS automatiques",
-    "Mises à jour gratuites",
-    "Hébergement sécurisé en France",
-]
-
-const testimonials = [
-    { name: "Jean M.", garage: "Garage du Centre", text: "Je gagne 2h par jour grâce à GaragePro !" },
-    { name: "Marie L.", garage: "Auto Service Plus", text: "Mes clients adorent les SMS de rappel." },
-    { name: "Pierre D.", garage: "Mécanique Express", text: "Enfin un logiciel simple et efficace." },
+    { title: "Clients illimités", desc: "Gérez tous vos clients sans restriction" },
+    { title: "Véhicules illimités", desc: "Ajoutez autant de véhicules que nécessaire" },
+    { title: "Devis & Factures", desc: "Création illimitée de documents" },
+    { title: "Support prioritaire", desc: "Assistance dédiée 7j/7" },
+    { title: "Exports avancés", desc: "Excel, PDF et intégrations" },
+    { title: "Rappels SMS", desc: "Notifications automatiques clients" },
 ]
 
 // Wrapper component with Suspense for useSearchParams
 export default function UpgradePage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+            <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-zinc-600" />
             </div>
         }>
             <UpgradePageContent />
@@ -52,15 +40,10 @@ function UpgradePageContent() {
     const searchParams = useSearchParams()
     const { user, garage } = useAuth()
     const [isLoading, setIsLoading] = useState(false)
-    const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly")
     const [error, setError] = useState<string | null>(null)
 
-    const pricing = {
-        monthly: { price: 59.99, period: "mois", savings: null },
-        yearly: { price: 49.99, period: "mois", savings: "2 mois offerts" }
-    }
-
-    const currentPricing = pricing[billingPeriod]
+    const priceHT = 59.99
+    const priceTTC = priceHT * 1.2
 
     const handleSubscribe = async () => {
         if (!user) {
@@ -79,7 +62,7 @@ function UpgradePageContent() {
                     userId: user.uid,
                     email: user.email,
                     garageName: garage?.nom || "Mon Garage",
-                    billingPeriod,
+                    billingPeriod: "monthly",
                     successUrl: `${window.location.origin}/dashboard?upgrade=success`,
                     cancelUrl: `${window.location.origin}/upgrade?canceled=true`,
                 }),
@@ -91,7 +74,6 @@ function UpgradePageContent() {
                 throw new Error(data.error)
             }
 
-            // Rediriger vers Stripe Checkout via l'URL retournée
             if (data.url) {
                 window.location.href = data.url
             } else {
@@ -104,249 +86,164 @@ function UpgradePageContent() {
         }
     }
 
-    // Check if coming back from canceled checkout
     useEffect(() => {
         if (searchParams.get("canceled") === "true") {
             setError("Paiement annulé. Vous pouvez réessayer quand vous voulez.")
         }
     }, [searchParams])
 
-    return (
-        <div className="min-h-screen bg-zinc-50">
-            {/* Header */}
-            <header className="bg-white border-b border-zinc-200 sticky top-0 z-50">
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+    // Already Pro - redirect
+    if (garage?.plan === 'pro' && garage?.subscriptionStatus === 'active') {
+        return (
+            <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+                <div className="max-w-md w-full text-center">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center mx-auto mb-6">
+                        <Sparkles className="h-8 w-8 text-white" />
+                    </div>
+                    <h1 className="text-2xl font-bold text-white mb-2">Vous êtes déjà Pro</h1>
+                    <p className="text-zinc-400 mb-8">Vous bénéficiez de toutes les fonctionnalités sans limites.</p>
                     <Link
                         href="/dashboard"
-                        className="flex items-center gap-2 text-zinc-600 hover:text-zinc-900 transition-colors"
+                        className="inline-flex h-12 px-8 bg-white text-zinc-900 font-semibold rounded-xl items-center gap-2 hover:bg-zinc-100 transition-colors"
                     >
-                        <ArrowLeft className="h-5 w-5" />
-                        <span className="text-sm font-medium">Retour au dashboard</span>
+                        Retour au dashboard
+                        <ArrowRight className="h-4 w-4" />
                     </Link>
-
-                    <div className="flex items-center gap-2 text-sm text-zinc-500">
-                        <Shield className="h-4 w-4 text-emerald-500" />
-                        <span>Paiement 100% sécurisé</span>
-                    </div>
                 </div>
-            </header>
+            </div>
+        )
+    }
 
-            <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-                {/* Hero */}
-                <div className="text-center mb-8 sm:mb-12">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-full text-emerald-700 text-sm font-medium mb-4">
-                        <Zap className="h-4 w-4" />
-                        Offre spéciale : 2 mois offerts sur l'abonnement annuel
+    return (
+        <div className="min-h-screen bg-zinc-950">
+            {/* Subtle gradient background */}
+            <div className="absolute inset-0 bg-gradient-to-b from-zinc-900 via-zinc-950 to-zinc-950" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-800/20 via-transparent to-transparent" />
+
+            {/* Content */}
+            <div className="relative">
+                {/* Header */}
+                <header className="border-b border-zinc-800/50">
+                    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+                        <Link
+                            href="/dashboard"
+                            className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
+                        >
+                            <ArrowLeft className="h-4 w-4" />
+                            <span className="text-sm font-medium">Retour</span>
+                        </Link>
+                        <div className="flex items-center gap-2 text-xs text-zinc-500">
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            Paiement sécurisé
+                        </div>
                     </div>
-                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-zinc-900 mb-4">
-                        Passez au <span className="text-emerald-600">Pro</span>
-                    </h1>
-                    <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
-                        Débloquez toutes les fonctionnalités et gérez votre garage sans limites.
-                    </p>
-                </div>
+                </header>
 
-                {error && (
-                    <div className="max-w-lg mx-auto mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
-                        {error}
+                <main className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
+                    {/* Hero */}
+                    <div className="text-center mb-12 sm:mb-16">
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-zinc-800/50 border border-zinc-700/50 rounded-full text-zinc-300 text-xs font-medium mb-6">
+                            <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+                            Plan Pro
+                        </div>
+                        <h1 className="text-3xl sm:text-5xl font-bold text-white mb-4 tracking-tight">
+                            Libérez tout le potentiel<br className="hidden sm:block" /> de votre garage
+                        </h1>
+                        <p className="text-lg text-zinc-300 max-w-xl mx-auto">
+                            Un seul abonnement. Aucune limite. Tout inclus.
+                        </p>
                     </div>
-                )}
 
-                <div className="grid lg:grid-cols-5 gap-8">
+                    {error && (
+                        <div className="max-w-md mx-auto mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm text-center">
+                            {error}
+                        </div>
+                    )}
+
                     {/* Pricing Card */}
-                    <div className="lg:col-span-3">
-                        <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden">
-                            {/* Billing Toggle */}
-                            <div className="p-6 border-b border-zinc-100 bg-zinc-50">
-                                <div className="flex items-center justify-center gap-2 p-1 bg-white border border-zinc-200 rounded-xl max-w-xs mx-auto">
-                                    <button
-                                        onClick={() => setBillingPeriod("monthly")}
-                                        className={cn(
-                                            "flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors",
-                                            billingPeriod === "monthly"
-                                                ? "bg-zinc-900 text-white"
-                                                : "text-zinc-600 hover:text-zinc-900"
-                                        )}
-                                    >
-                                        Mensuel
-                                    </button>
-                                    <button
-                                        onClick={() => setBillingPeriod("yearly")}
-                                        className={cn(
-                                            "flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors relative",
-                                            billingPeriod === "yearly"
-                                                ? "bg-zinc-900 text-white"
-                                                : "text-zinc-600 hover:text-zinc-900"
-                                        )}
-                                    >
-                                        Annuel
-                                        <span className="absolute -top-2 -right-2 px-1.5 py-0.5 bg-emerald-500 text-white text-[10px] font-bold rounded-full">
-                                            -17%
+                    <div className="max-w-md mx-auto mb-16">
+                        <div className="relative">
+                            {/* Glow effect */}
+                            <div className="absolute -inset-px bg-gradient-to-b from-zinc-700/50 to-zinc-800/50 rounded-2xl blur-sm" />
+
+                            <div className="relative bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+                                {/* Price section */}
+                                <div className="p-8 text-center border-b border-zinc-800/50">
+                                    <div className="flex items-baseline justify-center gap-1 mb-1">
+                                        <span className="text-5xl font-bold text-white tracking-tight">
+                                            {priceHT.toFixed(2).replace(".", ",")}€
                                         </span>
+                                        <span className="text-zinc-400 text-lg">/mois</span>
+                                    </div>
+                                    <p className="text-sm text-zinc-400">
+                                        {priceTTC.toFixed(2).replace(".", ",")}€ TTC • Sans engagement
+                                    </p>
+                                </div>
+
+                                {/* CTA */}
+                                <div className="p-6">
+                                    <button
+                                        onClick={handleSubscribe}
+                                        disabled={isLoading}
+                                        className="w-full h-14 bg-white hover:bg-zinc-100 disabled:bg-zinc-700 text-zinc-900 disabled:text-zinc-400 text-base font-semibold rounded-xl flex items-center justify-center gap-2 transition-all"
+                                    >
+                                        {isLoading ? (
+                                            <>
+                                                <Loader2 className="h-5 w-5 animate-spin" />
+                                                <span>Redirection...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span>Commencer maintenant</span>
+                                                <ArrowRight className="h-4 w-4" />
+                                            </>
+                                        )}
                                     </button>
-                                </div>
-                            </div>
 
-                            {/* Pricing */}
-                            <div className="p-6 sm:p-8 text-center">
-                                <div className="flex items-baseline justify-center gap-1 mb-2">
-                                    <span className="text-5xl sm:text-6xl font-bold text-zinc-900">
-                                        {currentPricing.price.toFixed(2).replace(".", ",")}€
-                                    </span>
-                                    <span className="text-xl text-zinc-500">HT/{currentPricing.period}</span>
-                                </div>
-
-                                {currentPricing.savings && (
-                                    <div className="inline-block px-3 py-1 bg-emerald-100 text-emerald-700 text-sm font-medium rounded-full mb-4">
-                                        {currentPricing.savings}
-                                    </div>
-                                )}
-
-                                {billingPeriod === "yearly" && (
-                                    <p className="text-sm text-zinc-500 mb-6">
-                                        Facturé {(currentPricing.price * 12).toFixed(2).replace(".", ",")}€ HT/an
+                                    <p className="text-center text-xs text-zinc-400 mt-4">
+                                        Annulable à tout moment • Paiement via Stripe
                                     </p>
-                                )}
-                            </div>
-
-                            {/* Features */}
-                            <div className="px-6 sm:px-8 pb-8">
-                                <div className="grid sm:grid-cols-2 gap-3">
-                                    {features.map((feature, i) => (
-                                        <div key={i} className="flex items-center gap-3">
-                                            <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                                                <Check className="h-3 w-3 text-emerald-600" />
-                                            </div>
-                                            <span className="text-sm text-zinc-700">{feature}</span>
-                                        </div>
-                                    ))}
                                 </div>
+                            </div>
+                        </div>
+                    </div>
 
-                                {/* CTA Button */}
-                                <button
-                                    onClick={handleSubscribe}
-                                    disabled={isLoading}
-                                    className="w-full h-14 mt-8 bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-400 text-white text-base font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
+                    {/* Features Grid */}
+                    <div className="mb-16">
+                        <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider text-center mb-8">
+                            Tout ce qui est inclus
+                        </h2>
+                        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {features.map((feature, i) => (
+                                <div
+                                    key={i}
+                                    className="p-5 bg-zinc-900/50 border border-zinc-800/50 rounded-xl"
                                 >
-                                    {isLoading ? (
-                                        <>
-                                            <Loader2 className="h-5 w-5 animate-spin" />
-                                            Redirection vers le paiement...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <CreditCard className="h-5 w-5" />
-                                            S'abonner maintenant
-                                        </>
-                                    )}
-                                </button>
-
-                                {/* Trust badges */}
-                                <div className="flex items-center justify-center gap-6 mt-6 pt-6 border-t border-zinc-100">
-                                    <div className="flex items-center gap-2 text-sm text-zinc-500">
-                                        <Lock className="h-4 w-4" />
-                                        <span>SSL sécurisé</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-sm text-zinc-500">
-                                        <Shield className="h-4 w-4" />
-                                        <span>Via Stripe</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Guarantee */}
-                        <div className="mt-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
-                            <div className="flex items-start gap-3">
-                                <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                                    <Shield className="h-5 w-5 text-emerald-600" />
-                                </div>
-                                <div>
-                                    <p className="font-semibold text-emerald-900">Satisfait ou remboursé</p>
-                                    <p className="text-sm text-emerald-700">
-                                        Vous avez 30 jours pour tester. Si vous n'êtes pas satisfait, nous vous remboursons intégralement.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Sidebar */}
-                    <div className="lg:col-span-2 space-y-6">
-                        {/* Current plan */}
-                        <div className="bg-white rounded-xl border border-zinc-200 p-5">
-                            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wide mb-3">
-                                Votre plan actuel
-                            </h3>
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    {garage?.plan === 'pro' && garage?.subscriptionStatus === 'active' ? (
-                                        <>
-                                            <p className="font-semibold text-emerald-600">Plan Pro Actif ✓</p>
-                                            <p className="text-sm text-zinc-500">Illimité • Support prioritaire</p>
-                                        </>
-                                    ) : garage?.subscriptionStatus === 'past_due' ? (
-                                        <>
-                                            <p className="font-semibold text-amber-600">Paiement en attente</p>
-                                            <p className="text-sm text-zinc-500">Mettez à jour votre paiement</p>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <p className="font-semibold text-zinc-900">Démo Gratuite</p>
-                                            <p className="text-sm text-zinc-500">5 clients • 5 véhicules</p>
-                                        </>
-                                    )}
-                                </div>
-                                {garage?.plan !== 'pro' && <ChevronRight className="h-5 w-5 text-zinc-400" />}
-                            </div>
-                        </div>
-
-                        {/* Testimonials */}
-                        <div className="bg-white rounded-xl border border-zinc-200 p-5">
-                            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wide mb-4">
-                                Ils utilisent GaragePro
-                            </h3>
-                            <div className="space-y-4">
-                                {testimonials.map((t, i) => (
-                                    <div key={i} className="border-b border-zinc-100 last:border-0 pb-4 last:pb-0">
-                                        <div className="flex items-center gap-1 mb-2">
-                                            {[...Array(5)].map((_, j) => (
-                                                <Star key={j} className="h-4 w-4 text-amber-400 fill-amber-400" />
-                                            ))}
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                            <Check className="h-3 w-3 text-emerald-400" />
                                         </div>
-                                        <p className="text-sm text-zinc-700 mb-2">"{t.text}"</p>
-                                        <p className="text-xs text-zinc-500">
-                                            <span className="font-medium">{t.name}</span> — {t.garage}
-                                        </p>
+                                        <div>
+                                            <p className="font-medium text-white text-sm">{feature.title}</p>
+                                            <p className="text-xs text-zinc-400 mt-0.5">{feature.desc}</p>
+                                        </div>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* FAQ */}
-                        <div className="bg-white rounded-xl border border-zinc-200 p-5">
-                            <h3 className="text-sm font-semibold text-zinc-500 uppercase tracking-wide mb-4">
-                                Questions fréquentes
-                            </h3>
-                            <div className="space-y-3">
-                                {[
-                                    { q: "Puis-je annuler ?", a: "Oui, à tout moment sans frais." },
-                                    { q: "Mes données sont-elles transférées ?", a: "Oui, vous gardez tout ce que vous avez créé." },
-                                    { q: "Y a-t-il un engagement ?", a: "Non, vous êtes libre d'arrêter quand vous voulez." },
-                                ].map((faq, i) => (
-                                    <details key={i} className="group">
-                                        <summary className="flex items-center justify-between cursor-pointer list-none py-2">
-                                            <span className="text-sm font-medium text-zinc-900">{faq.q}</span>
-                                            <ChevronRight className="h-4 w-4 text-zinc-400 transition-transform group-open:rotate-90" />
-                                        </summary>
-                                        <p className="text-sm text-zinc-600 pb-2">{faq.a}</p>
-                                    </details>
-                                ))}
-                            </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
-                </div>
-            </main>
+
+                    {/* Current plan indicator */}
+                    <div className="text-center">
+                        <div className="inline-flex items-center gap-3 px-4 py-2.5 bg-zinc-900/50 border border-zinc-800/50 rounded-xl">
+                            <div className="w-2 h-2 rounded-full bg-zinc-600" />
+                            <span className="text-sm text-zinc-400">
+                                Actuellement : <span className="text-zinc-300 font-medium">Plan Démo</span> (5 clients, 5 véhicules)
+                            </span>
+                        </div>
+                    </div>
+                </main>
+            </div>
         </div>
     )
 }

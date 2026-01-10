@@ -209,17 +209,24 @@ export function Sidebar() {
                 {!isCollapsed && (
                     <div className="px-2 py-2 border-t border-zinc-50">
                         {isPro ? (
-                            <div className="flex items-center gap-2 px-2.5 py-2 bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-200 rounded-lg">
-                                <Crown className="h-4 w-4 text-amber-600" />
-                                <span className="text-[13px] font-medium text-amber-900">Plan Pro</span>
+                            <div className="flex items-center gap-2.5 px-3 py-2.5 bg-zinc-900 rounded-lg">
+                                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center">
+                                    <Crown className="h-3 w-3 text-white" />
+                                </div>
+                                <span className="text-[13px] font-medium text-white">Pro</span>
                             </div>
                         ) : (
                             <Link
                                 href="/upgrade"
-                                className="flex items-center gap-2 px-2.5 py-2 bg-gradient-to-r from-emerald-50 to-emerald-100 border border-emerald-200 rounded-lg hover:from-emerald-100 hover:to-emerald-200 transition-all group"
+                                className="flex items-center justify-between px-3 py-2.5 bg-zinc-50 border border-zinc-100 rounded-lg hover:bg-zinc-100 hover:border-zinc-200 transition-all group"
                             >
-                                <Zap className="h-4 w-4 text-emerald-600" />
-                                <span className="text-[13px] font-medium text-emerald-900">Passer au Pro</span>
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-5 h-5 rounded-full bg-zinc-200 group-hover:bg-zinc-300 flex items-center justify-center transition-colors">
+                                        <Zap className="h-3 w-3 text-zinc-600" />
+                                    </div>
+                                    <span className="text-[13px] font-medium text-zinc-700">Passer au Pro</span>
+                                </div>
+                                <ChevronRight className="h-4 w-4 text-zinc-400 group-hover:translate-x-0.5 transition-transform" />
                             </Link>
                         )}
                     </div>
@@ -227,12 +234,12 @@ export function Sidebar() {
                 {isCollapsed && (
                     <div className="px-2 py-2 border-t border-zinc-50 flex justify-center">
                         {isPro ? (
-                            <div className="p-2 bg-amber-100 rounded-lg" title="Plan Pro">
-                                <Crown className="h-4 w-4 text-amber-600" />
+                            <div className="w-9 h-9 bg-zinc-900 rounded-lg flex items-center justify-center" title="Plan Pro">
+                                <Crown className="h-4 w-4 text-amber-400" />
                             </div>
                         ) : (
-                            <Link href="/upgrade" className="p-2 bg-emerald-100 rounded-lg hover:bg-emerald-200 transition-colors" title="Passer au Pro">
-                                <Zap className="h-4 w-4 text-emerald-600" />
+                            <Link href="/upgrade" className="w-9 h-9 bg-zinc-100 rounded-lg flex items-center justify-center hover:bg-zinc-200 transition-colors" title="Passer au Pro">
+                                <Zap className="h-4 w-4 text-zinc-600" />
                             </Link>
                         )}
                     </div>

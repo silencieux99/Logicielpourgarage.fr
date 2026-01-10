@@ -47,8 +47,8 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         },
       ],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/?canceled=true`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/upgrade/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/upgrade?canceled=true`,
       metadata: {
         userId: userId,
       },
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
         metadata: {
           userId: userId,
         },
-        trial_period_days: 14, // 14 jours d'essai gratuit
+        // No trial period - charge immediately
       },
       allow_promotion_codes: true,
       billing_address_collection: 'required',
