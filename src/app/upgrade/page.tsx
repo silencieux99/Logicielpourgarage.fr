@@ -280,10 +280,24 @@ function UpgradePageContent() {
                             </h3>
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="font-semibold text-zinc-900">Démo Gratuite</p>
-                                    <p className="text-sm text-zinc-500">5 clients • 5 véhicules</p>
+                                    {garage?.plan === 'pro' && garage?.subscriptionStatus === 'active' ? (
+                                        <>
+                                            <p className="font-semibold text-emerald-600">Plan Pro Actif ✓</p>
+                                            <p className="text-sm text-zinc-500">Illimité • Support prioritaire</p>
+                                        </>
+                                    ) : garage?.subscriptionStatus === 'past_due' ? (
+                                        <>
+                                            <p className="font-semibold text-amber-600">Paiement en attente</p>
+                                            <p className="text-sm text-zinc-500">Mettez à jour votre paiement</p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <p className="font-semibold text-zinc-900">Démo Gratuite</p>
+                                            <p className="text-sm text-zinc-500">5 clients • 5 véhicules</p>
+                                        </>
+                                    )}
                                 </div>
-                                <ChevronRight className="h-5 w-5 text-zinc-400" />
+                                {garage?.plan !== 'pro' && <ChevronRight className="h-5 w-5 text-zinc-400" />}
                             </div>
                         </div>
 

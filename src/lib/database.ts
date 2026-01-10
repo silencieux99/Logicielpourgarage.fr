@@ -475,23 +475,52 @@ export const createReparation = async (data: Omit<Reparation, 'id' | 'createdAt'
 }
 
 export const getReparations = async (garageId: string, statut?: string): Promise<Reparation[]> => {
-    let q = query(
-        collection(db, 'reparations'),
-        where('garageId', '==', garageId),
-        orderBy('createdAt', 'desc')
-    )
-
-    if (statut && statut !== 'all') {
-        q = query(
+    try {
+        // Try with orderBy first (requires composite index)
+        let q = query(
             collection(db, 'reparations'),
             where('garageId', '==', garageId),
-            where('statut', '==', statut),
             orderBy('createdAt', 'desc')
         )
-    }
 
-    const snapshot = await getDocs(q)
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Reparation))
+        if (statut && statut !== 'all') {
+            q = query(
+                collection(db, 'reparations'),
+                where('garageId', '==', garageId),
+                where('statut', '==', statut),
+                orderBy('createdAt', 'desc')
+            )
+        }
+
+        const snapshot = await getDocs(q)
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Reparation))
+    } catch (error: any) {
+        // Fallback: If index is missing, fetch without orderBy and sort client-side
+        console.warn('Firestore index missing, falling back to client-side sorting:', error.message)
+
+        let q = query(
+            collection(db, 'reparations'),
+            where('garageId', '==', garageId)
+        )
+
+        if (statut && statut !== 'all') {
+            q = query(
+                collection(db, 'reparations'),
+                where('garageId', '==', garageId),
+                where('statut', '==', statut)
+            )
+        }
+
+        const snapshot = await getDocs(q)
+        const reparations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Reparation))
+
+        // Sort client-side by createdAt descending
+        return reparations.sort((a, b) => {
+            const dateA = a.createdAt?.toDate?.() || new Date(0)
+            const dateB = b.createdAt?.toDate?.() || new Date(0)
+            return dateB.getTime() - dateA.getTime()
+        })
+    }
 }
 
 export const updateReparation = async (reparationId: string, data: Partial<Reparation>) => {

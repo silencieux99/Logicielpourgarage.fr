@@ -189,6 +189,46 @@ export default function DashboardPage() {
                 </Link>
             </div>
 
+            {/* Subscription Banner - Demo Plan */}
+            {garage?.plan !== 'pro' && (
+                <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-start sm:items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                            <TrendingUp className="h-5 w-5 text-emerald-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-semibold text-emerald-900">
+                                Vous êtes sur le plan Démo gratuit
+                            </p>
+                            <p className="text-xs text-emerald-700 mt-0.5">
+                                Limité à 5 clients et 5 véhicules. Passez au Pro pour un accès illimité.
+                            </p>
+                        </div>
+                    </div>
+                    <Link
+                        href="/upgrade"
+                        className="flex-shrink-0 h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
+                    >
+                        <span>Passer au Pro</span>
+                        <ArrowUpRight className="h-4 w-4" />
+                    </Link>
+                </div>
+            )}
+
+            {/* Pro Plan Success Banner */}
+            {garage?.plan === 'pro' && garage?.subscriptionStatus === 'active' && (
+                <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl sm:rounded-2xl p-4 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+                        <span className="text-lg">👑</span>
+                    </div>
+                    <div>
+                        <p className="text-sm font-medium text-amber-900">
+                            Plan Pro actif — Accès illimité à toutes les fonctionnalités
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {/* Quick Actions - Mobile */}
             <div className="sm:hidden">
                 <div className="flex gap-3 overflow-x-auto pb-2 scroll-hide -mx-4 px-4">

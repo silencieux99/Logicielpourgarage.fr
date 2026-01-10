@@ -24,11 +24,14 @@ import {
     ChevronRight,
     Search,
     Hammer,
-    GraduationCap
+    GraduationCap,
+    Crown,
+    Zap
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useSidebar } from "@/lib/sidebar-context"
 import { signOut } from "@/lib/auth"
+import { useAuth } from "@/lib/auth-context"
 
 const navigation = [
     { name: "Tableau de bord", href: "/dashboard", icon: LayoutDashboard },
@@ -61,7 +64,10 @@ export function Sidebar() {
     const pathname = usePathname()
     const router = useRouter()
     const { isCollapsed, toggleSidebar, tabletExpanded, toggleTabletSidebar } = useSidebar()
+    const { garage } = useAuth()
     const [showMoreMenu, setShowMoreMenu] = useState(false)
+
+    const isPro = garage?.plan === 'pro' && garage?.subscriptionStatus === 'active'
 
     const handleLogout = async () => {
         try {
@@ -198,6 +204,39 @@ export function Sidebar() {
                         )
                     })}
                 </div>
+
+                {/* Subscription Badge */}
+                {!isCollapsed && (
+                    <div className="px-2 py-2 border-t border-zinc-50">
+                        {isPro ? (
+                            <div className="flex items-center gap-2 px-2.5 py-2 bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-200 rounded-lg">
+                                <Crown className="h-4 w-4 text-amber-600" />
+                                <span className="text-[13px] font-medium text-amber-900">Plan Pro</span>
+                            </div>
+                        ) : (
+                            <Link
+                                href="/upgrade"
+                                className="flex items-center gap-2 px-2.5 py-2 bg-gradient-to-r from-emerald-50 to-emerald-100 border border-emerald-200 rounded-lg hover:from-emerald-100 hover:to-emerald-200 transition-all group"
+                            >
+                                <Zap className="h-4 w-4 text-emerald-600" />
+                                <span className="text-[13px] font-medium text-emerald-900">Passer au Pro</span>
+                            </Link>
+                        )}
+                    </div>
+                )}
+                {isCollapsed && (
+                    <div className="px-2 py-2 border-t border-zinc-50 flex justify-center">
+                        {isPro ? (
+                            <div className="p-2 bg-amber-100 rounded-lg" title="Plan Pro">
+                                <Crown className="h-4 w-4 text-amber-600" />
+                            </div>
+                        ) : (
+                            <Link href="/upgrade" className="p-2 bg-emerald-100 rounded-lg hover:bg-emerald-200 transition-colors" title="Passer au Pro">
+                                <Zap className="h-4 w-4 text-emerald-600" />
+                            </Link>
+                        )}
+                    </div>
+                )}
 
                 {/* Logout Button */}
                 <div className="p-2 border-t border-zinc-50">
