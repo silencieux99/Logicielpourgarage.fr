@@ -22,6 +22,12 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
+import {
+    getStats,
+    getRendezVous,
+    getDocuments,
+    getReparationsEnCours
+} from "@/lib/database"
 
 interface DashboardStats {
     clientsTotal: number
@@ -84,12 +90,50 @@ export default function DashboardPage() {
     }, [fabOpen])
 
     const loadDashboard = async () => {
+        if (!garage?.id) return
         setLoading(true)
         try {
-            // TODO: Load from Firebase
-            setStats(null)
-            setRecentItems([])
-            setLowStockCount(0)
+            // Fetch stats from Firebase
+            const [statsData, rdvToday, documents, reparationsEnCours] = await Promise.all([
+                getStats(garage.id),
+                getRendezVous(garage.id, new Date()), // Today's appointments
+                getDocuments(garage.id, 'facture'),   // All invoices
+                getReparationsEnCours(garage.id)      // In-progress repairs
+            ])
+
+            // Calculate today's revenue (CA Jour)
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+            const facturesAujourdhui = documents.filter(d => {
+                if (d.statut !== 'paye' || !d.datePaiement) return false
+                // Handle Firestore Timestamp or Date
+                const paidDate = d.datePaiement.toDate ? d.datePaiement.toDate() : new Date(d.datePaiement as unknown as string)
+                paidDate.setHours(0, 0, 0, 0)
+                return paidDate.getTime() === today.getTime()
+            })
+            const caJour = facturesAujourdhui.reduce((sum, f) => sum + f.montantTTC, 0)
+
+            setStats({
+                clientsTotal: statsData.totalClients,
+                vehiculesTotal: statsData.totalVehicules,
+                reparationsEnCours: reparationsEnCours.length,
+                rdvAujourdhui: rdvToday.length,
+                caJour: caJour,
+                caJourChange: 0 // TODO: Calculer le changement vs hier si besoin
+            })
+
+            // Build recent items from latest repairs
+            const recentRepairs: RecentItem[] = reparationsEnCours.slice(0, 5).map(r => ({
+                id: r.id || '',
+                type: 'repair' as const,
+                titre: r.description?.substring(0, 50) || 'Réparation',
+                sousTitre: `#${r.numero}`,
+                date: r.dateEntree?.toDate ? r.dateEntree.toDate().toLocaleDateString('fr-FR') : '-'
+            }))
+
+            setRecentItems(recentRepairs)
+            setLowStockCount(0) // TODO: Implémenter getLowStockArticles dans database.ts
+
         } catch (error) {
             console.error("Erreur chargement dashboard:", error)
         } finally {

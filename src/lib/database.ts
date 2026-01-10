@@ -90,9 +90,11 @@ export interface GarageConfig {
 export interface Client {
     id?: string
     garageId: string
+    type?: 'particulier' | 'societe'
     civilite: string
     prenom: string
     nom: string
+    raisonSociale?: string
     email?: string
     telephone?: string
     adresse?: string

@@ -58,12 +58,29 @@ export function InvoiceTemplate({ data, scale = 1, className = "" }: InvoiceTemp
     const formatDate = (d: Date | string) => {
         if (!d) return "-"
         const date = typeof d === 'string' ? new Date(d) : d
-        return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+        return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
     }
 
-    const formatCurrency = (amount: number) => amount.toFixed(2) + " €"
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('fr-FR', {
+            style: 'currency',
+            currency: 'EUR',
+            minimumFractionDigits: 2
+        }).format(amount)
+    }
 
     const isDevis = data.type === 'devis'
+    const docTitle = isDevis ? 'DEVIS' : 'FACTURE'
+
+    // Design tokens - "Hyper Pro" aesthetic
+    const colors = {
+        black: '#111827',     // gray-900 (Text principal)
+        darkGray: '#374151',  // gray-700 (Labels importants)
+        gray: '#6B7280',      // gray-500 (Labels secondaires)
+        lightGray: '#E5E7EB', // gray-200 (Bordures)
+        ultraLight: '#F9FAFB',// gray-50 (Fonds alternés)
+        accent: '#111827'     // Noir profond pour l'accentuation premium
+    }
 
     return (
         <div
@@ -71,352 +88,278 @@ export function InvoiceTemplate({ data, scale = 1, className = "" }: InvoiceTemp
             style={{
                 width: '210mm',
                 minHeight: '297mm',
-                maxHeight: '297mm',
-                fontSize: `${10 * scale}px`,
-                fontFamily: 'system-ui, -apple-system, sans-serif',
-                overflow: 'hidden'
+                fontSize: `${11 * scale}px`, // Increased font size
+                fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                color: colors.black,
+                overflow: 'hidden',
+                boxSizing: 'border-box',
+                position: 'relative',
+                lineHeight: '1.5'
             }}
         >
-            {/* Top accent bar */}
-            <div
-                className="w-full"
-                style={{
-                    height: '4px',
-                    background: isDevis
-                        ? 'linear-gradient(90deg, #2563eb, #3b82f6, #2563eb)'
-                        : 'linear-gradient(90deg, #18181b, #3f3f46, #18181b)'
-                }}
-            />
+            {/* Page Padding - Generous margins for premium feel */}
+            <div style={{ padding: `${40 * scale}px ${40 * scale}px` }}>
 
-            <div style={{ padding: `${20 * scale}px ${24 * scale}px` }}>
-                {/* Header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: `${16 * scale}px` }}>
-                    {/* Company */}
-                    <div style={{ display: 'flex', gap: `${12 * scale}px`, alignItems: 'flex-start' }}>
+                {/* 1. HEADER: Logo & Document ID */}
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    marginBottom: `${60 * scale}px`
+                }}>
+                    {/* Logo Area */}
+                    <div>
                         {data.garage.logo ? (
                             <img
                                 src={data.garage.logo}
                                 alt="Logo"
                                 style={{
-                                    width: `${40 * scale}px`,
-                                    height: `${40 * scale}px`,
+                                    height: `${120 * scale}px`, // Increased Logo
+                                    width: 'auto',
                                     objectFit: 'contain',
-                                    borderRadius: `${4 * scale}px`
+                                    display: 'block'
                                 }}
                             />
                         ) : (
                             <div style={{
-                                width: `${40 * scale}px`,
-                                height: `${40 * scale}px`,
-                                background: '#f4f4f5',
-                                borderRadius: `${4 * scale}px`,
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'center'
+                                gap: `${16 * scale}px`
                             }}>
-                                <Building2 style={{ width: `${20 * scale}px`, height: `${20 * scale}px`, color: '#a1a1aa' }} />
+                                <div style={{
+                                    width: `${80 * scale}px`,
+                                    height: `${80 * scale}px`,
+                                    background: colors.black,
+                                    borderRadius: `${10 * scale}px`,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: 'white'
+                                }}>
+                                    <Building2 size={40 * scale} />
+                                </div>
+                                <span style={{ fontWeight: 700, fontSize: `${28 * scale}px`, letterSpacing: '-0.02em' }}>
+                                    {data.garage.nom}
+                                </span>
                             </div>
                         )}
-                        <div>
-                            <p style={{ fontWeight: 700, fontSize: `${12 * scale}px`, color: '#18181b', marginBottom: `${2 * scale}px` }}>
-                                {data.garage.nom || 'Garage'}
-                            </p>
-                            <p style={{ color: '#71717a', fontSize: `${9 * scale}px` }}>{data.garage.adresse}</p>
-                            <p style={{ color: '#71717a', fontSize: `${9 * scale}px` }}>{data.garage.codePostal} {data.garage.ville}</p>
-                            {data.garage.telephone && <p style={{ color: '#71717a', fontSize: `${9 * scale}px` }}>{data.garage.telephone}</p>}
-                        </div>
                     </div>
 
-                    {/* Document info */}
+                    {/* Document ID Block - Right Aligned */}
                     <div style={{ textAlign: 'right' }}>
-                        <div style={{
-                            display: 'inline-block',
-                            background: isDevis ? '#2563eb' : '#18181b',
-                            color: 'white',
-                            padding: `${6 * scale}px ${16 * scale}px`,
-                            borderRadius: `${4 * scale}px`,
-                            marginBottom: `${6 * scale}px`
+                        <h1 style={{
+                            fontSize: `${36 * scale}px`,  // Larger Title
+                            fontWeight: 800,
+                            letterSpacing: '-0.03em',
+                            margin: 0,
+                            lineHeight: 1,
+                            color: colors.black,
+                            marginBottom: `${8 * scale}px`
                         }}>
-                            <span style={{ fontWeight: 700, fontSize: `${12 * scale}px`, letterSpacing: '0.05em' }}>
-                                {isDevis ? 'DEVIS' : 'FACTURE'}
-                            </span>
-                        </div>
-                        <p style={{ fontFamily: 'monospace', fontWeight: 600, fontSize: `${11 * scale}px`, color: '#18181b' }}>
-                            {data.numero}
+                            {docTitle}
+                        </h1>
+                        <p style={{
+                            fontSize: `${15 * scale}px`,
+                            color: colors.gray,
+                            fontWeight: 500,
+                            fontFamily: "'JetBrains Mono', monospace"
+                        }}>
+                            #{data.numero}
                         </p>
-                        <p style={{ color: '#71717a', fontSize: `${9 * scale}px`, marginTop: `${2 * scale}px` }}>
-                            {formatDate(data.dateEmission)}
-                        </p>
-                        {data.dateEcheance && (
-                            <p style={{ color: '#71717a', fontSize: `${9 * scale}px` }}>
-                                {isDevis ? 'Valide jusqu\'au' : 'Échéance'} {formatDate(data.dateEcheance)}
-                            </p>
-                        )}
                     </div>
                 </div>
 
-                {/* Client & Vehicle Row */}
+                {/* 2. CONTEXT GRID: From, To, Details */}
                 <div style={{
                     display: 'grid',
-                    gridTemplateColumns: data.vehicule?.plaque ? '1fr 1fr' : '1fr',
-                    gap: `${12 * scale}px`,
-                    marginBottom: `${16 * scale}px`
+                    gridTemplateColumns: '1.2fr 1.2fr 1fr',
+                    gap: `${40 * scale}px`,
+                    marginBottom: `${60 * scale}px`,
+                    borderBottom: `1px solid ${colors.lightGray}`,
+                    paddingBottom: `${40 * scale}px`
                 }}>
-                    <div style={{
-                        background: '#fafafa',
-                        padding: `${10 * scale}px ${12 * scale}px`,
-                        borderRadius: `${6 * scale}px`,
-                        border: '1px solid #e4e4e7'
-                    }}>
+
+                    {/* FROM (Garage) */}
+                    <div>
                         <p style={{
-                            fontSize: `${8 * scale}px`,
-                            color: '#a1a1aa',
+                            fontSize: `${11 * scale}px`,
                             textTransform: 'uppercase',
                             letterSpacing: '0.05em',
-                            marginBottom: `${4 * scale}px`
+                            color: colors.gray,
+                            fontWeight: 600,
+                            marginBottom: `${12 * scale}px`
                         }}>
-                            {isDevis ? 'Devis pour' : 'Facturé à'}
+                            Émetteur
                         </p>
-                        <p style={{ fontWeight: 600, color: '#18181b', fontSize: `${10 * scale}px` }}>{data.client.nom}</p>
-                        {data.client.adresse && <p style={{ color: '#52525b', fontSize: `${9 * scale}px` }}>{data.client.adresse}</p>}
-                        {(data.client.codePostal || data.client.ville) && (
-                            <p style={{ color: '#52525b', fontSize: `${9 * scale}px` }}>{data.client.codePostal} {data.client.ville}</p>
-                        )}
+                        <p style={{ fontWeight: 700, fontSize: `${12 * scale}px`, marginBottom: `${4 * scale}px` }}>
+                            {data.garage.nom}
+                        </p>
+                        <div style={{ color: colors.darkGray, fontSize: `${11 * scale}px` }}>
+                            <p>{data.garage.adresse}</p>
+                            <p>{data.garage.codePostal} {data.garage.ville}</p>
+                            <div style={{ marginTop: `${8 * scale}px`, display: 'flex', flexDirection: 'column', gap: `${2 * scale}px` }}>
+                                {data.garage.email && <p>{data.garage.email}</p>}
+                                {data.garage.telephone && <p>{data.garage.telephone}</p>}
+                            </div>
+                        </div>
                     </div>
 
-                    {data.vehicule?.plaque && (
-                        <div style={{
-                            background: '#fafafa',
-                            padding: `${10 * scale}px ${12 * scale}px`,
-                            borderRadius: `${6 * scale}px`,
-                            border: '1px solid #e4e4e7'
+                    {/* TO (Client) */}
+                    <div>
+                        <p style={{
+                            fontSize: `${11 * scale}px`,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            color: colors.gray,
+                            fontWeight: 600,
+                            marginBottom: `${12 * scale}px`
                         }}>
-                            <p style={{
-                                fontSize: `${8 * scale}px`,
-                                color: '#a1a1aa',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.05em',
-                                marginBottom: `${4 * scale}px`
-                            }}>
-                                Véhicule
-                            </p>
-                            <p style={{
-                                fontFamily: 'monospace',
-                                fontWeight: 700,
-                                color: '#18181b',
-                                fontSize: `${11 * scale}px`,
-                                background: '#e4e4e7',
-                                padding: `${2 * scale}px ${6 * scale}px`,
-                                borderRadius: `${3 * scale}px`,
-                                display: 'inline-block'
-                            }}>
-                                {data.vehicule.plaque}
-                            </p>
-                            <p style={{ color: '#52525b', fontSize: `${9 * scale}px`, marginTop: `${2 * scale}px` }}>
-                                {data.vehicule.marque} {data.vehicule.modele}
-                            </p>
+                            Adressé à
+                        </p>
+                        <p style={{ fontWeight: 700, fontSize: `${12 * scale}px`, marginBottom: `${4 * scale}px` }}>
+                            {data.client.nom}
+                        </p>
+                        <div style={{ color: colors.darkGray, fontSize: `${11 * scale}px` }}>
+                            {data.client.adresse && <p>{data.client.adresse}</p>}
+                            {(data.client.codePostal || data.client.ville) && (
+                                <p>{data.client.codePostal} {data.client.ville}</p>
+                            )}
+                            {data.client.email && (
+                                <p style={{ marginTop: `${8 * scale}px` }}>{data.client.email}</p>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* DETAILS (Dates & Car) */}
+                    <div style={{ textAlign: 'right' }}>
+                        <p style={{
+                            fontSize: `${11 * scale}px`,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            color: colors.gray,
+                            fontWeight: 600,
+                            marginBottom: `${12 * scale}px`
+                        }}>
+                            Détails
+                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: `${8 * scale}px` }}>
+                            <div>
+                                <span style={{ color: colors.gray, fontSize: `${11 * scale}px` }}>Date d'émission</span>
+                                <p style={{ fontWeight: 600, fontSize: `${12 * scale}px` }}>{formatDate(data.dateEmission)}</p>
+                            </div>
+                            {data.dateEcheance && (
+                                <div>
+                                    <span style={{ color: colors.gray, fontSize: `${11 * scale}px` }}>{isDevis ? 'Validité' : 'Échéance'}</span>
+                                    <p style={{ fontWeight: 600, fontSize: `${12 * scale}px` }}>{formatDate(data.dateEcheance)}</p>
+                                </div>
+                            )}
+                            {data.vehicule?.plaque && (
+                                <div style={{ marginTop: `${8 * scale}px` }}>
+                                    <span style={{ color: colors.gray, fontSize: `${11 * scale}px` }}>Véhicule</span>
+                                    <div style={{
+                                        display: 'inline-block',
+                                        background: colors.ultraLight,
+                                        border: `1px solid ${colors.lightGray}`,
+                                        padding: `${4 * scale}px ${8 * scale}px`,
+                                        borderRadius: `${4 * scale}px`,
+                                        marginTop: `${4 * scale}px`
+                                    }}>
+                                        <p style={{ fontWeight: 700, fontSize: `${11 * scale}px`, fontFamily: "'JetBrains Mono', monospace" }}>
+                                            {data.vehicule.plaque}
+                                        </p>
+                                        <p style={{ fontSize: `${10 * scale}px`, color: colors.gray }}>
+                                            {data.vehicule.marque} {data.vehicule.modele}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* 3. ITEMS TABLE */}
+                <div style={{ marginBottom: `${40 * scale}px` }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                            <tr style={{ borderBottom: `1px solid ${colors.black}` }}>
+                                <th style={{ textAlign: 'left', padding: `${12 * scale}px 0`, textTransform: 'uppercase', fontSize: `${10 * scale}px`, fontWeight: 700, letterSpacing: '0.05em', color: colors.black }}>Description</th>
+                                <th style={{ textAlign: 'center', padding: `${12 * scale}px`, textTransform: 'uppercase', fontSize: `${10 * scale}px`, fontWeight: 700, letterSpacing: '0.05em', color: colors.black, width: '10%' }}>Qté</th>
+                                <th style={{ textAlign: 'right', padding: `${12 * scale}px`, textTransform: 'uppercase', fontSize: `${10 * scale}px`, fontWeight: 700, letterSpacing: '0.05em', color: colors.black, width: '15%' }}>Prix Unit.</th>
+                                <th style={{ textAlign: 'right', padding: `${12 * scale}px 0`, textTransform: 'uppercase', fontSize: `${10 * scale}px`, fontWeight: 700, letterSpacing: '0.05em', color: colors.black, width: '15%' }}>Total HT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.lignes.map((ligne, i) => {
+                                const qte = typeof ligne.quantite === 'string' ? parseFloat(ligne.quantite) || 0 : ligne.quantite
+                                const totalLigne = ligne.totalHT ?? (qte * ligne.prixUnitaireHT)
+                                return (
+                                    <tr key={i} style={{ borderBottom: `1px solid ${colors.lightGray}` }}>
+                                        <td style={{ padding: `${16 * scale}px 0` }}>
+                                            <p style={{ fontWeight: 600, fontSize: `${12 * scale}px`, color: colors.black }}>{ligne.designation}</p>
+                                            {ligne.description && <p style={{ fontSize: `${11 * scale}px`, color: colors.gray, marginTop: `${4 * scale}px` }}>{ligne.description}</p>}
+                                        </td>
+                                        <td style={{ textAlign: 'center', padding: `${16 * scale}px`, fontSize: `${12 * scale}px`, color: colors.darkGray }}>{ligne.quantite}</td>
+                                        <td style={{ textAlign: 'right', padding: `${16 * scale}px`, fontSize: `${12 * scale}px`, color: colors.darkGray, fontFamily: "'JetBrains Mono', monospace" }}>{formatCurrency(ligne.prixUnitaireHT)}</td>
+                                        <td style={{ textAlign: 'right', padding: `${16 * scale}px 0`, fontSize: `${12 * scale}px`, fontWeight: 600, color: colors.black, fontFamily: "'JetBrains Mono', monospace" }}>{formatCurrency(totalLigne)}</td>
+                                    </tr>
+                                )
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* 4. TOTALS */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: `${60 * scale}px` }}>
+                    <div style={{ width: '40%' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: `${8 * scale}px 0`, borderBottom: `1px solid ${colors.lightGray}` }}>
+                            <span style={{ fontSize: `${12 * scale}px`, color: colors.gray }}>Total HT</span>
+                            <span style={{ fontSize: `${12 * scale}px`, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>{formatCurrency(data.totalHT)}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: `${8 * scale}px 0`, borderBottom: `1px solid ${colors.lightGray}` }}>
+                            <span style={{ fontSize: `${12 * scale}px`, color: colors.gray }}>TVA ({data.tauxTVA}%)</span>
+                            <span style={{ fontSize: `${12 * scale}px`, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>{formatCurrency(data.totalTVA)}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: `${16 * scale}px 0`, alignItems: 'baseline' }}>
+                            <span style={{ fontSize: `${15 * scale}px`, fontWeight: 700, color: colors.black }}>Total TTC</span>
+                            <span style={{ fontSize: `${22 * scale}px`, fontWeight: 800, color: colors.black, fontFamily: "'JetBrains Mono', monospace" }}>{formatCurrency(data.totalTTC)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 5. NOTES & FOOTER */}
+                <div style={{ marginTop: 'auto' }}>
+                    {data.notes && (
+                        <div style={{ marginBottom: `${40 * scale}px` }}>
+                            <p style={{ fontSize: `${11 * scale}px`, color: colors.gray, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: `${8 * scale}px` }}>Notes</p>
+                            <p style={{ fontSize: `${12 * scale}px`, color: colors.darkGray, lineHeight: 1.6 }}>{data.notes}</p>
                         </div>
                     )}
-                </div>
 
-                {/* Table */}
-                <table style={{
-                    width: '100%',
-                    borderCollapse: 'collapse',
-                    marginBottom: `${12 * scale}px`
-                }}>
-                    <thead>
-                        <tr style={{ background: '#18181b' }}>
-                            <th style={{
-                                textAlign: 'left',
-                                padding: `${8 * scale}px ${10 * scale}px`,
-                                fontSize: `${8 * scale}px`,
-                                fontWeight: 600,
-                                color: 'white',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.05em'
-                            }}>
-                                Désignation
-                            </th>
-                            <th style={{
-                                textAlign: 'center',
-                                padding: `${8 * scale}px`,
-                                fontSize: `${8 * scale}px`,
-                                fontWeight: 600,
-                                color: 'white',
-                                textTransform: 'uppercase',
-                                width: `${50 * scale}px`
-                            }}>
-                                Qté
-                            </th>
-                            <th style={{
-                                textAlign: 'right',
-                                padding: `${8 * scale}px`,
-                                fontSize: `${8 * scale}px`,
-                                fontWeight: 600,
-                                color: 'white',
-                                textTransform: 'uppercase',
-                                width: `${70 * scale}px`
-                            }}>
-                                P.U. HT
-                            </th>
-                            <th style={{
-                                textAlign: 'right',
-                                padding: `${8 * scale}px ${10 * scale}px`,
-                                fontSize: `${8 * scale}px`,
-                                fontWeight: 600,
-                                color: 'white',
-                                textTransform: 'uppercase',
-                                width: `${70 * scale}px`
-                            }}>
-                                Total HT
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {data.lignes.map((ligne, index) => {
-                            const qte = typeof ligne.quantite === 'string' ? parseFloat(ligne.quantite) || 0 : ligne.quantite
-                            const totalLigne = ligne.totalHT ?? (qte * ligne.prixUnitaireHT)
-                            const isEven = index % 2 === 0
+                    <div style={{ borderTop: `1px solid ${colors.lightGray}`, paddingTop: `${24 * scale}px` }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: `${20 * scale}px` }}>
+                            {/* Mentions légales */}
+                            <div style={{ flex: 1 }}>
+                                {data.mentionsLegales ? (
+                                    <p style={{ fontSize: `${10 * scale}px`, color: colors.gray, lineHeight: 1.5 }}>
+                                        {data.mentionsLegales}
+                                    </p>
+                                ) : (
+                                    <p style={{ fontSize: `${10 * scale}px`, color: colors.gray }}>
+                                        Document généré par GaragePro.
+                                    </p>
+                                )}
+                            </div>
 
-                            return (
-                                <tr key={ligne.id || index} style={{ background: isEven ? '#fafafa' : 'white' }}>
-                                    <td style={{
-                                        padding: `${6 * scale}px ${10 * scale}px`,
-                                        borderBottom: '1px solid #e4e4e7'
-                                    }}>
-                                        <span style={{ fontWeight: 500, color: '#18181b' }}>{ligne.designation || '-'}</span>
-                                        {ligne.description && (
-                                            <span style={{
-                                                display: 'block',
-                                                color: '#71717a',
-                                                fontSize: `${8 * scale}px`
-                                            }}>
-                                                {ligne.description}
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td style={{
-                                        textAlign: 'center',
-                                        padding: `${6 * scale}px`,
-                                        color: '#52525b',
-                                        borderBottom: '1px solid #e4e4e7'
-                                    }}>
-                                        {ligne.quantite}
-                                    </td>
-                                    <td style={{
-                                        textAlign: 'right',
-                                        padding: `${6 * scale}px`,
-                                        color: '#52525b',
-                                        fontFamily: 'monospace',
-                                        borderBottom: '1px solid #e4e4e7'
-                                    }}>
-                                        {formatCurrency(ligne.prixUnitaireHT)}
-                                    </td>
-                                    <td style={{
-                                        textAlign: 'right',
-                                        padding: `${6 * scale}px ${10 * scale}px`,
-                                        fontWeight: 600,
-                                        color: '#18181b',
-                                        fontFamily: 'monospace',
-                                        borderBottom: '1px solid #e4e4e7'
-                                    }}>
-                                        {formatCurrency(totalLigne)}
-                                    </td>
-                                </tr>
-                            )
-                        })}
-                    </tbody>
-                </table>
-
-                {/* Totals */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: `${12 * scale}px` }}>
-                    <div style={{ width: `${160 * scale}px` }}>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            padding: `${4 * scale}px 0`,
-                            color: '#52525b',
-                            fontSize: `${9 * scale}px`
-                        }}>
-                            <span>Total HT</span>
-                            <span style={{ fontFamily: 'monospace' }}>{formatCurrency(data.totalHT)}</span>
-                        </div>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            padding: `${4 * scale}px 0`,
-                            color: '#52525b',
-                            fontSize: `${9 * scale}px`
-                        }}>
-                            <span>TVA {data.tauxTVA}%</span>
-                            <span style={{ fontFamily: 'monospace' }}>{formatCurrency(data.totalTVA)}</span>
-                        </div>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            padding: `${8 * scale}px 0`,
-                            marginTop: `${4 * scale}px`,
-                            borderTop: `2px solid #18181b`,
-                            fontSize: `${11 * scale}px`
-                        }}>
-                            <span style={{ fontWeight: 700, color: '#18181b' }}>Total TTC</span>
-                            <span style={{ fontWeight: 700, color: '#18181b', fontFamily: 'monospace' }}>
-                                {formatCurrency(data.totalTTC)}
-                            </span>
+                            {/* Garage Legal Info */}
+                            <div style={{ textAlign: 'right', fontSize: `${10 * scale}px`, color: colors.gray }}>
+                                <p style={{ marginBottom: `${2 * scale}px` }}>{data.garage.nom}</p>
+                                {data.garage.siret && <p>SIRET : {data.garage.siret}</p>}
+                                {data.garage.tva && <p>TVA : {data.garage.tva}</p>}
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Notes */}
-                {data.notes && (
-                    <div style={{
-                        background: '#fef3c7',
-                        border: '1px solid #fcd34d',
-                        padding: `${8 * scale}px ${10 * scale}px`,
-                        borderRadius: `${4 * scale}px`,
-                        marginBottom: `${12 * scale}px`
-                    }}>
-                        <p style={{ fontSize: `${9 * scale}px`, color: '#92400e' }}>
-                            <strong>Note :</strong> {data.notes}
-                        </p>
-                    </div>
-                )}
-
-                {/* Legal Mentions - Compact */}
-                {data.mentionsLegales && (
-                    <div style={{
-                        borderTop: '1px solid #e4e4e7',
-                        paddingTop: `${8 * scale}px`,
-                        marginBottom: `${8 * scale}px`
-                    }}>
-                        <p style={{
-                            fontSize: `${7 * scale}px`,
-                            color: '#a1a1aa',
-                            lineHeight: 1.4
-                        }}>
-                            {data.mentionsLegales}
-                        </p>
-                    </div>
-                )}
-
-                {/* Footer - Minimal */}
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    paddingTop: `${6 * scale}px`,
-                    borderTop: '1px solid #f4f4f5',
-                    fontSize: `${8 * scale}px`,
-                    color: '#a1a1aa'
-                }}>
-                    <span>{data.garage.email}</span>
-                    <span>
-                        {data.garage.siret && `SIRET: ${data.garage.siret}`}
-                        {data.garage.siret && data.garage.tva && ' • '}
-                        {data.garage.tva && `TVA: ${data.garage.tva}`}
-                    </span>
-                </div>
             </div>
         </div>
     )
