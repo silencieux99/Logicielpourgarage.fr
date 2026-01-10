@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Récupérer l'abonnement séparément pour avoir toutes les données
-        const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId) as any
 
         // Mettre à jour le garage
         const garageSnapshot = await adminDb
