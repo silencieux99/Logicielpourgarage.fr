@@ -43,7 +43,6 @@ export default function SchedulePage() {
     const loadAppointments = async () => {
         setLoading(true)
         try {
-            // TODO: Load from Firebase
             setAppointments([])
         } catch (error) {
             console.error("Erreur chargement RDV:", error)
@@ -77,12 +76,12 @@ export default function SchedulePage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">Agenda</h1>
-                    <p className="text-sm text-zinc-500 mt-1">{appointments.length} rendez-vous</p>
+                    <h1 className="text-xl sm:text-2xl font-semibold text-[var(--text-primary)] tracking-tight">Agenda</h1>
+                    <p className="text-[13px] text-[var(--text-tertiary)] mt-0.5">{appointments.length} rendez-vous</p>
                 </div>
                 <Link
                     href="/schedule/new"
-                    className="hidden sm:flex h-10 sm:h-11 px-4 sm:px-5 bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-medium rounded-xl items-center gap-2 transition-colors"
+                    className="hidden sm:inline-flex h-9 px-4 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white text-[13px] font-medium rounded-lg items-center gap-2 transition-colors"
                 >
                     <Plus className="h-4 w-4" />
                     <span>Nouveau RDV</span>
@@ -90,23 +89,23 @@ export default function SchedulePage() {
             </div>
 
             {/* Date Navigation */}
-            <div className="bg-white rounded-xl border border-zinc-200 p-4">
+            <div className="bg-white rounded-xl border border-[var(--border-light)] p-4" style={{ boxShadow: 'var(--shadow-sm)' }}>
                 <div className="flex items-center justify-between">
                     <button
                         onClick={() => goToDay(-1)}
-                        className="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
+                        className="p-2 hover:bg-[var(--bg-tertiary)] rounded-lg transition-colors"
                     >
-                        <ChevronLeft className="h-5 w-5 text-zinc-600" />
+                        <ChevronLeft className="h-5 w-5 text-[var(--text-secondary)]" />
                     </button>
 
                     <div className="text-center">
-                        <p className="text-lg font-semibold text-zinc-900 capitalize">
+                        <p className="text-[15px] font-semibold text-[var(--text-primary)] capitalize">
                             {formatDate(selectedDate)}
                         </p>
                         {!isToday && (
                             <button
                                 onClick={() => setSelectedDate(new Date())}
-                                className="text-sm text-zinc-500 hover:text-zinc-900"
+                                className="text-[12px] text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
                             >
                                 Retour à aujourd'hui
                             </button>
@@ -115,9 +114,9 @@ export default function SchedulePage() {
 
                     <button
                         onClick={() => goToDay(1)}
-                        className="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
+                        className="p-2 hover:bg-[var(--bg-tertiary)] rounded-lg transition-colors"
                     >
-                        <ChevronRight className="h-5 w-5 text-zinc-600" />
+                        <ChevronRight className="h-5 w-5 text-[var(--text-secondary)]" />
                     </button>
                 </div>
             </div>
@@ -125,12 +124,11 @@ export default function SchedulePage() {
             {/* Content */}
             {loading ? (
                 <div className="flex items-center justify-center py-20">
-                    <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+                    <Loader2 className="h-6 w-6 animate-spin text-[var(--text-muted)]" />
                 </div>
             ) : (
-                <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-                    {/* Time slots */}
-                    <div className="divide-y divide-zinc-100">
+                <div className="bg-white rounded-xl border border-[var(--border-light)] overflow-hidden" style={{ boxShadow: 'var(--shadow-sm)' }}>
+                    <div className="divide-y divide-[var(--border-light)]">
                         {timeSlots.map((time) => {
                             const appointment = getAppointmentAtTime(time)
 
@@ -138,11 +136,11 @@ export default function SchedulePage() {
                                 <div
                                     key={time}
                                     className={cn(
-                                        "flex items-stretch min-h-[60px]",
-                                        appointment ? "bg-zinc-50" : "hover:bg-zinc-50"
+                                        "flex items-stretch min-h-[56px]",
+                                        appointment ? "bg-[var(--bg-tertiary)]" : "hover:bg-[var(--bg-secondary)]"
                                     )}
                                 >
-                                    <div className="w-16 sm:w-20 flex-shrink-0 p-3 text-sm font-medium text-zinc-500 border-r border-zinc-100">
+                                    <div className="w-16 sm:w-20 flex-shrink-0 p-3 text-[13px] font-medium text-[var(--text-muted)] border-r border-[var(--border-light)]">
                                         {time}
                                     </div>
 
@@ -152,18 +150,18 @@ export default function SchedulePage() {
                                                 href={`/schedule/${appointment.id}`}
                                                 className={cn(
                                                     "block p-3 rounded-lg border-l-4",
-                                                    appointment.typeColor || "border-zinc-400 bg-zinc-100"
+                                                    appointment.typeColor || "border-[var(--accent-primary)] bg-[var(--bg-tertiary)]"
                                                 )}
                                             >
-                                                <p className="text-sm font-semibold text-zinc-900">{appointment.type}</p>
+                                                <p className="text-[13px] font-semibold text-[var(--text-primary)]">{appointment.type}</p>
                                                 {appointment.clientNom && (
-                                                    <div className="flex items-center gap-1 text-xs text-zinc-500 mt-1">
+                                                    <div className="flex items-center gap-1 text-[11px] text-[var(--text-tertiary)] mt-1">
                                                         <User className="h-3 w-3" />
                                                         {appointment.clientNom}
                                                     </div>
                                                 )}
                                                 {appointment.vehiculePlaque && (
-                                                    <div className="flex items-center gap-1 text-xs text-zinc-500">
+                                                    <div className="flex items-center gap-1 text-[11px] text-[var(--text-tertiary)]">
                                                         <Car className="h-3 w-3" />
                                                         {appointment.vehiculePlaque}
                                                     </div>
@@ -172,7 +170,7 @@ export default function SchedulePage() {
                                         ) : (
                                             <Link
                                                 href={`/schedule/new?date=${selectedDate.toISOString().split('T')[0]}&time=${time}`}
-                                                className="w-full h-full min-h-[44px] flex items-center justify-center text-zinc-400 hover:text-zinc-600 transition-colors rounded-lg border-2 border-dashed border-transparent hover:border-zinc-200"
+                                                className="w-full h-full min-h-[40px] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-tertiary)] transition-colors rounded-lg border border-dashed border-transparent hover:border-[var(--border-default)]"
                                             >
                                                 <Plus className="h-4 w-4" />
                                             </Link>
@@ -185,16 +183,16 @@ export default function SchedulePage() {
                 </div>
             )}
 
-            {/* Empty State - only if no appointments at all */}
+            {/* Empty State */}
             {!loading && appointments.length === 0 && (
-                <div className="bg-zinc-50 rounded-xl p-6 text-center">
-                    <Calendar className="h-8 w-8 text-zinc-400 mx-auto mb-2" />
-                    <p className="text-sm text-zinc-500">
+                <div className="bg-[var(--bg-tertiary)] rounded-xl p-6 text-center">
+                    <Calendar className="h-6 w-6 text-[var(--text-muted)] mx-auto mb-2" />
+                    <p className="text-[13px] text-[var(--text-tertiary)]">
                         Aucun rendez-vous prévu ce jour
                     </p>
                     <Link
                         href={`/schedule/new?date=${selectedDate.toISOString().split('T')[0]}`}
-                        className="inline-flex items-center gap-2 text-sm font-medium text-zinc-900 mt-2 hover:underline"
+                        className="inline-flex items-center gap-2 text-[13px] font-medium text-[var(--accent-primary)] mt-2 hover:underline"
                     >
                         <Plus className="h-4 w-4" />
                         Planifier un rendez-vous
@@ -205,9 +203,10 @@ export default function SchedulePage() {
             {/* Mobile FAB */}
             <Link
                 href="/schedule/new"
-                className="md:hidden fixed right-4 bottom-20 w-14 h-14 bg-zinc-900 hover:bg-zinc-800 text-white rounded-full shadow-lg flex items-center justify-center z-30"
+                className="md:hidden fixed right-4 bottom-20 w-12 h-12 bg-[var(--accent-primary)] text-white rounded-full flex items-center justify-center z-30"
+                style={{ boxShadow: 'var(--shadow-lg)' }}
             >
-                <Plus className="h-6 w-6" />
+                <Plus className="h-5 w-5" />
             </Link>
         </div>
     )

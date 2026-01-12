@@ -5,6 +5,9 @@ import {
     sendPasswordResetEmail,
     sendEmailVerification,
     onAuthStateChanged,
+    updatePassword,
+    reauthenticateWithCredential,
+    EmailAuthProvider,
     User
 } from 'firebase/auth'
 import { auth } from './firebase'
@@ -31,6 +34,21 @@ export const signOut = async () => {
 // Mot de passe oublié
 export const resetPassword = async (email: string) => {
     await sendPasswordResetEmail(auth, email)
+}
+
+// Changer le mot de passe (nécessite réauthentification)
+export const updateUserPassword = async (currentPassword: string, newPassword: string) => {
+    const user = auth.currentUser
+    if (!user || !user.email) {
+        throw new Error('Utilisateur non connecté')
+    }
+
+    // Réauthentifier l'utilisateur avec son mot de passe actuel
+    const credential = EmailAuthProvider.credential(user.email, currentPassword)
+    await reauthenticateWithCredential(user, credential)
+
+    // Mettre à jour le mot de passe
+    await updatePassword(user, newPassword)
 }
 
 // Observer les changements d'authentification

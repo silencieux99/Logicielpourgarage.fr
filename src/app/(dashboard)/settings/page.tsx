@@ -30,6 +30,7 @@ import {
 } from "lucide-react"
 import { useUpload } from "@/hooks/use-upload"
 import { useAuth } from "@/lib/auth-context"
+import { updateUserPassword } from "@/lib/auth"
 import { getGarageByUserId, getGarageConfig, updateGarage, updateGarageConfig, createGarageConfig } from "@/lib/database"
 import { InvoiceTemplate } from "@/components/InvoiceTemplate"
 
@@ -44,11 +45,21 @@ const settingsSections = [
 ]
 
 export default function SettingsPage() {
-    const { user, loading } = useAuth()
+    const { user, garage, loading } = useAuth()
     const [activeSection, setActiveSection] = useState("garage")
     const [isSaving, setIsSaving] = useState(false)
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle')
     const [showPassword, setShowPassword] = useState(false)
+    const [mobileContentOpen, setMobileContentOpen] = useState(false)
+
+    // Password change states
+    const [passwordData, setPasswordData] = useState({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: ""
+    })
+    const [passwordLoading, setPasswordLoading] = useState(false)
+    const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
     // Refs
     const avatarInputRef = useRef<HTMLInputElement>(null)
@@ -70,8 +81,13 @@ export default function SettingsPage() {
         uploading: logoUploading
     } = useUpload({ folder: 'logos', maxFiles: 1 })
 
-    const avatarUrl = avatarFiles[0]?.url || avatarFiles[0]?.preview
-    const logoUrl = logoFiles[0]?.url || logoFiles[0]?.preview
+    // URLs existantes depuis Firestore (avant upload de nouveaux fichiers)
+    const [existingAvatarUrl, setExistingAvatarUrl] = useState<string | null>(null)
+    const [existingLogoUrl, setExistingLogoUrl] = useState<string | null>(null)
+
+    // Utiliser l'URL uploadée si disponible, sinon l'URL existante
+    const avatarUrl = avatarFiles[0]?.url || avatarFiles[0]?.preview || existingAvatarUrl
+    const logoUrl = logoFiles[0]?.url || logoFiles[0]?.preview || existingLogoUrl
 
     // Form states
     const [profileData, setProfileData] = useState({
@@ -105,7 +121,7 @@ export default function SettingsPage() {
 
     const [notificationSettings, setNotificationSettings] = useState({
         emailRappelRDV: true,
-        smsRappelRDV: true,
+        smsRappelRDV: false,
         emailDevis: true,
         emailFacture: true,
         rappelDelai: 24,
@@ -116,11 +132,30 @@ export default function SettingsPage() {
         const loadInitialData = async () => {
             if (!user) return;
 
+            console.log('🔄 Chargement des données pour user:', user.uid);
             setProfileData(prev => ({ ...prev, email: user.email || "" }));
 
             try {
                 const garageDataFetched = await getGarageByUserId(user.uid);
+                console.log('📦 Données garage chargées:', garageDataFetched);
+
                 if (garageDataFetched) {
+                    // Charger les données du profil utilisateur
+                    setProfileData(prev => ({
+                        ...prev,
+                        prenom: garageDataFetched.ownerPrenom || "",
+                        nom: garageDataFetched.ownerNom || "",
+                        telephone: garageDataFetched.ownerTelephone || "",
+                    }));
+
+                    // Charger les URLs d'avatar et logo existantes
+                    if (garageDataFetched.ownerAvatar) {
+                        setExistingAvatarUrl(garageDataFetched.ownerAvatar);
+                    }
+                    if (garageDataFetched.logo) {
+                        setExistingLogoUrl(garageDataFetched.logo);
+                    }
+
                     setGarageData({
                         nom: garageDataFetched.nom || "",
                         siret: garageDataFetched.siret || "",
@@ -135,6 +170,8 @@ export default function SettingsPage() {
 
                     if (garageDataFetched.id) {
                         const configDataFetched = await getGarageConfig(garageDataFetched.id);
+                        console.log('📦 Données config chargées:', configDataFetched);
+
                         if (configDataFetched) {
                             setDocumentSettings({
                                 prefixeDevis: configDataFetched.prefixeDevis || "D",
@@ -155,6 +192,7 @@ export default function SettingsPage() {
                         }
                     }
                 }
+                console.log('✅ Chargement terminé');
             } catch (err) {
                 console.error('❌ Settings - Erreur chargement:', err);
             }
@@ -187,15 +225,23 @@ export default function SettingsPage() {
     }
 
     const handleSave = async () => {
-        if (!user) return
+        if (!user) {
+            console.error('❌ handleSave: Pas d\'utilisateur connecté')
+            return
+        }
         setIsSaving(true)
         setSaveStatus('saving')
 
         try {
+            console.log('🔄 Début sauvegarde...')
             const currentGarage = await getGarageByUserId(user.uid)
-            if (!currentGarage || !currentGarage.id) throw new Error("Garage non trouvé")
+            if (!currentGarage || !currentGarage.id) {
+                console.error('❌ handleSave: Garage non trouvé pour user:', user.uid)
+                throw new Error("Garage non trouvé")
+            }
+            console.log('✅ Garage trouvé:', currentGarage.id)
 
-            // Mettre à jour le garage
+            // Mettre à jour le garage (+ données profil)
             const garageUpdateData: any = {
                 nom: garageData.nom,
                 siret: garageData.siret,
@@ -206,11 +252,22 @@ export default function SettingsPage() {
                 telephone: garageData.telephone,
                 email: garageData.email,
                 siteWeb: garageData.siteWeb,
+                // Données profil utilisateur
+                ownerPrenom: profileData.prenom,
+                ownerNom: profileData.nom,
+                ownerTelephone: profileData.telephone,
             }
 
-            // Ajouter le logo seulement s'il existe
-            if (logoFiles[0]?.url) {
-                garageUpdateData.logo = logoFiles[0].url
+            // Ajouter le logo (nouveau upload ou existant)
+            const logoToSave = logoFiles[0]?.url || existingLogoUrl
+            if (logoToSave) {
+                garageUpdateData.logo = logoToSave
+            }
+
+            // Ajouter l'avatar (nouveau upload ou existant)
+            const avatarToSave = avatarFiles[0]?.url || existingAvatarUrl
+            if (avatarToSave) {
+                garageUpdateData.ownerAvatar = avatarToSave
             }
 
             // Filtrer les undefined
@@ -218,43 +275,46 @@ export default function SettingsPage() {
                 Object.entries(garageUpdateData).filter(([_, v]) => v !== undefined)
             )
 
+            console.log('🔄 Mise à jour garage avec:', cleanGarageData)
             await updateGarage(currentGarage.id, cleanGarageData)
+            console.log('✅ Garage mis à jour')
 
             // Vérifier si la config existe, sinon la créer
             let currentConfig = await getGarageConfig(currentGarage.id)
+            console.log('🔍 Config actuelle:', currentConfig)
+
+            const configData = {
+                prefixeDevis: documentSettings.prefixeDevis,
+                prefixeFacture: documentSettings.prefixeFacture,
+                prochainNumeroDevis: documentSettings.prochainNumeroDevis,
+                prochainNumeroFacture: documentSettings.prochainNumeroFacture,
+                mentionsLegales: documentSettings.mentionsLegales,
+                tauxHoraireMO: documentSettings.tauxHoraire,
+                tauxTVA: documentSettings.tauxTVA,
+                emailNotifications: notificationSettings.emailRappelRDV,
+                smsRappels: notificationSettings.smsRappelRDV,
+            }
+
             if (!currentConfig || !currentConfig.id) {
                 // Créer la config si elle n'existe pas
+                console.log('🔄 Création nouvelle config avec:', configData)
                 await createGarageConfig({
                     garageId: currentGarage.id,
-                    prefixeDevis: documentSettings.prefixeDevis,
-                    prefixeFacture: documentSettings.prefixeFacture,
-                    prochainNumeroDevis: documentSettings.prochainNumeroDevis,
-                    prochainNumeroFacture: documentSettings.prochainNumeroFacture,
-                    mentionsLegales: documentSettings.mentionsLegales,
-                    tauxHoraireMO: documentSettings.tauxHoraire,
-                    tauxTVA: documentSettings.tauxTVA,
-                    emailNotifications: notificationSettings.emailRappelRDV,
-                    smsRappels: notificationSettings.smsRappelRDV,
+                    ...configData,
                 })
+                console.log('✅ Config créée')
             } else {
                 // Mettre à jour la config existante
-                await updateGarageConfig(currentConfig.id, {
-                    prefixeDevis: documentSettings.prefixeDevis,
-                    prefixeFacture: documentSettings.prefixeFacture,
-                    prochainNumeroDevis: documentSettings.prochainNumeroDevis,
-                    prochainNumeroFacture: documentSettings.prochainNumeroFacture,
-                    mentionsLegales: documentSettings.mentionsLegales,
-                    tauxHoraireMO: documentSettings.tauxHoraire,
-                    tauxTVA: documentSettings.tauxTVA,
-                    emailNotifications: notificationSettings.emailRappelRDV,
-                    smsRappels: notificationSettings.smsRappelRDV,
-                })
+                console.log('🔄 Mise à jour config', currentConfig.id, 'avec:', configData)
+                await updateGarageConfig(currentConfig.id, configData)
+                console.log('✅ Config mise à jour')
             }
 
             setSaveStatus('success')
+            console.log('✅ Sauvegarde complète réussie!')
             setTimeout(() => setSaveStatus('idle'), 3000)
         } catch (error) {
-            console.error('Error saving settings:', error)
+            console.error('❌ Erreur sauvegarde settings:', error)
             setSaveStatus('error')
             setTimeout(() => setSaveStatus('idle'), 3000)
         } finally {
@@ -410,115 +470,116 @@ export default function SettingsPage() {
                             <p className="text-sm text-zinc-500">Configuration des devis et factures avec aperçu en temps réel</p>
                         </div>
 
-                        <div className="grid xl:grid-cols-2 gap-8">
-                            <div className="space-y-6">
-                                <div className="bg-white rounded-2xl border border-zinc-200 p-6">
-                                    <h3 className="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+                        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6 lg:gap-8">
+                            {/* Formulaires */}
+                            <div className="space-y-4 lg:space-y-6">
+                                <div className="bg-white rounded-xl lg:rounded-2xl border border-zinc-200 p-4 lg:p-6">
+                                    <h3 className="text-sm font-semibold text-zinc-900 mb-3 lg:mb-4 flex items-center gap-2">
                                         <Hash className="h-4 w-4 text-zinc-400" />
                                         Numérotation
                                     </h3>
-                                    <div className="space-y-4">
+                                    <div className="space-y-3 lg:space-y-4">
                                         <div>
-                                            <label className="block text-xs font-medium text-zinc-600 mb-1.5">Préfixe et prochain numéro (Devis)</label>
+                                            <label className="block text-xs font-medium text-zinc-600 mb-1.5">Préfixe et n° (Devis)</label>
                                             <div className="flex gap-2">
                                                 <input
                                                     type="text"
                                                     value={documentSettings.prefixeDevis}
                                                     onChange={(e) => setDocumentSettings({ ...documentSettings, prefixeDevis: e.target.value })}
-                                                    className="w-20 h-11 px-3 border border-zinc-300 rounded-xl text-sm text-center bg-white font-mono uppercase"
-                                                    placeholder="DEV"
+                                                    className="w-16 lg:w-20 h-10 lg:h-11 px-2 lg:px-3 border border-zinc-300 rounded-lg lg:rounded-xl text-sm text-center bg-white font-mono uppercase"
+                                                    placeholder="D"
                                                 />
                                                 <input
                                                     type="number"
                                                     value={documentSettings.prochainNumeroDevis}
                                                     onChange={(e) => setDocumentSettings({ ...documentSettings, prochainNumeroDevis: parseInt(e.target.value) || 1 })}
-                                                    className="flex-1 h-11 px-4 border border-zinc-300 rounded-xl text-sm bg-white"
+                                                    className="flex-1 h-10 lg:h-11 px-3 lg:px-4 border border-zinc-300 rounded-lg lg:rounded-xl text-sm bg-white"
                                                 />
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-medium text-zinc-600 mb-1.5">Préfixe et prochain numéro (Facture)</label>
+                                            <label className="block text-xs font-medium text-zinc-600 mb-1.5">Préfixe et n° (Facture)</label>
                                             <div className="flex gap-2">
                                                 <input
                                                     type="text"
                                                     value={documentSettings.prefixeFacture}
                                                     onChange={(e) => setDocumentSettings({ ...documentSettings, prefixeFacture: e.target.value })}
-                                                    className="w-20 h-11 px-3 border border-zinc-300 rounded-xl text-sm text-center bg-white font-mono uppercase"
-                                                    placeholder="FAC"
+                                                    className="w-16 lg:w-20 h-10 lg:h-11 px-2 lg:px-3 border border-zinc-300 rounded-lg lg:rounded-xl text-sm text-center bg-white font-mono uppercase"
+                                                    placeholder="F"
                                                 />
                                                 <input
                                                     type="number"
                                                     value={documentSettings.prochainNumeroFacture}
                                                     onChange={(e) => setDocumentSettings({ ...documentSettings, prochainNumeroFacture: parseInt(e.target.value) || 1 })}
-                                                    className="flex-1 h-11 px-4 border border-zinc-300 rounded-xl text-sm bg-white"
+                                                    className="flex-1 h-10 lg:h-11 px-3 lg:px-4 border border-zinc-300 rounded-lg lg:rounded-xl text-sm bg-white"
                                                 />
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="bg-white rounded-2xl border border-zinc-200 p-6">
-                                    <h3 className="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+                                <div className="bg-white rounded-xl lg:rounded-2xl border border-zinc-200 p-4 lg:p-6">
+                                    <h3 className="text-sm font-semibold text-zinc-900 mb-3 lg:mb-4 flex items-center gap-2">
                                         <Euro className="h-4 w-4 text-zinc-400" />
-                                        Tarification par défaut
+                                        Tarification
                                     </h3>
-                                    <div className="grid sm:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-2 gap-3 lg:gap-4">
                                         <div>
-                                            <label className="block text-xs font-medium text-zinc-600 mb-1.5">Taux horaire MO (€ HT)</label>
+                                            <label className="block text-xs font-medium text-zinc-600 mb-1.5">Taux horaire (€)</label>
                                             <div className="relative">
                                                 <input
                                                     type="number"
                                                     value={documentSettings.tauxHoraire}
                                                     onChange={(e) => setDocumentSettings({ ...documentSettings, tauxHoraire: parseFloat(e.target.value) || 0 })}
-                                                    className="w-full h-11 pl-10 pr-4 border border-zinc-300 rounded-xl text-sm bg-white"
+                                                    className="w-full h-10 lg:h-11 pl-8 lg:pl-10 pr-3 border border-zinc-300 rounded-lg lg:rounded-xl text-sm bg-white"
                                                 />
-                                                <Euro className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                                                <Euro className="absolute left-2.5 lg:left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-medium text-zinc-600 mb-1.5">TVA par défaut (%)</label>
+                                            <label className="block text-xs font-medium text-zinc-600 mb-1.5">TVA (%)</label>
                                             <select
                                                 value={documentSettings.tauxTVA}
                                                 onChange={(e) => setDocumentSettings({ ...documentSettings, tauxTVA: parseFloat(e.target.value) })}
-                                                className="w-full h-11 px-4 border border-zinc-300 rounded-xl text-sm bg-white appearance-none"
+                                                className="w-full h-10 lg:h-11 px-3 lg:px-4 border border-zinc-300 rounded-lg lg:rounded-xl text-sm bg-white appearance-none"
                                             >
                                                 <option value={20}>20%</option>
                                                 <option value={10}>10%</option>
                                                 <option value={5.5}>5.5%</option>
-                                                <option value={0}>Exonéré (0%)</option>
+                                                <option value={0}>0%</option>
                                             </select>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="bg-white rounded-2xl border border-zinc-200 p-6">
-                                    <h3 className="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+                                <div className="bg-white rounded-xl lg:rounded-2xl border border-zinc-200 p-4 lg:p-6">
+                                    <h3 className="text-sm font-semibold text-zinc-900 mb-3 lg:mb-4 flex items-center gap-2">
                                         <FileText className="h-4 w-4 text-zinc-400" />
                                         Mentions légales
                                     </h3>
                                     <textarea
                                         value={documentSettings.mentionsLegales}
                                         onChange={(e) => setDocumentSettings({ ...documentSettings, mentionsLegales: e.target.value })}
-                                        rows={4}
-                                        className="w-full px-4 py-3 border border-zinc-300 rounded-xl text-sm resize-none bg-white focus:ring-2 focus:ring-zinc-900 focus:border-zinc-900 outline-none transition-all"
-                                        placeholder="Mentions légales apparaissant en bas de vos documents..."
+                                        rows={3}
+                                        className="w-full px-3 lg:px-4 py-2.5 lg:py-3 border border-zinc-300 rounded-lg lg:rounded-xl text-sm resize-none bg-white focus:ring-2 focus:ring-zinc-900 focus:border-zinc-900 outline-none transition-all"
+                                        placeholder="Mentions légales..."
                                     />
-                                    <p className="mt-2 text-[11px] text-zinc-500">Ex: Membre d'une association agréée, le règlement par chèque est accepté.</p>
                                 </div>
                             </div>
 
-                            <div className="relative">
-                                <div className="xl:sticky xl:top-24">
-                                    <div className="flex items-center justify-between mb-4">
+                            {/* Aperçu */}
+                            <div className="relative order-first lg:order-last">
+                                <div className="lg:sticky lg:top-24">
+                                    <div className="flex items-center justify-between mb-3 lg:mb-4">
                                         <div className="flex items-center gap-2">
                                             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                            <span className="text-xs font-semibold text-zinc-500 uppercase tracking-widest">Aperçu direct</span>
+                                            <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Aperçu</span>
                                         </div>
-                                        <span className="text-[10px] text-zinc-400 sm:hidden italic">Faites glisser pour voir tout le document</span>
+                                        <span className="text-[10px] text-zinc-400 lg:hidden">← Glissez →</span>
                                     </div>
 
-                                    <div className="w-full overflow-x-auto pb-4 scrollbar-hide">
-                                        <div className="min-w-[400px] sm:min-w-0">
+                                    <div className="w-full overflow-x-auto pb-4 -mx-4 px-4 lg:mx-0 lg:px-0">
+                                        <div className="min-w-[320px] lg:min-w-0">
                                             <InvoiceTemplate
                                                 data={{
                                                     type: "facture",
@@ -534,7 +595,7 @@ export default function SettingsPage() {
                                                         email: garageData.email,
                                                         siret: garageData.siret,
                                                         tva: garageData.tva,
-                                                        logo: logoUrl
+                                                        logo: logoUrl || undefined
                                                     },
                                                     client: {
                                                         nom: "Client Exemple",
@@ -543,9 +604,9 @@ export default function SettingsPage() {
                                                         ville: "Paris"
                                                     },
                                                     lignes: [
-                                                        { designation: "Main d'œuvre - Révision", description: "Forfait vidange + contrôles", quantite: "2h", prixUnitaireHT: documentSettings.tauxHoraire },
-                                                        { designation: "Filtre à huile", description: "Réf: FH-2024-X", quantite: 1, prixUnitaireHT: 25 },
-                                                        { designation: "Huile moteur 5W40", description: "5 litres - Synthétique", quantite: 1, prixUnitaireHT: 65 }
+                                                        { designation: "Main d'œuvre", description: "Révision", quantite: "2h", prixUnitaireHT: documentSettings.tauxHoraire },
+                                                        { designation: "Filtre à huile", quantite: 1, prixUnitaireHT: 25 },
+                                                        { designation: "Huile 5W40", quantite: 1, prixUnitaireHT: 65 }
                                                     ],
                                                     totalHT: exampleHT,
                                                     tauxTVA: documentSettings.tauxTVA,
@@ -553,16 +614,16 @@ export default function SettingsPage() {
                                                     totalTTC: exampleTTC,
                                                     mentionsLegales: documentSettings.mentionsLegales
                                                 }}
-                                                scale={0.8}
+                                                scale={0.65}
                                             />
                                         </div>
                                     </div>
 
-                                    <div className="mt-6 p-4 bg-zinc-100 rounded-xl border border-zinc-200">
-                                        <p className="text-xs text-zinc-600 flex items-start gap-3">
-                                            <Zap className="h-4 w-4 text-zinc-400 mt-0.5" />
+                                    <div className="hidden lg:block mt-4 p-3 bg-zinc-100 rounded-xl border border-zinc-200">
+                                        <p className="text-xs text-zinc-600 flex items-start gap-2">
+                                            <Zap className="h-4 w-4 text-zinc-400 flex-shrink-0" />
                                             <span>
-                                                Vos devis utiliseront le préfixe <span className="font-mono font-bold text-zinc-900">{documentSettings.prefixeDevis}-{String(documentSettings.prochainNumeroDevis).padStart(5, '0')}</span>
+                                                Prochain devis : <span className="font-mono font-bold text-zinc-900">{documentSettings.prefixeDevis}-{String(documentSettings.prochainNumeroDevis).padStart(5, '0')}</span>
                                             </span>
                                         </p>
                                     </div>
@@ -601,104 +662,280 @@ export default function SettingsPage() {
                     </div>
                 )
             case "securite":
+                const handlePasswordChange = async () => {
+                    // Validation
+                    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+                        setPasswordMessage({ type: 'error', text: 'Veuillez remplir tous les champs' })
+                        return
+                    }
+                    if (passwordData.newPassword.length < 6) {
+                        setPasswordMessage({ type: 'error', text: 'Le nouveau mot de passe doit contenir au moins 6 caractères' })
+                        return
+                    }
+                    if (passwordData.newPassword !== passwordData.confirmPassword) {
+                        setPasswordMessage({ type: 'error', text: 'Les mots de passe ne correspondent pas' })
+                        return
+                    }
+
+                    setPasswordLoading(true)
+                    setPasswordMessage(null)
+
+                    try {
+                        await updateUserPassword(passwordData.currentPassword, passwordData.newPassword)
+                        setPasswordMessage({ type: 'success', text: 'Mot de passe modifié avec succès !' })
+                        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
+                    } catch (error: any) {
+                        console.error('Erreur changement mot de passe:', error)
+                        if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                            setPasswordMessage({ type: 'error', text: 'Mot de passe actuel incorrect' })
+                        } else if (error.code === 'auth/weak-password') {
+                            setPasswordMessage({ type: 'error', text: 'Le nouveau mot de passe est trop faible' })
+                        } else {
+                            setPasswordMessage({ type: 'error', text: 'Une erreur est survenue. Veuillez réessayer.' })
+                        }
+                    } finally {
+                        setPasswordLoading(false)
+                    }
+                }
+
                 return (
                     <div className="space-y-6">
                         <div>
                             <h2 className="text-lg font-semibold text-zinc-900 mb-1">Sécurité</h2>
-                            <p className="text-sm text-zinc-500">Gérez votre mot de passe</p>
+                            <p className="text-sm text-zinc-500">Gérez votre mot de passe et la sécurité de votre compte</p>
                         </div>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-zinc-700 mb-2">Mot de passe actuel</label>
-                                <div className="relative">
-                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-                                    <input type={showPassword ? "text" : "password"} placeholder="••••••••" className="w-full h-11 pl-10 pr-12 border border-zinc-300 rounded-xl text-sm" />
-                                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600">
-                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                    </button>
+
+                        {/* Message de feedback */}
+                        {passwordMessage && (
+                            <div className={cn(
+                                "p-4 rounded-xl flex items-center gap-3",
+                                passwordMessage.type === 'success' ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+                            )}>
+                                {passwordMessage.type === 'success' ? (
+                                    <Check className="h-5 w-5 flex-shrink-0" />
+                                ) : (
+                                    <X className="h-5 w-5 flex-shrink-0" />
+                                )}
+                                <span className="text-sm font-medium">{passwordMessage.text}</span>
+                            </div>
+                        )}
+
+                        <div className="bg-white rounded-xl lg:rounded-2xl border border-zinc-200 p-4 lg:p-6">
+                            <h3 className="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
+                                <Lock className="h-4 w-4 text-zinc-400" />
+                                Changer le mot de passe
+                            </h3>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-zinc-700 mb-2">Mot de passe actuel</label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                                        <input
+                                            type={showPassword ? "text" : "password"}
+                                            value={passwordData.currentPassword}
+                                            onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                                            placeholder="••••••••"
+                                            className="w-full h-10 lg:h-11 pl-10 pr-12 border border-zinc-300 rounded-lg lg:rounded-xl text-sm"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+                                        >
+                                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-zinc-700 mb-2">Nouveau mot de passe</label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                                        <input
+                                            type={showPassword ? "text" : "password"}
+                                            value={passwordData.newPassword}
+                                            onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                                            placeholder="••••••••"
+                                            className="w-full h-10 lg:h-11 pl-10 pr-4 border border-zinc-300 rounded-lg lg:rounded-xl text-sm"
+                                        />
+                                    </div>
+                                    <p className="mt-1 text-xs text-zinc-500">Minimum 6 caractères</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-zinc-700 mb-2">Confirmer le nouveau mot de passe</label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                                        <input
+                                            type={showPassword ? "text" : "password"}
+                                            value={passwordData.confirmPassword}
+                                            onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                                            placeholder="••••••••"
+                                            className="w-full h-10 lg:h-11 pl-10 pr-4 border border-zinc-300 rounded-lg lg:rounded-xl text-sm"
+                                        />
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={handlePasswordChange}
+                                    disabled={passwordLoading}
+                                    className="w-full sm:w-auto h-10 lg:h-11 px-6 bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-medium rounded-lg lg:rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {passwordLoading ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            Modification...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Shield className="h-4 w-4" />
+                                            Changer le mot de passe
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Info compte */}
+                        <div className="bg-zinc-50 rounded-xl lg:rounded-2xl border border-zinc-200 p-4 lg:p-6">
+                            <h3 className="text-sm font-semibold text-zinc-900 mb-3">Informations du compte</h3>
+                            <div className="space-y-2 text-sm">
+                                <div className="flex items-center justify-between py-2 border-b border-zinc-200">
+                                    <span className="text-zinc-500">Email</span>
+                                    <span className="font-medium text-zinc-900">{user?.email}</span>
+                                </div>
+                                <div className="flex items-center justify-between py-2">
+                                    <span className="text-zinc-500">Dernière connexion</span>
+                                    <span className="font-medium text-zinc-900">
+                                        {user?.metadata?.lastSignInTime ? new Date(user.metadata.lastSignInTime).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}
+                                    </span>
                                 </div>
                             </div>
-                            <button className="h-11 px-6 bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-medium rounded-xl transition-colors">Changer le mot de passe</button>
                         </div>
                     </div>
                 )
             case "facturation":
+                // Récupérer les infos du garage depuis le contexte auth
+                const isPro = garage?.plan === 'pro' && garage?.subscriptionStatus === 'active'
+
                 return (
                     <div className="space-y-6">
                         <div>
                             <h2 className="text-lg font-semibold text-zinc-900 mb-1">Abonnement</h2>
-                            <p className="text-sm text-zinc-500">Gérez votre plan et passez au Pro</p>
+                            <p className="text-sm text-zinc-500">Gérez votre plan et vos paiements</p>
                         </div>
 
-                        {/* Plan actuel */}
-                        <div className="bg-gradient-to-br from-zinc-100 to-zinc-50 rounded-2xl p-6 border border-zinc-200">
-                            <div className="flex items-center justify-between mb-4">
-                                <div>
-                                    <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-1">Plan actuel</p>
-                                    <p className="text-xl font-bold text-zinc-900">Démo Gratuite</p>
+                        {isPro ? (
+                            /* Plan Pro Actif */
+                            <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl p-6 text-white relative overflow-hidden">
+                                <div className="absolute top-4 right-4">
+                                    <span className="px-3 py-1 bg-white/20 text-white text-xs font-bold rounded-full">
+                                        ACTIF
+                                    </span>
                                 </div>
-                                <div className="px-3 py-1.5 bg-zinc-200 rounded-full">
-                                    <span className="text-xs font-semibold text-zinc-700">Gratuit</span>
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+
+                                <div className="relative">
+                                    <p className="text-xs font-medium text-emerald-200 uppercase tracking-wide mb-1">Votre plan</p>
+                                    <p className="text-2xl font-bold text-white mb-2">Pro</p>
+
+                                    <div className="flex items-baseline gap-1 mb-4">
+                                        <span className="text-4xl font-bold">59,99€</span>
+                                        <span className="text-emerald-200">HT/mois</span>
+                                    </div>
+
+                                    <div className="space-y-2 mb-6">
+                                        {["Clients illimités", "Véhicules illimités", "Factures & devis illimités", "Support prioritaire"].map((feature, i) => (
+                                            <div key={i} className="flex items-center gap-2">
+                                                <Check className="h-4 w-4 text-white flex-shrink-0" />
+                                                <span className="text-sm text-emerald-100">{feature}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <button
+                                        onClick={() => window.location.href = '/settings/billing'}
+                                        className="w-full h-12 bg-white/20 hover:bg-white/30 text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors border border-white/20"
+                                    >
+                                        <CreditCard className="h-4 w-4" />
+                                        Gérer mon abonnement
+                                    </button>
                                 </div>
                             </div>
-
-                            <div className="grid grid-cols-2 gap-4 mb-4">
-                                <div className="bg-white rounded-xl p-4 border border-zinc-200">
-                                    <p className="text-2xl font-bold text-zinc-900">5</p>
-                                    <p className="text-sm text-zinc-500">Clients max</p>
-                                </div>
-                                <div className="bg-white rounded-xl p-4 border border-zinc-200">
-                                    <p className="text-2xl font-bold text-zinc-900">5</p>
-                                    <p className="text-sm text-zinc-500">Véhicules max</p>
-                                </div>
-                            </div>
-
-                            <p className="text-sm text-zinc-500">
-                                Vous utilisez actuellement la version démo. Passez au Pro pour débloquer toutes les fonctionnalités.
-                            </p>
-                        </div>
-
-                        {/* Plan Pro */}
-                        <div className="bg-gradient-to-br from-zinc-900 to-zinc-800 rounded-2xl p-6 text-white relative overflow-hidden">
-                            <div className="absolute top-4 right-4">
-                                <span className="px-3 py-1 bg-emerald-500 text-white text-xs font-bold rounded-full">
-                                    RECOMMANDÉ
-                                </span>
-                            </div>
-
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-
-                            <div className="relative">
-                                <p className="text-xs font-medium text-zinc-400 uppercase tracking-wide mb-1">Passer au</p>
-                                <p className="text-2xl font-bold text-white mb-2">Pro</p>
-
-                                <div className="flex items-baseline gap-1 mb-4">
-                                    <span className="text-4xl font-bold">59,99€</span>
-                                    <span className="text-zinc-400">HT/mois</span>
-                                </div>
-
-                                <div className="space-y-2 mb-6">
-                                    {["Clients illimités", "Véhicules illimités", "Factures & devis illimités", "Support prioritaire"].map((feature, i) => (
-                                        <div key={i} className="flex items-center gap-2">
-                                            <Check className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-                                            <span className="text-sm text-zinc-300">{feature}</span>
+                        ) : (
+                            /* Plan Démo */
+                            <>
+                                <div className="bg-gradient-to-br from-zinc-100 to-zinc-50 rounded-2xl p-6 border border-zinc-200">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div>
+                                            <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-1">Plan actuel</p>
+                                            <p className="text-xl font-bold text-zinc-900">Démo Gratuite</p>
                                         </div>
-                                    ))}
+                                        <div className="px-3 py-1.5 bg-zinc-200 rounded-full">
+                                            <span className="text-xs font-semibold text-zinc-700">Gratuit</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4 mb-4">
+                                        <div className="bg-white rounded-xl p-4 border border-zinc-200">
+                                            <p className="text-2xl font-bold text-zinc-900">5</p>
+                                            <p className="text-sm text-zinc-500">Clients max</p>
+                                        </div>
+                                        <div className="bg-white rounded-xl p-4 border border-zinc-200">
+                                            <p className="text-2xl font-bold text-zinc-900">5</p>
+                                            <p className="text-sm text-zinc-500">Véhicules max</p>
+                                        </div>
+                                    </div>
+
+                                    <p className="text-sm text-zinc-500">
+                                        Vous utilisez actuellement la version démo. Passez au Pro pour débloquer toutes les fonctionnalités.
+                                    </p>
                                 </div>
 
-                                <button
-                                    onClick={() => window.location.href = '/upgrade'}
-                                    className="w-full h-12 bg-white hover:bg-zinc-100 text-zinc-900 text-sm font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
-                                >
-                                    <CreditCard className="h-4 w-4" />
-                                    S'abonner maintenant
-                                </button>
+                                {/* Plan Pro */}
+                                <div className="bg-gradient-to-br from-zinc-900 to-zinc-800 rounded-2xl p-6 text-white relative overflow-hidden">
+                                    <div className="absolute top-4 right-4">
+                                        <span className="px-3 py-1 bg-emerald-500 text-white text-xs font-bold rounded-full">
+                                            RECOMMANDÉ
+                                        </span>
+                                    </div>
 
-                                <p className="text-xs text-zinc-500 text-center mt-3">
-                                    Sans engagement • Annulation à tout moment
-                                </p>
-                            </div>
-                        </div>
+                                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+
+                                    <div className="relative">
+                                        <p className="text-xs font-medium text-zinc-400 uppercase tracking-wide mb-1">Passer au</p>
+                                        <p className="text-2xl font-bold text-white mb-2">Pro</p>
+
+                                        <div className="flex items-baseline gap-1 mb-4">
+                                            <span className="text-4xl font-bold">59,99€</span>
+                                            <span className="text-zinc-400">HT/mois</span>
+                                        </div>
+
+                                        <div className="space-y-2 mb-6">
+                                            {["Clients illimités", "Véhicules illimités", "Factures & devis illimités", "Support prioritaire"].map((feature, i) => (
+                                                <div key={i} className="flex items-center gap-2">
+                                                    <Check className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                                                    <span className="text-sm text-zinc-300">{feature}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <button
+                                            onClick={() => window.location.href = '/upgrade'}
+                                            className="w-full h-12 bg-white hover:bg-zinc-100 text-zinc-900 text-sm font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
+                                        >
+                                            <CreditCard className="h-4 w-4" />
+                                            S'abonner maintenant
+                                        </button>
+
+                                        <p className="text-xs text-zinc-500 text-center mt-3">
+                                            Sans engagement • Annulation à tout moment
+                                        </p>
+                                    </div>
+                                </div>
+                            </>
+                        )}
 
                         {/* FAQ */}
                         <div className="space-y-3">
@@ -747,36 +984,86 @@ export default function SettingsPage() {
     return (
         <div className="space-y-4 sm:space-y-6">
             <div>
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">Paramètres</h1>
-                <p className="text-sm text-zinc-500 mt-1">Gérez votre compte et vos préférences</p>
+                <h1 className="text-xl sm:text-2xl font-semibold text-[var(--text-primary)] tracking-tight">Paramètres</h1>
+                <p className="text-[13px] text-[var(--text-tertiary)] mt-0.5">Gérez votre compte et vos préférences</p>
             </div>
 
-            <div className="lg:hidden space-y-2">
-                {settingsSections.map((section) => (
-                    <button key={section.id} onClick={() => setActiveSection(section.id)} className={cn("w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-colors text-left", activeSection === section.id ? "border-zinc-900 bg-zinc-50" : "border-zinc-200 bg-white hover:border-zinc-300")}>
-                        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0", activeSection === section.id ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-600")}>
-                            <section.icon className="h-5 w-5" />
+            <div className="lg:hidden">
+                {!mobileContentOpen ? (
+                    <div className="space-y-2">
+                        {settingsSections.map((section) => (
+                            <button key={section.id} onClick={() => { setActiveSection(section.id); setMobileContentOpen(true); }} className={cn("w-full flex items-center gap-4 p-4 rounded-xl border transition-all text-left", activeSection === section.id ? "border-[var(--accent-primary)] bg-[var(--accent-soft)]" : "border-[var(--border-light)] bg-white hover:border-[var(--border-default)]")} style={{ boxShadow: 'var(--shadow-xs)' }}>
+                                <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0", activeSection === section.id ? "bg-[var(--accent-primary)] text-white" : "bg-[var(--bg-tertiary)] text-[var(--text-muted)]")}>
+                                    <section.icon className="h-4 w-4" strokeWidth={1.5} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[14px] font-medium text-[var(--text-primary)]">{section.label}</p>
+                                    <p className="text-[12px] text-[var(--text-tertiary)]">{section.description}</p>
+                                </div>
+                                <ChevronRight className="h-5 w-5 text-zinc-400 flex-shrink-0" />
+                            </button>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        <button
+                            onClick={() => setMobileContentOpen(false)}
+                            className="flex items-center gap-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors"
+                        >
+                            <ChevronRight className="h-4 w-4 rotate-180" />
+                            Retour aux paramètres
+                        </button>
+                        <div className="bg-white rounded-xl border border-[var(--border-light)] p-4 sm:p-5" style={{ boxShadow: 'var(--shadow-sm)' }}>
+                            <div ref={mobileContentRef}>
+                                {renderContent()}
+                            </div>
+                            <div className="flex justify-end pt-6 mt-6 border-t border-zinc-200">
+                                <button
+                                    onClick={handleSave}
+                                    disabled={isSaving || avatarUploading || logoUploading}
+                                    className={cn(
+                                        "h-10 px-5 text-[13px] font-medium rounded-lg flex items-center gap-2 transition-all duration-200 disabled:opacity-50",
+                                        saveStatus === 'success' ? "bg-emerald-600 hover:bg-emerald-700 text-white" :
+                                            saveStatus === 'error' ? "bg-red-600 hover:bg-red-700 text-white" :
+                                                "bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white"
+                                    )}
+                                >
+                                    {isSaving ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : saveStatus === 'success' ? (
+                                        <>
+                                            <Check className="h-4 w-4" />
+                                            Enregistré
+                                        </>
+                                    ) : saveStatus === 'error' ? (
+                                        <>
+                                            <X className="h-4 w-4" />
+                                            Erreur
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save className="h-4 w-4" />
+                                            Enregistrer
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-[15px] font-semibold text-zinc-900">{section.label}</p>
-                            <p className="text-[13px] text-zinc-500">{section.description}</p>
-                        </div>
-                        <ChevronRight className="h-5 w-5 text-zinc-400 flex-shrink-0" />
-                    </button>
-                ))}
+                    </div>
+                )}
             </div>
 
             <div className="hidden lg:grid lg:grid-cols-4 gap-6">
                 <div className="space-y-1">
                     {settingsSections.map((section) => (
-                        <button key={section.id} onClick={() => setActiveSection(section.id)} className={cn("w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors", activeSection === section.id ? "bg-zinc-900 text-white" : "text-zinc-600 hover:bg-zinc-100")}>
-                            <section.icon className="h-5 w-5" />
-                            <span className="text-[14px] font-medium">{section.label}</span>
+                        <button key={section.id} onClick={() => setActiveSection(section.id)} className={cn("w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all", activeSection === section.id ? "bg-[var(--accent-primary)] text-white" : "text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]")}>
+                            <section.icon className="h-4 w-4" strokeWidth={1.5} />
+                            <span className="text-[13px] font-medium">{section.label}</span>
                         </button>
                     ))}
                 </div>
 
-                <div className="lg:col-span-3 bg-white rounded-2xl border border-zinc-200 p-6">
+                <div className="lg:col-span-3 bg-white rounded-xl border border-[var(--border-light)] p-5" style={{ boxShadow: 'var(--shadow-sm)' }}>
                     <div ref={mobileContentRef}>
                         {renderContent()}
                     </div>
@@ -785,10 +1072,10 @@ export default function SettingsPage() {
                             onClick={handleSave}
                             disabled={isSaving || avatarUploading || logoUploading}
                             className={cn(
-                                "h-11 px-6 text-sm font-semibold rounded-xl flex items-center gap-2 transition-all duration-300 disabled:opacity-50",
+                                "h-10 px-5 text-[13px] font-medium rounded-lg flex items-center gap-2 transition-all duration-200 disabled:opacity-50",
                                 saveStatus === 'success' ? "bg-emerald-600 hover:bg-emerald-700 text-white" :
                                     saveStatus === 'error' ? "bg-red-600 hover:bg-red-700 text-white" :
-                                        "bg-zinc-900 hover:bg-zinc-800 text-white"
+                                        "bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white"
                             )}
                         >
                             {isSaving ? (

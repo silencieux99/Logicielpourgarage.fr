@@ -221,7 +221,7 @@ export default function DocumentViewerPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
-                <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+                <Loader2 className="h-6 w-6 animate-spin text-[var(--text-muted)]" />
             </div>
         )
     }
@@ -275,7 +275,7 @@ export default function DocumentViewerPage() {
                             </Link>
                             <div className="min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                    <h1 className="text-lg sm:text-xl font-bold text-zinc-900 truncate">
+                                    <h1 className="text-base sm:text-lg font-semibold text-[var(--text-primary)] tracking-tight truncate">
                                         {templateData.type === 'devis' ? 'Devis' : 'Facture'} {templateData.numero}
                                     </h1>
                                     <span className={cn(
@@ -329,7 +329,7 @@ export default function DocumentViewerPage() {
                             <button
                                 onClick={handleExportPDF}
                                 disabled={exporting}
-                                className="h-9 sm:h-10 px-3 sm:px-4 bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-400 text-white rounded-lg flex items-center gap-2 text-sm font-medium transition-colors"
+                                className="h-9 px-3 sm:px-4 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] disabled:bg-zinc-400 text-white rounded-lg flex items-center gap-2 text-[13px] font-medium transition-colors"
                             >
                                 {exporting ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />

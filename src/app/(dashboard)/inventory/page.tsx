@@ -65,12 +65,12 @@ export default function InventoryPage() {
             <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">Stock</h1>
-                        <p className="text-sm text-zinc-500 mt-1">{articles.length} article{articles.length !== 1 ? 's' : ''}</p>
+                        <h1 className="text-xl sm:text-2xl font-semibold text-[var(--text-primary)] tracking-tight">Stock</h1>
+                        <p className="text-[13px] text-[var(--text-tertiary)] mt-0.5">{articles.length} article{articles.length !== 1 ? 's' : ''}</p>
                     </div>
                     <Link
                         href="/inventory/new"
-                        className="hidden sm:flex h-10 sm:h-11 px-4 sm:px-5 bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-medium rounded-xl items-center gap-2 transition-colors"
+                        className="hidden sm:inline-flex h-9 px-4 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white text-[13px] font-medium rounded-lg items-center gap-2 transition-colors"
                     >
                         <Plus className="h-4 w-4" />
                         <span>Nouvel article</span>
@@ -86,13 +86,13 @@ export default function InventoryPage() {
                             placeholder="Rechercher par référence, désignation..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full h-10 sm:h-11 pl-10 pr-4 bg-white border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                            className="w-full h-10 pl-10 pr-4 bg-white border border-[var(--border-default)] rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-transparent transition-shadow"
                         />
                     </div>
                     <button
                         onClick={() => setShowLowStock(!showLowStock)}
                         className={cn(
-                            "h-10 sm:h-11 px-4 rounded-xl text-sm font-medium flex items-center gap-2 transition-colors",
+                            "h-10 px-4 rounded-lg text-[13px] font-medium flex items-center gap-2 transition-all",
                             showLowStock
                                 ? "bg-amber-100 text-amber-700"
                                 : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
@@ -107,7 +107,7 @@ export default function InventoryPage() {
             {/* Content */}
             {loading ? (
                 <div className="flex items-center justify-center py-20">
-                    <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+                    <Loader2 className="h-6 w-6 animate-spin text-[var(--text-muted)]" />
                 </div>
             ) : filteredArticles.length === 0 ? (
                 <div className="bg-white rounded-xl sm:rounded-2xl border border-zinc-200 p-8 sm:p-16 text-center">
@@ -141,7 +141,8 @@ export default function InventoryPage() {
                             <Link
                                 key={article.id}
                                 href={`/inventory/${article.id}`}
-                                className="bg-white rounded-xl border border-zinc-200 p-5 hover:border-zinc-300 transition-colors"
+                                className="bg-white rounded-xl border border-[var(--border-light)] p-4 hover:border-[var(--border-default)] transition-all"
+                                style={{ boxShadow: 'var(--shadow-sm)' }}
                             >
                                 <div className="flex items-start justify-between mb-3">
                                     <span className="px-2.5 py-1 bg-zinc-100 text-zinc-700 text-xs font-mono font-semibold rounded-lg">
@@ -187,9 +188,10 @@ export default function InventoryPage() {
             {/* Mobile FAB */}
             <Link
                 href="/inventory/new"
-                className="md:hidden fixed right-4 bottom-20 w-14 h-14 bg-zinc-900 hover:bg-zinc-800 text-white rounded-full shadow-lg flex items-center justify-center z-30"
+                className="md:hidden fixed right-4 bottom-20 w-12 h-12 bg-[var(--accent-primary)] text-white rounded-full flex items-center justify-center z-30"
+                style={{ boxShadow: 'var(--shadow-lg)' }}
             >
-                <Plus className="h-6 w-6" />
+                <Plus className="h-5 w-5" />
             </Link>
         </div>
     )

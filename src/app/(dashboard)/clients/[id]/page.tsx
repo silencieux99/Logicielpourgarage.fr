@@ -170,7 +170,7 @@ export default function ClientDetailPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center py-20">
-                <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+                <Loader2 className="h-6 w-6 animate-spin text-[var(--text-muted)]" />
             </div>
         )
     }
@@ -199,14 +199,14 @@ export default function ClientDetailPage() {
                         <ArrowLeft className="h-5 w-5 text-zinc-600" />
                     </Link>
                     <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-zinc-200 to-zinc-300 flex items-center justify-center">
-                            <span className="text-lg font-bold text-zinc-600">
+                        <div className="w-12 h-12 rounded-xl bg-[var(--bg-tertiary)] flex items-center justify-center">
+                            <span className="text-[15px] font-semibold text-[var(--text-muted)]">
                                 {client.prenom?.[0]}{client.nom?.[0]}
                             </span>
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h1 className="text-xl sm:text-2xl font-bold text-zinc-900">{clientName}</h1>
+                                <h1 className="text-lg sm:text-xl font-semibold text-[var(--text-primary)] tracking-tight">{clientName}</h1>
                                 <button
                                     onClick={toggleVIP}
                                     className={cn(
@@ -218,7 +218,7 @@ export default function ClientDetailPage() {
                                     <Star className={cn("h-5 w-5", client.isVIP && "fill-amber-500")} />
                                 </button>
                             </div>
-                            <p className="text-sm text-zinc-500">
+                            <p className="text-[12px] text-[var(--text-tertiary)]">
                                 Client depuis le {client.createdAt.toDate().toLocaleDateString('fr-FR')}
                             </p>
                         </div>
@@ -230,14 +230,14 @@ export default function ClientDetailPage() {
                         <>
                             <button
                                 onClick={() => setIsEditing(true)}
-                                className="hidden sm:flex h-10 px-4 text-zinc-700 text-sm font-medium rounded-xl hover:bg-zinc-100 items-center gap-2 transition-colors"
+                                className="hidden sm:flex h-9 px-4 text-[var(--text-secondary)] text-[13px] font-medium rounded-lg hover:bg-[var(--bg-tertiary)] items-center gap-2 transition-colors"
                             >
                                 <Edit className="h-4 w-4" />
                                 Modifier
                             </button>
                             <button
                                 onClick={() => setDeleteConfirm(true)}
-                                className="hidden sm:flex h-10 px-4 text-red-600 text-sm font-medium rounded-xl hover:bg-red-50 items-center gap-2 transition-colors"
+                                className="hidden sm:flex h-9 px-4 text-red-600 text-[13px] font-medium rounded-lg hover:bg-red-50 items-center gap-2 transition-colors"
                             >
                                 <Trash2 className="h-4 w-4" />
                             </button>
@@ -254,7 +254,7 @@ export default function ClientDetailPage() {
                             <button
                                 onClick={handleSave}
                                 disabled={saving}
-                                className="h-10 px-4 bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-medium rounded-xl flex items-center gap-2 transition-colors"
+                                className="h-9 px-4 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white text-[13px] font-medium rounded-lg flex items-center gap-2 transition-colors"
                             >
                                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                                 Enregistrer
@@ -266,33 +266,33 @@ export default function ClientDetailPage() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="bg-white rounded-xl border border-zinc-200 p-4">
-                    <div className="flex items-center gap-2 text-zinc-500 mb-1">
-                        <Car className="h-4 w-4" />
-                        <span className="text-xs">Véhicules</span>
+                <div className="bg-white rounded-xl border border-[var(--border-light)] p-4" style={{ boxShadow: 'var(--shadow-sm)' }}>
+                    <div className="flex items-center gap-2 text-[var(--text-muted)] mb-1">
+                        <Car className="h-4 w-4" strokeWidth={1.5} />
+                        <span className="text-[11px]">Véhicules</span>
                     </div>
-                    <p className="text-2xl font-bold text-zinc-900">{vehicles.length}</p>
+                    <p className="text-xl font-semibold text-[var(--text-primary)]">{vehicles.length}</p>
                 </div>
-                <div className="bg-white rounded-xl border border-zinc-200 p-4">
-                    <div className="flex items-center gap-2 text-zinc-500 mb-1">
-                        <Wrench className="h-4 w-4" />
-                        <span className="text-xs">Réparations</span>
+                <div className="bg-white rounded-xl border border-[var(--border-light)] p-4" style={{ boxShadow: 'var(--shadow-sm)' }}>
+                    <div className="flex items-center gap-2 text-[var(--text-muted)] mb-1">
+                        <Wrench className="h-4 w-4" strokeWidth={1.5} />
+                        <span className="text-[11px]">Réparations</span>
                     </div>
-                    <p className="text-2xl font-bold text-zinc-900">{reparations.length}</p>
+                    <p className="text-xl font-semibold text-[var(--text-primary)]">{reparations.length}</p>
                 </div>
-                <div className="bg-white rounded-xl border border-zinc-200 p-4">
-                    <div className="flex items-center gap-2 text-zinc-500 mb-1">
-                        <Euro className="h-4 w-4" />
-                        <span className="text-xs">CA Total</span>
+                <div className="bg-white rounded-xl border border-[var(--border-light)] p-4" style={{ boxShadow: 'var(--shadow-sm)' }}>
+                    <div className="flex items-center gap-2 text-[var(--text-muted)] mb-1">
+                        <Euro className="h-4 w-4" strokeWidth={1.5} />
+                        <span className="text-[11px]">CA Total</span>
                     </div>
-                    <p className="text-2xl font-bold text-zinc-900">{totalCA.toLocaleString()} €</p>
+                    <p className="text-xl font-semibold text-[var(--text-primary)]">{totalCA.toLocaleString()} €</p>
                 </div>
-                <div className="bg-white rounded-xl border border-zinc-200 p-4">
-                    <div className="flex items-center gap-2 text-zinc-500 mb-1">
-                        <FileText className="h-4 w-4" />
-                        <span className="text-xs">Documents</span>
+                <div className="bg-white rounded-xl border border-[var(--border-light)] p-4" style={{ boxShadow: 'var(--shadow-sm)' }}>
+                    <div className="flex items-center gap-2 text-[var(--text-muted)] mb-1">
+                        <FileText className="h-4 w-4" strokeWidth={1.5} />
+                        <span className="text-[11px]">Documents</span>
                     </div>
-                    <p className="text-2xl font-bold text-zinc-900">{documents.length}</p>
+                    <p className="text-xl font-semibold text-[var(--text-primary)]">{documents.length}</p>
                 </div>
             </div>
 
@@ -318,28 +318,28 @@ export default function ClientDetailPage() {
             <div className="flex flex-wrap gap-2">
                 <Link
                     href={`/repairs/new?clientId=${client.id}`}
-                    className="h-10 px-4 bg-amber-100 text-amber-700 text-sm font-medium rounded-xl flex items-center gap-2 hover:bg-amber-200 transition-colors"
+                    className="h-9 px-4 bg-amber-50 text-amber-700 text-[13px] font-medium rounded-lg flex items-center gap-2 hover:bg-amber-100 transition-colors"
                 >
                     <Wrench className="h-4 w-4" />
                     Nouvelle réparation
                 </Link>
                 <Link
                     href={`/invoices/new?type=devis&clientId=${client.id}`}
-                    className="h-10 px-4 bg-blue-100 text-blue-700 text-sm font-medium rounded-xl flex items-center gap-2 hover:bg-blue-200 transition-colors"
+                    className="h-9 px-4 bg-blue-50 text-blue-700 text-[13px] font-medium rounded-lg flex items-center gap-2 hover:bg-blue-100 transition-colors"
                 >
                     <FileText className="h-4 w-4" />
                     Nouveau devis
                 </Link>
                 <Link
                     href={`/vehicles/new?clientId=${client.id}`}
-                    className="h-10 px-4 bg-emerald-100 text-emerald-700 text-sm font-medium rounded-xl flex items-center gap-2 hover:bg-emerald-200 transition-colors"
+                    className="h-9 px-4 bg-emerald-50 text-emerald-700 text-[13px] font-medium rounded-lg flex items-center gap-2 hover:bg-emerald-100 transition-colors"
                 >
                     <Car className="h-4 w-4" />
                     Ajouter véhicule
                 </Link>
                 <Link
                     href={`/schedule/new?clientId=${client.id}`}
-                    className="h-10 px-4 bg-violet-100 text-violet-700 text-sm font-medium rounded-xl flex items-center gap-2 hover:bg-violet-200 transition-colors"
+                    className="h-9 px-4 bg-violet-50 text-violet-700 text-[13px] font-medium rounded-lg flex items-center gap-2 hover:bg-violet-100 transition-colors"
                 >
                     <Calendar className="h-4 w-4" />
                     Planifier RDV
@@ -347,7 +347,7 @@ export default function ClientDetailPage() {
                 {client.telephone && (
                     <a
                         href={`tel:${client.telephone}`}
-                        className="h-10 px-4 bg-zinc-100 text-zinc-700 text-sm font-medium rounded-xl flex items-center gap-2 hover:bg-zinc-200 transition-colors"
+                        className="h-9 px-4 bg-[var(--bg-tertiary)] text-[var(--text-secondary)] text-[13px] font-medium rounded-lg flex items-center gap-2 hover:bg-[var(--border-default)] transition-colors"
                     >
                         <Phone className="h-4 w-4" />
                         Appeler
@@ -356,8 +356,8 @@ export default function ClientDetailPage() {
             </div>
 
             {/* Tabs */}
-            <div className="border-b border-zinc-200">
-                <div className="flex gap-1 -mb-px">
+            <div className="border-b border-[var(--border-light)]">
+                <div className="flex gap-0.5 -mb-px">
                     {[
                         { id: "info", label: "Informations", icon: null },
                         { id: "vehicles", label: "Véhicules", icon: Car, count: vehicles.length },
@@ -368,16 +368,16 @@ export default function ClientDetailPage() {
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as any)}
                             className={cn(
-                                "px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2",
+                                "px-4 py-3 text-[13px] font-medium border-b-2 transition-all flex items-center gap-2",
                                 activeTab === tab.id
-                                    ? "border-zinc-900 text-zinc-900"
-                                    : "border-transparent text-zinc-500 hover:text-zinc-700"
+                                    ? "border-[var(--accent-primary)] text-[var(--text-primary)]"
+                                    : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
                             )}
                         >
-                            {tab.icon && <tab.icon className="h-4 w-4" />}
+                            {tab.icon && <tab.icon className="h-4 w-4" strokeWidth={1.5} />}
                             {tab.label}
                             {tab.count !== undefined && tab.count > 0 && (
-                                <span className="px-2 py-0.5 bg-zinc-100 text-zinc-600 text-xs rounded-full">
+                                <span className="px-1.5 py-0.5 bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] text-[10px] rounded-md">
                                     {tab.count}
                                 </span>
                             )}
@@ -390,7 +390,7 @@ export default function ClientDetailPage() {
             <div className="pb-8">
                 {/* Info Tab */}
                 {activeTab === "info" && (
-                    <div className="bg-white rounded-2xl border border-zinc-200 divide-y divide-zinc-100">
+                    <div className="bg-white rounded-xl border border-[var(--border-light)] divide-y divide-[var(--border-light)]" style={{ boxShadow: 'var(--shadow-sm)' }}>
                         {/* Contact */}
                         <div className="p-6">
                             <h3 className="text-sm font-semibold text-zinc-900 mb-4">Contact</h3>

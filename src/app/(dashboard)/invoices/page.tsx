@@ -107,20 +107,20 @@ export default function InvoicesPage() {
             <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">Factures & Devis</h1>
-                        <p className="text-sm text-zinc-500 mt-1">{documents.length} document{documents.length !== 1 ? 's' : ''}</p>
+                        <h1 className="text-xl sm:text-2xl font-semibold text-[var(--text-primary)] tracking-tight">Factures & Devis</h1>
+                        <p className="text-[13px] text-[var(--text-tertiary)] mt-0.5">{documents.length} document{documents.length !== 1 ? 's' : ''}</p>
                     </div>
                     <div className="hidden sm:flex gap-2">
                         <Link
                             href="/invoices/new?type=devis"
-                            className="h-11 px-5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-sm font-medium rounded-xl flex items-center gap-2 transition-colors"
+                            className="h-9 px-4 bg-[var(--bg-tertiary)] hover:bg-[var(--border-default)] text-[var(--text-secondary)] text-[13px] font-medium rounded-lg flex items-center gap-2 transition-colors"
                         >
                             <Plus className="h-4 w-4" />
                             Devis
                         </Link>
                         <Link
                             href="/invoices/new?type=facture"
-                            className="h-11 px-5 bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-medium rounded-xl flex items-center gap-2 transition-colors"
+                            className="h-9 px-4 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white text-[13px] font-medium rounded-lg flex items-center gap-2 transition-colors"
                         >
                             <Plus className="h-4 w-4" />
                             Facture
@@ -137,10 +137,10 @@ export default function InvoicesPage() {
                             placeholder="Rechercher par numéro ou client..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full h-10 sm:h-11 pl-10 pr-4 bg-white border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                            className="w-full h-10 pl-10 pr-4 bg-white border border-[var(--border-default)] rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-transparent transition-shadow"
                         />
                     </div>
-                    <div className="flex gap-1 p-1 bg-zinc-100 rounded-xl">
+                    <div className="flex gap-0.5 p-1 bg-[var(--bg-tertiary)] rounded-lg">
                         {[
                             { id: "all", label: "Tous" },
                             { id: "devis", label: "Devis" },
@@ -150,9 +150,10 @@ export default function InvoicesPage() {
                                 key={filter.id}
                                 onClick={() => setFilterType(filter.id as any)}
                                 className={cn(
-                                    "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                                    filterType === filter.id ? "bg-white shadow-sm text-zinc-900" : "text-zinc-600 hover:text-zinc-900"
+                                    "px-3 py-1.5 rounded-md text-[12px] font-medium transition-all",
+                                    filterType === filter.id ? "bg-white text-[var(--text-primary)]" : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
                                 )}
+                                style={filterType === filter.id ? { boxShadow: 'var(--shadow-xs)' } : {}}
                             >
                                 {filter.label}
                             </button>
@@ -164,7 +165,7 @@ export default function InvoicesPage() {
             {/* Content */}
             {loading ? (
                 <div className="flex items-center justify-center py-20">
-                    <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+                    <Loader2 className="h-6 w-6 animate-spin text-[var(--text-muted)]" />
                 </div>
             ) : filteredDocuments.length === 0 ? (
                 <div className="bg-white rounded-xl sm:rounded-2xl border border-zinc-200 p-8 sm:p-16 text-center">
@@ -205,17 +206,15 @@ export default function InvoicesPage() {
                             <Link
                                 key={doc.id}
                                 href={`/invoices/${doc.id}`}
-                                className="block bg-white rounded-xl border border-zinc-200 p-4 sm:p-5 hover:border-zinc-300 transition-colors"
+                                className="block bg-white rounded-xl border border-[var(--border-light)] p-4 hover:border-[var(--border-default)] transition-all"
+                                style={{ boxShadow: 'var(--shadow-sm)' }}
                             >
                                 <div className="flex items-center gap-4">
                                     <div className={cn(
-                                        "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
-                                        doc.type === "facture" ? "bg-emerald-100" : "bg-blue-100"
+                                        "w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0",
+                                        doc.type === "facture" ? "bg-[var(--bg-tertiary)]" : "bg-[var(--bg-tertiary)]"
                                     )}>
-                                        <FileText className={cn(
-                                            "h-5 w-5",
-                                            doc.type === "facture" ? "text-emerald-600" : "text-blue-600"
-                                        )} />
+                                        <FileText className="h-4 w-4 text-[var(--text-muted)]" strokeWidth={1.5} />
                                     </div>
 
                                     <div className="flex-1 min-w-0">
@@ -246,9 +245,10 @@ export default function InvoicesPage() {
             {/* Mobile FAB */}
             <Link
                 href="/invoices/new?type=devis"
-                className="md:hidden fixed right-4 bottom-20 w-14 h-14 bg-zinc-900 hover:bg-zinc-800 text-white rounded-full shadow-lg flex items-center justify-center z-30"
+                className="md:hidden fixed right-4 bottom-20 w-12 h-12 bg-[var(--accent-primary)] text-white rounded-full flex items-center justify-center z-30"
+                style={{ boxShadow: 'var(--shadow-lg)' }}
             >
-                <Plus className="h-6 w-6" />
+                <Plus className="h-5 w-5" />
             </Link>
         </div>
     )

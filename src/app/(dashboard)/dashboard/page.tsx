@@ -12,15 +12,13 @@ import {
     FileText,
     Clock,
     TrendingUp,
-    AlertTriangle,
     ChevronRight,
     ArrowUpRight,
     Loader2,
     X,
     Package,
     Receipt,
-    Crown,
-    Zap
+    Crown
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
@@ -54,10 +52,8 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true)
     const [stats, setStats] = useState<DashboardStats | null>(null)
     const [recentItems, setRecentItems] = useState<RecentItem[]>([])
-    const [lowStockCount, setLowStockCount] = useState(0)
     const [fabOpen, setFabOpen] = useState(false)
 
-    // Rediriger si pas connecté
     useEffect(() => {
         if (!authLoading && !user) {
             router.push('/login')
@@ -70,7 +66,6 @@ export default function DashboardPage() {
         }
     }, [garage?.id])
 
-    // Fermer le FAB quand on scroll
     useEffect(() => {
         const handleScroll = () => {
             if (fabOpen) setFabOpen(false)
@@ -79,7 +74,6 @@ export default function DashboardPage() {
         return () => window.removeEventListener('scroll', handleScroll)
     }, [fabOpen])
 
-    // Bloquer le scroll quand FAB ouvert
     useEffect(() => {
         if (fabOpen) {
             document.body.style.overflow = 'hidden'
@@ -95,20 +89,17 @@ export default function DashboardPage() {
         if (!garage?.id) return
         setLoading(true)
         try {
-            // Fetch stats from Firebase
             const [statsData, rdvToday, documents, reparationsEnCours] = await Promise.all([
                 getStats(garage.id),
-                getRendezVous(garage.id, new Date()), // Today's appointments
-                getDocuments(garage.id, 'facture'),   // All invoices
-                getReparationsEnCours(garage.id)      // In-progress repairs
+                getRendezVous(garage.id, new Date()),
+                getDocuments(garage.id, 'facture'),
+                getReparationsEnCours(garage.id)
             ])
 
-            // Calculate today's revenue (CA Jour)
             const today = new Date()
             today.setHours(0, 0, 0, 0)
             const facturesAujourdhui = documents.filter(d => {
                 if (d.statut !== 'paye' || !d.datePaiement) return false
-                // Handle Firestore Timestamp or Date
                 const paidDate = d.datePaiement.toDate ? d.datePaiement.toDate() : new Date(d.datePaiement as unknown as string)
                 paidDate.setHours(0, 0, 0, 0)
                 return paidDate.getTime() === today.getTime()
@@ -121,10 +112,9 @@ export default function DashboardPage() {
                 reparationsEnCours: reparationsEnCours.length,
                 rdvAujourdhui: rdvToday.length,
                 caJour: caJour,
-                caJourChange: 0 // TODO: Calculer le changement vs hier si besoin
+                caJourChange: 0
             })
 
-            // Build recent items from latest repairs
             const recentRepairs: RecentItem[] = reparationsEnCours.slice(0, 5).map(r => ({
                 id: r.id || '',
                 type: 'repair' as const,
@@ -134,7 +124,6 @@ export default function DashboardPage() {
             }))
 
             setRecentItems(recentRepairs)
-            setLowStockCount(0) // TODO: Implémenter getLowStockArticles dans database.ts
 
         } catch (error) {
             console.error("Erreur chargement dashboard:", error)
@@ -144,28 +133,29 @@ export default function DashboardPage() {
     }
 
     const quickActions = [
-        { icon: Users, label: "Client", href: "/clients/new", color: "bg-blue-100 text-blue-600" },
-        { icon: Car, label: "Véhicule", href: "/vehicles/new", color: "bg-emerald-100 text-emerald-600" },
-        { icon: Wrench, label: "Réparation", href: "/repairs/new", color: "bg-amber-100 text-amber-600" },
-        { icon: FileText, label: "Devis", href: "/invoices/new?type=devis", color: "bg-violet-100 text-violet-600" },
-        { icon: Calendar, label: "RDV", href: "/schedule/new", color: "bg-cyan-100 text-cyan-600" },
+        { icon: Users, label: "Client", href: "/clients/new" },
+        { icon: Car, label: "Véhicule", href: "/vehicles/new" },
+        { icon: Wrench, label: "Réparation", href: "/repairs/new" },
+        { icon: FileText, label: "Devis", href: "/invoices/new?type=devis" },
+        { icon: Calendar, label: "RDV", href: "/schedule/new" },
     ]
 
-    // Actions pour le FAB mobile (grille 4x2)
     const fabActions = [
-        { icon: Users, shortLabel: "Client", href: "/clients/new", color: "bg-blue-500" },
-        { icon: Car, shortLabel: "Véhicule", href: "/vehicles/new", color: "bg-emerald-500" },
-        { icon: Wrench, shortLabel: "Réparation", href: "/repairs/new", color: "bg-amber-500" },
-        { icon: FileText, shortLabel: "Devis", href: "/invoices/new?type=devis", color: "bg-violet-500" },
-        { icon: Receipt, shortLabel: "Facture", href: "/invoices/new?type=facture", color: "bg-rose-500" },
-        { icon: Calendar, shortLabel: "RDV", href: "/schedule/new", color: "bg-cyan-500" },
-        { icon: Package, shortLabel: "Stock", href: "/inventory/new", color: "bg-orange-500" },
+        { icon: Users, shortLabel: "Client", href: "/clients/new" },
+        { icon: Car, shortLabel: "Véhicule", href: "/vehicles/new" },
+        { icon: Wrench, shortLabel: "Réparation", href: "/repairs/new" },
+        { icon: FileText, shortLabel: "Devis", href: "/invoices/new?type=devis" },
+        { icon: Receipt, shortLabel: "Facture", href: "/invoices/new?type=facture" },
+        { icon: Calendar, shortLabel: "RDV", href: "/schedule/new" },
+        { icon: Package, shortLabel: "Stock", href: "/inventory/new" },
     ]
+
+    const isPro = garage?.plan === 'pro' && garage?.subscriptionStatus === 'active'
 
     if (loading) {
         return (
             <div className="flex items-center justify-center py-20">
-                <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+                <Loader2 className="h-6 w-6 animate-spin text-[var(--text-muted)]" />
             </div>
         )
     }
@@ -175,55 +165,54 @@ export default function DashboardPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">
-                        Bonjour ! 👋
+                    <h1 className="text-xl sm:text-2xl font-semibold text-[var(--text-primary)] tracking-tight">
+                        Tableau de bord
                     </h1>
-                    <p className="text-sm text-zinc-500 mt-1">
-                        Voici un aperçu de votre activité
+                    <p className="text-sm text-[var(--text-tertiary)] mt-0.5">
+                        {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
                     </p>
                 </div>
                 <Link
                     href="/repairs/new"
-                    className="hidden sm:flex h-10 sm:h-11 px-4 sm:px-5 bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-medium rounded-xl items-center gap-2 transition-colors"
+                    className="hidden sm:inline-flex h-9 px-4 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white text-[13px] font-medium rounded-lg items-center gap-2 transition-colors"
                 >
-                    <Plus className="h-4 w-4" />
+                    <Plus className="h-4 w-4" strokeWidth={2} />
                     <span>Nouvelle réparation</span>
                 </Link>
             </div>
 
-            {/* Subscription Banner - Demo Plan */}
-            {garage?.plan !== 'pro' && (
-                <div className="bg-zinc-900 rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {/* Subscription Banner */}
+            {!isPro && (
+                <div className="bg-[var(--accent-primary)] rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center flex-shrink-0">
-                            <Zap className="h-5 w-5 text-zinc-400" />
+                        <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                            <TrendingUp className="h-4 w-4 text-white/70" />
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-white">
-                                Plan Démo • 5 clients, 5 véhicules
+                            <p className="text-[13px] font-medium text-white">
+                                Plan Démo — 5 clients, 5 véhicules max
                             </p>
-                            <p className="text-xs text-zinc-400 mt-0.5">
+                            <p className="text-[12px] text-white/60 mt-0.5">
                                 Passez au Pro pour un accès illimité
                             </p>
                         </div>
                     </div>
                     <Link
                         href="/upgrade"
-                        className="flex-shrink-0 h-9 px-4 bg-white hover:bg-zinc-100 text-zinc-900 text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
+                        className="flex-shrink-0 h-8 px-3 bg-white hover:bg-white/90 text-[var(--accent-primary)] text-[13px] font-medium rounded-md flex items-center gap-1.5 transition-colors"
                     >
                         <span>Passer au Pro</span>
-                        <ChevronRight className="h-4 w-4" />
+                        <ChevronRight className="h-3.5 w-3.5" />
                     </Link>
                 </div>
             )}
 
-            {/* Pro Plan Success Banner */}
-            {garage?.plan === 'pro' && garage?.subscriptionStatus === 'active' && (
-                <div className="bg-zinc-900 rounded-xl sm:rounded-2xl p-4 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center">
+            {isPro && (
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100/50 rounded-xl p-4 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
                         <Crown className="h-4 w-4 text-white" />
                     </div>
-                    <p className="text-sm font-medium text-white">
+                    <p className="text-[13px] font-medium text-amber-900">
                         Plan Pro actif — Accès illimité
                     </p>
                 </div>
@@ -231,114 +220,91 @@ export default function DashboardPage() {
 
             {/* Quick Actions - Mobile */}
             <div className="sm:hidden">
-                <div className="flex gap-3 overflow-x-auto pb-2 scroll-hide -mx-4 px-4">
+                <div className="flex gap-2 overflow-x-auto pb-1 scroll-hide -mx-3 px-3">
                     {quickActions.map((action) => (
                         <Link
                             key={action.label}
                             href={action.href}
-                            className="flex flex-col items-center gap-2 min-w-[72px]"
+                            className="flex flex-col items-center gap-1.5 min-w-[64px]"
                         >
-                            <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center", action.color)}>
-                                <action.icon className="h-6 w-6" />
+                            <div className="w-12 h-12 rounded-xl bg-white border border-[var(--border-default)] flex items-center justify-center hover:border-[var(--border-strong)] transition-colors" style={{ boxShadow: 'var(--shadow-sm)' }}>
+                                <action.icon className="h-5 w-5 text-[var(--text-secondary)]" strokeWidth={1.5} />
                             </div>
-                            <span className="text-xs font-medium text-zinc-600">{action.label}</span>
+                            <span className="text-[11px] font-medium text-[var(--text-tertiary)]">{action.label}</span>
                         </Link>
                     ))}
                 </div>
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                <div className="bg-white rounded-xl sm:rounded-2xl border border-zinc-200 p-4 sm:p-5">
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-                            <Users className="h-5 w-5 text-blue-600" />
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                {[
+                    { label: "Clients", value: stats?.clientsTotal || 0, icon: Users },
+                    { label: "Véhicules", value: stats?.vehiculesTotal || 0, icon: Car },
+                    { label: "En cours", value: stats?.reparationsEnCours || 0, icon: Wrench },
+                    { label: "RDV aujourd'hui", value: stats?.rdvAujourdhui || 0, icon: Calendar },
+                ].map((stat) => (
+                    <div
+                        key={stat.label}
+                        className="bg-white rounded-xl border border-[var(--border-light)] p-4 hover:border-[var(--border-default)] transition-all group"
+                        style={{ boxShadow: 'var(--shadow-sm)' }}
+                    >
+                        <div className="flex items-center justify-between mb-3">
+                            <stat.icon className="h-4 w-4 text-[var(--text-muted)] group-hover:text-[var(--text-tertiary)] transition-colors" strokeWidth={1.5} />
                         </div>
+                        <p className="text-2xl font-semibold text-[var(--text-primary)] tracking-tight">{stat.value}</p>
+                        <p className="text-[12px] text-[var(--text-muted)] mt-0.5">{stat.label}</p>
                     </div>
-                    <p className="text-2xl sm:text-3xl font-bold text-zinc-900">{stats?.clientsTotal || 0}</p>
-                    <p className="text-sm text-zinc-500">Clients</p>
-                </div>
-
-                <div className="bg-white rounded-xl sm:rounded-2xl border border-zinc-200 p-4 sm:p-5">
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
-                            <Car className="h-5 w-5 text-emerald-600" />
-                        </div>
-                    </div>
-                    <p className="text-2xl sm:text-3xl font-bold text-zinc-900">{stats?.vehiculesTotal || 0}</p>
-                    <p className="text-sm text-zinc-500">Véhicules</p>
-                </div>
-
-                <div className="bg-white rounded-xl sm:rounded-2xl border border-zinc-200 p-4 sm:p-5">
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
-                            <Wrench className="h-5 w-5 text-amber-600" />
-                        </div>
-                    </div>
-                    <p className="text-2xl sm:text-3xl font-bold text-zinc-900">{stats?.reparationsEnCours || 0}</p>
-                    <p className="text-sm text-zinc-500">En cours</p>
-                </div>
-
-                <div className="bg-white rounded-xl sm:rounded-2xl border border-zinc-200 p-4 sm:p-5">
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
-                            <Calendar className="h-5 w-5 text-violet-600" />
-                        </div>
-                    </div>
-                    <p className="text-2xl sm:text-3xl font-bold text-zinc-900">{stats?.rdvAujourdhui || 0}</p>
-                    <p className="text-sm text-zinc-500">RDV aujourd'hui</p>
-                </div>
+                ))}
             </div>
 
             {/* Main Content Grid */}
-            <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid lg:grid-cols-3 gap-4">
                 {/* Left Column - 2/3 width */}
-                <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+                <div className="lg:col-span-2 space-y-4">
                     {/* Recent Activity */}
-                    <div className="bg-white rounded-xl sm:rounded-2xl border border-zinc-200">
-                        <div className="p-4 sm:p-5 border-b border-zinc-100 flex items-center justify-between">
-                            <h2 className="text-[15px] sm:text-base font-semibold text-zinc-900">
+                    <div className="bg-white rounded-xl border border-[var(--border-light)]" style={{ boxShadow: 'var(--shadow-sm)' }}>
+                        <div className="px-4 py-3 border-b border-[var(--border-light)] flex items-center justify-between">
+                            <h2 className="text-[14px] font-semibold text-[var(--text-primary)]">
                                 Activité récente
                             </h2>
-                            <Link href="/repairs" className="text-sm text-zinc-500 hover:text-zinc-900 flex items-center gap-1">
+                            <Link href="/repairs" className="text-[12px] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] flex items-center gap-0.5 transition-colors">
                                 Tout voir
-                                <ChevronRight className="h-4 w-4" />
+                                <ChevronRight className="h-3.5 w-3.5" />
                             </Link>
                         </div>
 
                         {recentItems.length === 0 ? (
                             <div className="p-8 text-center">
-                                <Clock className="h-8 w-8 text-zinc-300 mx-auto mb-2" />
-                                <p className="text-sm text-zinc-500">Aucune activité récente</p>
-                                <p className="text-xs text-zinc-400 mt-1">
-                                    Commencez par créer un client ou une réparation
+                                <div className="w-10 h-10 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center mx-auto mb-3">
+                                    <Clock className="h-5 w-5 text-[var(--text-muted)]" strokeWidth={1.5} />
+                                </div>
+                                <p className="text-[13px] text-[var(--text-secondary)]">Aucune activité récente</p>
+                                <p className="text-[12px] text-[var(--text-muted)] mt-1">
+                                    Créez un client ou une réparation pour commencer
                                 </p>
                             </div>
                         ) : (
-                            <div className="divide-y divide-zinc-100">
+                            <div className="divide-y divide-[var(--border-light)]">
                                 {recentItems.map((item) => (
-                                    <div key={item.id} className="p-4 sm:p-5 hover:bg-zinc-50 transition-colors">
+                                    <div key={item.id} className="px-4 py-3 hover:bg-[var(--bg-secondary)] transition-colors">
                                         <div className="flex items-center gap-3">
-                                            <div className={cn(
-                                                "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
-                                                item.type === "repair" ? "bg-amber-100" :
-                                                    item.type === "invoice" ? "bg-emerald-100" : "bg-blue-100"
-                                            )}>
+                                            <div className="w-8 h-8 rounded-lg bg-[var(--bg-tertiary)] flex items-center justify-center flex-shrink-0">
                                                 {item.type === "repair" ? (
-                                                    <Wrench className="h-5 w-5 text-amber-600" />
+                                                    <Wrench className="h-4 w-4 text-[var(--text-muted)]" strokeWidth={1.5} />
                                                 ) : item.type === "invoice" ? (
-                                                    <FileText className="h-5 w-5 text-emerald-600" />
+                                                    <FileText className="h-4 w-4 text-[var(--text-muted)]" strokeWidth={1.5} />
                                                 ) : (
-                                                    <Calendar className="h-5 w-5 text-blue-600" />
+                                                    <Calendar className="h-4 w-4 text-[var(--text-muted)]" strokeWidth={1.5} />
                                                 )}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-zinc-900 truncate">{item.titre}</p>
+                                                <p className="text-[13px] font-medium text-[var(--text-primary)] truncate">{item.titre}</p>
                                                 {item.sousTitre && (
-                                                    <p className="text-xs text-zinc-500 truncate">{item.sousTitre}</p>
+                                                    <p className="text-[12px] text-[var(--text-muted)] truncate">{item.sousTitre}</p>
                                                 )}
                                             </div>
-                                            <span className="text-xs text-zinc-400 flex-shrink-0">{item.date}</span>
+                                            <span className="text-[11px] text-[var(--text-muted)] flex-shrink-0">{item.date}</span>
                                         </div>
                                     </div>
                                 ))}
@@ -348,18 +314,19 @@ export default function DashboardPage() {
 
                     {/* Quick Actions - Desktop */}
                     <div className="hidden sm:block">
-                        <h2 className="text-[15px] font-semibold text-zinc-900 mb-3">Actions rapides</h2>
-                        <div className="grid grid-cols-5 gap-3">
+                        <h2 className="text-[13px] font-medium text-[var(--text-secondary)] mb-2.5">Actions rapides</h2>
+                        <div className="grid grid-cols-5 gap-2">
                             {quickActions.map((action) => (
                                 <Link
                                     key={action.label}
                                     href={action.href}
-                                    className="bg-white rounded-xl border border-zinc-200 p-4 hover:border-zinc-300 transition-colors text-center"
+                                    className="bg-white rounded-xl border border-[var(--border-light)] p-3 hover:border-[var(--border-default)] hover:bg-[var(--bg-secondary)] transition-all text-center group"
+                                    style={{ boxShadow: 'var(--shadow-xs)' }}
                                 >
-                                    <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-2", action.color)}>
-                                        <action.icon className="h-6 w-6" />
+                                    <div className="w-10 h-10 rounded-lg bg-[var(--bg-tertiary)] group-hover:bg-[var(--border-default)] flex items-center justify-center mx-auto mb-2 transition-colors">
+                                        <action.icon className="h-5 w-5 text-[var(--text-secondary)]" strokeWidth={1.5} />
                                     </div>
-                                    <span className="text-sm font-medium text-zinc-700">{action.label}</span>
+                                    <span className="text-[12px] font-medium text-[var(--text-secondary)]">{action.label}</span>
                                 </Link>
                             ))}
                         </div>
@@ -367,58 +334,42 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Right Column - 1/3 width */}
-                <div className="space-y-4 sm:space-y-6">
+                <div className="space-y-4">
                     {/* CA Today */}
-                    <div className="bg-gradient-to-br from-zinc-900 to-zinc-800 rounded-xl sm:rounded-2xl p-5 text-white">
-                        <div className="flex items-center gap-2 mb-3">
-                            <TrendingUp className="h-5 w-5 text-zinc-400" />
-                            <span className="text-sm text-zinc-400">Aujourd'hui</span>
+                    <div className="bg-[var(--accent-primary)] rounded-xl p-4 text-white">
+                        <div className="flex items-center gap-2 mb-2">
+                            <TrendingUp className="h-4 w-4 text-white/50" strokeWidth={1.5} />
+                            <span className="text-[12px] text-white/50 font-medium">Aujourd'hui</span>
                         </div>
-                        <p className="text-3xl font-bold mb-1">{(stats?.caJour || 0).toLocaleString()} €</p>
-                        {stats?.caJourChange !== undefined && (
+                        <p className="text-2xl font-semibold tracking-tight">{(stats?.caJour || 0).toLocaleString('fr-FR')} €</p>
+                        {stats?.caJourChange !== undefined && stats.caJourChange !== 0 && (
                             <p className={cn(
-                                "text-sm flex items-center gap-1",
-                                stats.caJourChange >= 0 ? "text-emerald-400" : "text-red-400"
+                                "text-[12px] flex items-center gap-0.5 mt-1",
+                                stats.caJourChange >= 0 ? "text-emerald-300" : "text-red-300"
                             )}>
-                                <ArrowUpRight className="h-4 w-4" />
+                                <ArrowUpRight className="h-3 w-3" />
                                 {stats.caJourChange >= 0 ? "+" : ""}{stats.caJourChange}% vs hier
                             </p>
                         )}
                     </div>
 
-                    {/* Alerts */}
-                    {lowStockCount > 0 && (
-                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
-                                    <AlertTriangle className="h-5 w-5 text-amber-600" />
-                                </div>
-                                <div className="flex-1">
-                                    <p className="text-sm font-medium text-amber-900">Stock bas</p>
-                                    <p className="text-xs text-amber-700">{lowStockCount} article(s)</p>
-                                </div>
-                                <Link href="/inventory?lowStock=true" className="text-amber-700 hover:text-amber-900">
-                                    <ChevronRight className="h-5 w-5" />
-                                </Link>
-                            </div>
-                        </div>
-                    )}
-
                     {/* RDV Today */}
-                    <div className="bg-white rounded-xl sm:rounded-2xl border border-zinc-200 p-5">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-[15px] font-semibold text-zinc-900">RDV du jour</h2>
-                            <Link href="/schedule" className="text-sm text-zinc-500 hover:text-zinc-900">
+                    <div className="bg-white rounded-xl border border-[var(--border-light)] p-4" style={{ boxShadow: 'var(--shadow-sm)' }}>
+                        <div className="flex items-center justify-between mb-3">
+                            <h2 className="text-[13px] font-semibold text-[var(--text-primary)]">RDV du jour</h2>
+                            <Link href="/schedule" className="text-[12px] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors">
                                 Voir agenda
                             </Link>
                         </div>
 
                         <div className="text-center py-4">
-                            <Calendar className="h-8 w-8 text-zinc-300 mx-auto mb-2" />
-                            <p className="text-sm text-zinc-500">Aucun rendez-vous</p>
+                            <div className="w-10 h-10 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center mx-auto mb-2">
+                                <Calendar className="h-5 w-5 text-[var(--text-muted)]" strokeWidth={1.5} />
+                            </div>
+                            <p className="text-[13px] text-[var(--text-secondary)]">Aucun rendez-vous</p>
                             <Link
                                 href="/schedule/new"
-                                className="text-sm text-zinc-900 font-medium hover:underline mt-1 inline-block"
+                                className="text-[12px] text-[var(--accent-primary)] font-medium hover:underline mt-1 inline-block"
                             >
                                 Planifier un RDV
                             </Link>
@@ -430,48 +381,35 @@ export default function DashboardPage() {
             {/* Mobile FAB - Bottom Sheet */}
             {fabOpen && (
                 <>
-                    {/* Overlay */}
                     <div
-                        className="sm:hidden fixed inset-0 bg-black/40 z-40"
+                        className="sm:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
                         onClick={() => setFabOpen(false)}
                     />
-
-                    {/* Bottom Sheet */}
-                    <div className="sm:hidden fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom duration-300">
-                        {/* Handle */}
-                        <div className="flex justify-center pt-3 pb-2">
-                            <div className="w-10 h-1 bg-zinc-200 rounded-full" />
+                    <div className="sm:hidden fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-2xl animate-slide-in-bottom safe-area-bottom" style={{ boxShadow: 'var(--shadow-xl)' }}>
+                        <div className="flex justify-center pt-3 pb-1">
+                            <div className="w-9 h-1 bg-[var(--border-default)] rounded-full" />
                         </div>
-
-                        {/* Header */}
-                        <div className="px-5 pb-4 border-b border-zinc-100">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-semibold text-zinc-900">Créer</h3>
-                                <button
-                                    onClick={() => setFabOpen(false)}
-                                    className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center"
-                                >
-                                    <X className="h-4 w-4 text-zinc-500" />
-                                </button>
-                            </div>
+                        <div className="px-4 py-3 border-b border-[var(--border-light)] flex items-center justify-between">
+                            <h3 className="text-[15px] font-semibold text-[var(--text-primary)]">Créer</h3>
+                            <button
+                                onClick={() => setFabOpen(false)}
+                                className="w-8 h-8 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center"
+                            >
+                                <X className="h-4 w-4 text-[var(--text-secondary)]" />
+                            </button>
                         </div>
-
-                        {/* Grid d'actions */}
-                        <div className="grid grid-cols-4 gap-1 p-4 pb-8">
+                        <div className="grid grid-cols-4 gap-1 p-4 pb-6">
                             {fabActions.map((action) => (
                                 <Link
                                     key={action.shortLabel}
                                     href={action.href}
                                     onClick={() => setFabOpen(false)}
-                                    className="flex flex-col items-center gap-2 py-3 rounded-xl active:bg-zinc-50"
+                                    className="flex flex-col items-center gap-2 py-3 rounded-xl active:bg-[var(--bg-tertiary)]"
                                 >
-                                    <div className={cn(
-                                        "w-14 h-14 rounded-2xl flex items-center justify-center",
-                                        action.color
-                                    )}>
-                                        <action.icon className="h-6 w-6 text-white" />
+                                    <div className="w-12 h-12 rounded-xl bg-[var(--accent-primary)] flex items-center justify-center">
+                                        <action.icon className="h-5 w-5 text-white" strokeWidth={1.5} />
                                     </div>
-                                    <span className="text-xs font-medium text-zinc-700 text-center leading-tight">
+                                    <span className="text-[11px] font-medium text-[var(--text-secondary)] text-center">
                                         {action.shortLabel}
                                     </span>
                                 </Link>
@@ -484,9 +422,10 @@ export default function DashboardPage() {
             {/* Mobile FAB Button */}
             <button
                 onClick={() => setFabOpen(true)}
-                className="sm:hidden fixed right-4 bottom-20 w-14 h-14 bg-zinc-900 text-white rounded-full shadow-lg flex items-center justify-center z-30 active:scale-95 transition-transform"
+                className="sm:hidden fixed right-4 bottom-20 w-12 h-12 bg-[var(--accent-primary)] text-white rounded-full flex items-center justify-center z-30 active:scale-95 transition-transform"
+                style={{ boxShadow: 'var(--shadow-lg)' }}
             >
-                <Plus className="h-6 w-6" />
+                <Plus className="h-5 w-5" strokeWidth={2} />
             </button>
         </div>
     )

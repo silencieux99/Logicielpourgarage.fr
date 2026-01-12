@@ -43,6 +43,11 @@ export interface Garage {
     siteWeb?: string
     effectif?: string
     logo?: string
+    // Owner info
+    ownerPrenom?: string
+    ownerNom?: string
+    ownerTelephone?: string
+    ownerAvatar?: string
     // Subscription fields
     plan: 'demo' | 'pro'
     stripeCustomerId?: string
@@ -196,11 +201,45 @@ export interface Article {
     updatedAt: Timestamp
 }
 
+export interface Personnel {
+    id?: string
+    garageId: string
+    prenom: string
+    nom: string
+    email?: string
+    telephone?: string
+    role: 'mecanicien' | 'receptionniste' | 'manager' | 'apprenti' | 'carrossier' | 'electricien'
+    specialites: string[]
+    tauxHoraire: number
+    couleur: string // Pour l'agenda/planning
+    actif: boolean
+    photo?: string
+    dateEmbauche?: Timestamp
+    notes?: string
+    createdAt: Timestamp
+    updatedAt: Timestamp
+}
+
+export interface PointageHeure {
+    id?: string
+    garageId: string
+    personnelId: string
+    reparationId?: string
+    date: Timestamp
+    heureDebut: Timestamp
+    heureFin?: Timestamp
+    dureeMinutes: number
+    description?: string
+    type: 'reparation' | 'formation' | 'administratif' | 'pause' | 'autre'
+    createdAt: Timestamp
+}
+
 export interface RendezVous {
     id?: string
     garageId: string
     clientId: string
     vehiculeId?: string
+    personnelId?: string
     dateHeure: Timestamp
     dureeMinutes: number
     type: string
@@ -876,4 +915,117 @@ export const updateDocument = async (documentId: string, data: Partial<Document>
         ...data,
         updatedAt: Timestamp.now()
     })
+}
+
+// ============================================
+// PERSONNEL
+// ============================================
+
+export const createPersonnel = async (data: Omit<Personnel, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined)
+    )
+    const docRef = await addDoc(collection(db, 'personnel'), {
+        ...cleanData,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
+    })
+    return docRef.id
+}
+
+export const getPersonnelByGarage = async (garageId: string): Promise<Personnel[]> => {
+    const q = query(
+        collection(db, 'personnel'),
+        where('garageId', '==', garageId),
+        orderBy('nom', 'asc')
+    )
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Personnel))
+}
+
+export const getPersonnelById = async (personnelId: string): Promise<Personnel | null> => {
+    const docSnap = await getDoc(doc(db, 'personnel', personnelId))
+    if (!docSnap.exists()) return null
+    return { id: docSnap.id, ...docSnap.data() } as Personnel
+}
+
+export const getActivePersonnel = async (garageId: string): Promise<Personnel[]> => {
+    const q = query(
+        collection(db, 'personnel'),
+        where('garageId', '==', garageId),
+        where('actif', '==', true),
+        orderBy('nom', 'asc')
+    )
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Personnel))
+}
+
+export const updatePersonnel = async (personnelId: string, data: Partial<Personnel>): Promise<void> => {
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined)
+    )
+    await updateDoc(doc(db, 'personnel', personnelId), {
+        ...cleanData,
+        updatedAt: Timestamp.now()
+    })
+}
+
+export const deletePersonnel = async (personnelId: string): Promise<void> => {
+    await deleteDoc(doc(db, 'personnel', personnelId))
+}
+
+// ============================================
+// POINTAGE HEURES
+// ============================================
+
+export const createPointage = async (data: Omit<PointageHeure, 'id' | 'createdAt'>): Promise<string> => {
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined)
+    )
+    const docRef = await addDoc(collection(db, 'pointages'), {
+        ...cleanData,
+        createdAt: Timestamp.now()
+    })
+    return docRef.id
+}
+
+export const getPointagesByPersonnel = async (personnelId: string, startDate?: Timestamp, endDate?: Timestamp): Promise<PointageHeure[]> => {
+    let q = query(
+        collection(db, 'pointages'),
+        where('personnelId', '==', personnelId),
+        orderBy('date', 'desc')
+    )
+    const snapshot = await getDocs(q)
+    let pointages = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as PointageHeure))
+
+    // Filtrer par dates si spécifiées
+    if (startDate) {
+        pointages = pointages.filter(p => p.date.toMillis() >= startDate.toMillis())
+    }
+    if (endDate) {
+        pointages = pointages.filter(p => p.date.toMillis() <= endDate.toMillis())
+    }
+
+    return pointages
+}
+
+export const getPointagesByReparation = async (reparationId: string): Promise<PointageHeure[]> => {
+    const q = query(
+        collection(db, 'pointages'),
+        where('reparationId', '==', reparationId),
+        orderBy('date', 'desc')
+    )
+    const snapshot = await getDocs(q)
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as PointageHeure))
+}
+
+export const updatePointage = async (pointageId: string, data: Partial<PointageHeure>): Promise<void> => {
+    const cleanData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined)
+    )
+    await updateDoc(doc(db, 'pointages', pointageId), cleanData)
+}
+
+export const deletePointage = async (pointageId: string): Promise<void> => {
+    await deleteDoc(doc(db, 'pointages', pointageId))
 }

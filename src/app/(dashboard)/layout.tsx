@@ -23,8 +23,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     // Afficher un loader pendant la vérification
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-zinc-50">
-                <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+            <div className="min-h-screen flex items-center justify-center bg-[var(--bg-secondary)]">
+                <Loader2 className="h-6 w-6 animate-spin text-[var(--text-muted)]" />
             </div>
         )
     }
@@ -35,15 +35,15 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <div className="min-h-screen bg-zinc-50/50">
+        <div className="min-h-screen bg-[var(--bg-secondary)]">
             <Sidebar />
 
             <main className={cn(
-                "pb-24 md:pb-0 min-h-screen transition-all duration-300",
+                "pb-20 md:pb-0 min-h-screen transition-all duration-300",
                 tabletExpanded ? "md:pl-[200px]" : "md:pl-[64px]",
                 isCollapsed ? "lg:pl-[64px]" : "lg:pl-[240px]"
             )}>
-                <div className="p-3 sm:p-4 lg:p-6 max-w-6xl">
+                <div className="p-4 sm:p-5 lg:p-6 max-w-[1200px]">
                     {children}
                 </div>
             </main>

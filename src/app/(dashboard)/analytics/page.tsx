@@ -150,19 +150,20 @@ export default function AnalyticsPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">Analytiques</h1>
-                    <p className="text-sm text-zinc-500 mt-1">Vue d'ensemble de votre activité</p>
+                    <h1 className="text-xl sm:text-2xl font-semibold text-[var(--text-primary)] tracking-tight">Analytiques</h1>
+                    <p className="text-[13px] text-[var(--text-tertiary)] mt-0.5">Vue d'ensemble de votre activité</p>
                 </div>
 
-                <div className="flex gap-1 p-1 bg-zinc-100 rounded-xl w-fit">
+                <div className="flex gap-0.5 p-1 bg-[var(--bg-tertiary)] rounded-lg w-fit">
                     {periodes.map(p => (
                         <button
                             key={p.id}
                             onClick={() => setPeriode(p.id)}
                             className={cn(
-                                "px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                                periode === p.id ? "bg-white shadow-sm text-zinc-900" : "text-zinc-600 hover:text-zinc-900"
+                                "px-3 sm:px-4 py-2 rounded-md text-[13px] font-medium transition-all",
+                                periode === p.id ? "bg-white text-[var(--text-primary)]" : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
                             )}
+                            style={periode === p.id ? { boxShadow: 'var(--shadow-xs)' } : {}}
                         >
                             {p.label}
                         </button>
@@ -172,7 +173,7 @@ export default function AnalyticsPage() {
 
             {loading ? (
                 <div className="flex items-center justify-center py-20">
-                    <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+                    <Loader2 className="h-6 w-6 animate-spin text-[var(--text-muted)]" />
                 </div>
             ) : !stats ? (
                 // Empty state

@@ -138,17 +138,17 @@ export default function RepairsPage() {
             <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-zinc-900">Réparations</h1>
-                        <p className="text-sm text-zinc-500 mt-1">
+                        <h1 className="text-xl sm:text-2xl font-semibold text-[var(--text-primary)] tracking-tight">Réparations</h1>
+                        <p className="text-[13px] text-[var(--text-tertiary)] mt-0.5">
                             {totalRepairs} réparation{totalRepairs !== 1 ? 's' : ''}
                             {urgentes > 0 && (
-                                <span className="ml-2 text-red-600">• {urgentes} urgente{urgentes !== 1 ? 's' : ''}</span>
+                                <span className="ml-2 text-red-500">• {urgentes} urgente{urgentes !== 1 ? 's' : ''}</span>
                             )}
                         </p>
                     </div>
                     <Link
                         href="/repairs/new"
-                        className="hidden sm:flex h-10 sm:h-11 px-4 sm:px-5 bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-medium rounded-xl items-center gap-2 transition-colors"
+                        className="hidden sm:inline-flex h-9 px-4 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white text-[13px] font-medium rounded-lg items-center gap-2 transition-colors"
                     >
                         <Plus className="h-4 w-4" />
                         <span>Nouvelle réparation</span>
@@ -156,51 +156,27 @@ export default function RepairsPage() {
                 </div>
 
                 {/* Stats Cards - Desktop */}
-                <div className="hidden sm:grid grid-cols-4 gap-4">
-                    <div className="bg-white rounded-xl border border-zinc-200 p-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
-                                <Clock className="h-5 w-5 text-amber-600" />
-                            </div>
-                            <div>
-                                <p className="text-2xl font-bold text-zinc-900">{enAttente}</p>
-                                <p className="text-xs text-zinc-500">En attente</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="bg-white rounded-xl border border-zinc-200 p-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-                                <Wrench className="h-5 w-5 text-blue-600" />
-                            </div>
-                            <div>
-                                <p className="text-2xl font-bold text-zinc-900">{enCours}</p>
-                                <p className="text-xs text-zinc-500">En cours</p>
+                <div className="hidden sm:grid grid-cols-4 gap-3">
+                    {[
+                        { label: "En attente", value: enAttente, icon: Clock },
+                        { label: "En cours", value: enCours, icon: Wrench },
+                        { label: "Terminées", value: terminees, icon: CheckCircle },
+                        { label: "CA en cours", value: `${caEnCours.toLocaleString()} €`, icon: Euro }
+                    ].map((stat) => (
+                        <div
+                            key={stat.label}
+                            className="bg-white rounded-xl border border-[var(--border-light)] p-4"
+                            style={{ boxShadow: 'var(--shadow-sm)' }}
+                        >
+                            <div className="flex items-center gap-3">
+                                <stat.icon className="h-4 w-4 text-[var(--text-muted)]" strokeWidth={1.5} />
+                                <div>
+                                    <p className="text-xl font-semibold text-[var(--text-primary)]">{stat.value}</p>
+                                    <p className="text-[11px] text-[var(--text-muted)]">{stat.label}</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div className="bg-white rounded-xl border border-zinc-200 p-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
-                                <CheckCircle className="h-5 w-5 text-emerald-600" />
-                            </div>
-                            <div>
-                                <p className="text-2xl font-bold text-zinc-900">{terminees}</p>
-                                <p className="text-xs text-zinc-500">Terminées</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="bg-white rounded-xl border border-zinc-200 p-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
-                                <Euro className="h-5 w-5 text-violet-600" />
-                            </div>
-                            <div>
-                                <p className="text-2xl font-bold text-zinc-900">{caEnCours.toLocaleString()} €</p>
-                                <p className="text-xs text-zinc-500">CA en cours</p>
-                            </div>
-                        </div>
-                    </div>
+                    ))}
                 </div>
 
                 {/* Mobile Stats */}
@@ -226,11 +202,11 @@ export default function RepairsPage() {
                             placeholder="Rechercher par plaque, client, description..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full h-10 sm:h-11 pl-10 pr-4 bg-white border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                            className="w-full h-10 pl-10 pr-4 bg-white border border-[var(--border-default)] rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-transparent transition-shadow"
                         />
                     </div>
                     <div className="flex gap-2">
-                        <div className="flex gap-1 p-1 bg-zinc-100 rounded-xl overflow-x-auto">
+                        <div className="flex gap-0.5 p-1 bg-[var(--bg-tertiary)] rounded-lg overflow-x-auto">
                             {[
                                 { id: "all", label: "Toutes" },
                                 { id: "en_attente", label: "Attente" },
@@ -241,9 +217,10 @@ export default function RepairsPage() {
                                     key={filter.id}
                                     onClick={() => setFilterStatus(filter.id as any)}
                                     className={cn(
-                                        "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap",
-                                        filterStatus === filter.id ? "bg-white shadow-sm text-zinc-900" : "text-zinc-600 hover:text-zinc-900"
+                                        "px-3 py-1.5 rounded-md text-[12px] font-medium transition-all whitespace-nowrap",
+                                        filterStatus === filter.id ? "bg-white text-[var(--text-primary)]" : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
                                     )}
+                                    style={filterStatus === filter.id ? { boxShadow: 'var(--shadow-xs)' } : {}}
                                 >
                                     {filter.label}
                                 </button>
@@ -287,7 +264,7 @@ export default function RepairsPage() {
             {/* Content Logic */}
             {loading ? (
                 <div className="flex items-center justify-center py-20">
-                    <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+                    <Loader2 className="h-6 w-6 animate-spin text-[var(--text-muted)]" />
                 </div>
             ) : !garage?.id ? (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">

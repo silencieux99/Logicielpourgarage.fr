@@ -32,10 +32,12 @@ import {
     getReparationsByVehicule,
     getArticles,
     createClient,
+    getActivePersonnel,
     Client,
     Vehicule,
     Reparation,
-    Article
+    Article,
+    Personnel
 } from "@/lib/database"
 import { Timestamp, addDoc, collection } from "firebase/firestore"
 import { db } from "@/lib/firebase"
@@ -895,7 +897,8 @@ function NewRepairForm() {
                     <div className="relative">
                         <div className="flex items-center justify-between mb-4">
                             <label className="text-[13px] font-medium text-zinc-500">Lignes</label>
-                            <div className="flex gap-2">
+                            {/* Desktop buttons */}
+                            <div className="hidden sm:flex gap-2">
                                 <button
                                     type="button"
                                     onClick={() => addLigne("main_oeuvre")}
@@ -921,6 +924,34 @@ function NewRepairForm() {
                                     Catalogue
                                 </button>
                             </div>
+                        </div>
+
+                        {/* Mobile action buttons - Full width */}
+                        <div className="sm:hidden grid grid-cols-2 gap-2 mb-4">
+                            <button
+                                type="button"
+                                onClick={() => addLigne("main_oeuvre")}
+                                className="h-12 px-4 text-sm font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl transition-colors flex items-center justify-center gap-2"
+                            >
+                                <Plus className="h-4 w-4" />
+                                Main d'œuvre
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => addLigne("piece")}
+                                className="h-12 px-4 text-sm font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl transition-colors flex items-center justify-center gap-2"
+                            >
+                                <Plus className="h-4 w-4" />
+                                Pièce
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setShowCatalogPicker(true)}
+                                className="col-span-2 h-12 px-4 text-sm font-medium bg-zinc-900 text-white hover:bg-zinc-800 rounded-xl transition-colors flex items-center justify-center gap-2"
+                            >
+                                <Search className="h-4 w-4" />
+                                Depuis le catalogue
+                            </button>
                         </div>
 
                         {/* Catalog Picker Modal */}
@@ -1000,52 +1031,125 @@ function NewRepairForm() {
                                 <p className="text-sm text-zinc-400">Aucune ligne</p>
                             </div>
                         ) : (
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                                 {lignes.map((ligne) => (
                                     <div
                                         key={ligne.id}
-                                        className="flex items-center gap-3 p-4 bg-zinc-50 rounded-2xl group"
+                                        className="p-4 bg-zinc-50 rounded-2xl space-y-3 sm:space-y-0"
                                     >
-                                        <div className={cn(
-                                            "w-1 h-8 rounded-full",
-                                            ligne.type === "main_oeuvre" ? "bg-zinc-400" : "bg-zinc-300"
-                                        )} />
-                                        <input
-                                            type="text"
-                                            value={ligne.designation}
-                                            onChange={(e) => updateLigne(ligne.id, "designation", e.target.value)}
-                                            placeholder={ligne.type === "main_oeuvre" ? "Main d'œuvre..." : "Pièce..."}
-                                            className="flex-1 h-9 px-3 bg-white border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900"
-                                        />
-                                        <input
-                                            type="number"
-                                            value={ligne.quantite}
-                                            onChange={(e) => updateLigne(ligne.id, "quantite", parseFloat(e.target.value) || 0)}
-                                            min={ligne.type === "main_oeuvre" ? 0.5 : 1}
-                                            step={ligne.type === "main_oeuvre" ? 0.5 : 1}
-                                            className="w-16 h-9 px-2 bg-white border border-zinc-200 rounded-lg text-sm text-center"
-                                        />
-                                        <div className="relative">
+                                        {/* Header mobile: Type indicator + Delete */}
+                                        <div className="flex items-center justify-between sm:hidden mb-2">
+                                            <span className={cn(
+                                                "text-[11px] font-medium px-2 py-0.5 rounded-full",
+                                                ligne.type === "main_oeuvre"
+                                                    ? "bg-blue-100 text-blue-700"
+                                                    : "bg-emerald-100 text-emerald-700"
+                                            )}>
+                                                {ligne.type === "main_oeuvre" ? "Main d'œuvre" : "Pièce"}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeLigne(ligne.id)}
+                                                className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
+                                        </div>
+
+                                        {/* Desktop: Single row layout */}
+                                        <div className="hidden sm:flex items-center gap-3">
+                                            <div className={cn(
+                                                "w-1 h-8 rounded-full flex-shrink-0",
+                                                ligne.type === "main_oeuvre" ? "bg-blue-400" : "bg-emerald-400"
+                                            )} />
+                                            <input
+                                                type="text"
+                                                value={ligne.designation}
+                                                onChange={(e) => updateLigne(ligne.id, "designation", e.target.value)}
+                                                placeholder={ligne.type === "main_oeuvre" ? "Main d'œuvre..." : "Pièce..."}
+                                                className="flex-1 h-9 px-3 bg-white border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                                            />
                                             <input
                                                 type="number"
-                                                value={ligne.prixUnitaireHT}
-                                                onChange={(e) => updateLigne(ligne.id, "prixUnitaireHT", parseFloat(e.target.value) || 0)}
-                                                step={0.01}
-                                                className="w-24 h-9 px-3 pr-6 bg-white border border-zinc-200 rounded-lg text-sm text-right"
+                                                value={ligne.quantite}
+                                                onChange={(e) => updateLigne(ligne.id, "quantite", parseFloat(e.target.value) || 0)}
+                                                min={ligne.type === "main_oeuvre" ? 0.5 : 1}
+                                                step={ligne.type === "main_oeuvre" ? 0.5 : 1}
+                                                className="w-16 h-9 px-2 bg-white border border-zinc-200 rounded-lg text-sm text-center"
                                             />
-                                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-zinc-400">€</span>
+                                            <div className="relative">
+                                                <input
+                                                    type="number"
+                                                    value={ligne.prixUnitaireHT}
+                                                    onChange={(e) => updateLigne(ligne.id, "prixUnitaireHT", parseFloat(e.target.value) || 0)}
+                                                    step={0.01}
+                                                    className="w-24 h-9 px-3 pr-6 bg-white border border-zinc-200 rounded-lg text-sm text-right"
+                                                />
+                                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-zinc-400">€</span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeLigne(ligne.id)}
+                                                className="p-2 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-lg transition-all"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
                                         </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => removeLigne(ligne.id)}
-                                            className="p-2 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-lg transition-all"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </button>
+
+                                        {/* Mobile: Stacked layout */}
+                                        <div className="sm:hidden space-y-3">
+                                            {/* Designation - Full width */}
+                                            <input
+                                                type="text"
+                                                value={ligne.designation}
+                                                onChange={(e) => updateLigne(ligne.id, "designation", e.target.value)}
+                                                placeholder={ligne.type === "main_oeuvre" ? "Désignation main d'œuvre..." : "Désignation pièce..."}
+                                                className="w-full h-11 px-4 bg-white border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                                            />
+
+                                            {/* Quantité + Prix - Side by side */}
+                                            <div className="flex gap-3">
+                                                <div className="flex-1">
+                                                    <label className="block text-[11px] font-medium text-zinc-400 mb-1">
+                                                        {ligne.type === "main_oeuvre" ? "Heures" : "Quantité"}
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        value={ligne.quantite}
+                                                        onChange={(e) => updateLigne(ligne.id, "quantite", parseFloat(e.target.value) || 0)}
+                                                        min={ligne.type === "main_oeuvre" ? 0.5 : 1}
+                                                        step={ligne.type === "main_oeuvre" ? 0.5 : 1}
+                                                        className="w-full h-11 px-4 bg-white border border-zinc-200 rounded-xl text-sm text-center"
+                                                    />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <label className="block text-[11px] font-medium text-zinc-400 mb-1">Prix HT</label>
+                                                    <div className="relative">
+                                                        <input
+                                                            type="number"
+                                                            value={ligne.prixUnitaireHT}
+                                                            onChange={(e) => updateLigne(ligne.id, "prixUnitaireHT", parseFloat(e.target.value) || 0)}
+                                                            step={0.01}
+                                                            className="w-full h-11 px-4 pr-8 bg-white border border-zinc-200 rounded-xl text-sm text-right"
+                                                        />
+                                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-zinc-400">€</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Total for this line */}
+                                            <div className="flex justify-between items-center pt-2 border-t border-zinc-200">
+                                                <span className="text-xs text-zinc-400">Sous-total HT</span>
+                                                <span className="text-sm font-semibold text-zinc-900">
+                                                    {(ligne.quantite * ligne.prixUnitaireHT).toFixed(2)} €
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
                         )}
+
                     </div>
 
                     {/* Notes */}

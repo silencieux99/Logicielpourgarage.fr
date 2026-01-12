@@ -33,10 +33,12 @@ import { useAuth } from "@/lib/auth-context"
 import {
     getClient,
     updateReparation,
+    getPersonnelById,
     Client,
     Vehicule,
     Reparation,
-    LigneReparation
+    LigneReparation,
+    Personnel
 } from "@/lib/database"
 import {
     doc,
@@ -71,6 +73,7 @@ export default function RepairDetailPage() {
     const [repair, setRepair] = useState<Reparation | null>(null)
     const [client, setClient] = useState<Client | null>(null)
     const [vehicule, setVehicule] = useState<Vehicule | null>(null)
+    const [mecanicien, setMecanicien] = useState<Personnel | null>(null)
     const [lignes, setLignes] = useState<LigneReparation[]>([])
     const [loading, setLoading] = useState(true)
     const [updating, setUpdating] = useState(false)
@@ -107,6 +110,12 @@ export default function RepairDetailPage() {
                 if (vehiculeDoc.exists()) {
                     setVehicule({ id: vehiculeDoc.id, ...vehiculeDoc.data() } as Vehicule)
                 }
+            }
+
+            // Charger le mécanicien assigné
+            if (repairData.mecanicienId) {
+                const mecanicienData = await getPersonnelById(repairData.mecanicienId)
+                setMecanicien(mecanicienData)
             }
 
             // Charger les lignes de réparation
@@ -173,7 +182,7 @@ export default function RepairDetailPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center py-20">
-                <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+                <Loader2 className="h-6 w-6 animate-spin text-[var(--text-muted)]" />
             </div>
         )
     }
@@ -214,7 +223,7 @@ export default function RepairDetailPage() {
                                 {priorite.label}
                             </span>
                         </div>
-                        <h1 className="text-xl sm:text-2xl font-bold text-zinc-900 line-clamp-2">
+                        <h1 className="text-lg sm:text-xl font-semibold text-[var(--text-primary)] tracking-tight line-clamp-2">
                             {repair.description}
                         </h1>
                     </div>
@@ -227,7 +236,7 @@ export default function RepairDetailPage() {
                     <>
                         <Link
                             href={`/invoices/new?type=devis&reparationId=${repair.id}`}
-                            className="h-10 px-4 bg-amber-100 text-amber-700 text-sm font-medium rounded-xl flex items-center gap-2 hover:bg-amber-200 transition-colors"
+                            className="h-9 px-4 bg-amber-50 text-amber-700 text-[13px] font-medium rounded-lg flex items-center gap-2 hover:bg-amber-100 transition-colors"
                         >
                             <FileText className="h-4 w-4" />
                             Créer devis
@@ -235,7 +244,7 @@ export default function RepairDetailPage() {
                         <button
                             onClick={() => updateStatus('en_cours')}
                             disabled={updating}
-                            className="h-10 px-4 bg-blue-600 text-white text-sm font-medium rounded-xl flex items-center gap-2 hover:bg-blue-700 transition-colors"
+                            className="h-9 px-4 bg-[var(--accent-primary)] text-white text-[13px] font-medium rounded-lg flex items-center gap-2 hover:bg-[var(--accent-hover)] transition-colors"
                         >
                             <Play className="h-4 w-4" />
                             Démarrer
@@ -247,7 +256,7 @@ export default function RepairDetailPage() {
                         <button
                             onClick={() => updateStatus('termine')}
                             disabled={updating}
-                            className="h-10 px-4 bg-emerald-600 text-white text-sm font-medium rounded-xl flex items-center gap-2 hover:bg-emerald-700 transition-colors"
+                            className="h-9 px-4 bg-emerald-600 text-white text-[13px] font-medium rounded-lg flex items-center gap-2 hover:bg-emerald-700 transition-colors"
                         >
                             <CheckCircle className="h-4 w-4" />
                             Terminer
@@ -255,7 +264,7 @@ export default function RepairDetailPage() {
                         <button
                             onClick={() => updateStatus('en_attente')}
                             disabled={updating}
-                            className="h-10 px-4 bg-amber-100 text-amber-700 text-sm font-medium rounded-xl flex items-center gap-2 hover:bg-amber-200 transition-colors"
+                            className="h-9 px-4 bg-amber-50 text-amber-700 text-[13px] font-medium rounded-lg flex items-center gap-2 hover:bg-amber-100 transition-colors"
                         >
                             <Pause className="h-4 w-4" />
                             Mettre en pause
@@ -265,7 +274,7 @@ export default function RepairDetailPage() {
                 {repair.statut === 'termine' && (
                     <Link
                         href={`/invoices/new?type=facture&reparationId=${repair.id}`}
-                        className="h-10 px-4 bg-violet-600 text-white text-sm font-medium rounded-xl flex items-center gap-2 hover:bg-violet-700 transition-colors"
+                        className="h-9 px-4 bg-violet-600 text-white text-[13px] font-medium rounded-lg flex items-center gap-2 hover:bg-violet-700 transition-colors"
                     >
                         <FileText className="h-4 w-4" />
                         Créer la facture
@@ -273,12 +282,12 @@ export default function RepairDetailPage() {
                 )}
                 <Link
                     href={`/repairs/${repair.id}/edit`}
-                    className="h-10 px-4 bg-zinc-100 text-zinc-700 text-sm font-medium rounded-xl flex items-center gap-2 hover:bg-zinc-200 transition-colors"
+                    className="h-9 px-4 bg-[var(--bg-tertiary)] text-[var(--text-secondary)] text-[13px] font-medium rounded-lg flex items-center gap-2 hover:bg-[var(--border-default)] transition-colors"
                 >
                     <Edit className="h-4 w-4" />
                     Modifier
                 </Link>
-                <button className="h-10 px-4 bg-zinc-100 text-zinc-700 text-sm font-medium rounded-xl flex items-center gap-2 hover:bg-zinc-200 transition-colors">
+                <button className="h-9 px-4 bg-[var(--bg-tertiary)] text-[var(--text-secondary)] text-[13px] font-medium rounded-lg flex items-center gap-2 hover:bg-[var(--border-default)] transition-colors">
                     <Printer className="h-4 w-4" />
                     Imprimer OR
                 </button>
@@ -289,8 +298,8 @@ export default function RepairDetailPage() {
                 <div className="lg:col-span-2 space-y-6">
                     {/* Véhicule */}
                     {vehicule && (
-                        <div className="bg-white rounded-2xl border border-zinc-200 p-6">
-                            <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-4">Véhicule</h2>
+                        <div className="bg-white rounded-xl border border-[var(--border-light)] p-5" style={{ boxShadow: 'var(--shadow-sm)' }}>
+                            <h2 className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-4">Véhicule</h2>
                             <Link href={`/vehicles/${vehicule.id}`} className="flex items-center gap-4 p-4 bg-zinc-50 rounded-xl hover:bg-zinc-100 transition-colors">
                                 <div className="w-14 h-14 rounded-xl bg-white border border-zinc-200 flex items-center justify-center">
                                     <BrandLogo brand={vehicule.marque} size={32} />
@@ -312,8 +321,8 @@ export default function RepairDetailPage() {
 
                     {/* Client */}
                     {client && (
-                        <div className="bg-white rounded-2xl border border-zinc-200 p-6">
-                            <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-4">Client</h2>
+                        <div className="bg-white rounded-xl border border-[var(--border-light)] p-5" style={{ boxShadow: 'var(--shadow-sm)' }}>
+                            <h2 className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-4">Client</h2>
                             <div className="flex items-center gap-4 p-4 bg-zinc-50 rounded-xl">
                                 <Link href={`/clients/${client.id}`} className="flex items-center gap-4 flex-1 hover:opacity-80 transition-opacity">
                                     <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-zinc-200 to-zinc-300 flex items-center justify-center">
@@ -347,9 +356,42 @@ export default function RepairDetailPage() {
                         </div>
                     )}
 
+                    {/* Mécanicien assigné */}
+                    <div className="bg-white rounded-xl border border-[var(--border-light)] p-5" style={{ boxShadow: 'var(--shadow-sm)' }}>
+                        <h2 className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-4">Mécanicien assigné</h2>
+                        {mecanicien ? (
+                            <div className="flex items-center gap-4 p-4 bg-zinc-50 rounded-xl">
+                                <div
+                                    className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-semibold"
+                                    style={{ backgroundColor: mecanicien.couleur }}
+                                >
+                                    {mecanicien.prenom[0]}{mecanicien.nom[0]}
+                                </div>
+                                <div className="flex-1">
+                                    <p className="font-semibold text-zinc-900">{mecanicien.prenom} {mecanicien.nom}</p>
+                                    <p className="text-sm text-zinc-500 capitalize">{mecanicien.role}</p>
+                                </div>
+                                <Link
+                                    href={`/repairs/${repair.id}/edit`}
+                                    className="text-sm text-[var(--accent-primary)] font-medium hover:underline"
+                                >
+                                    Changer
+                                </Link>
+                            </div>
+                        ) : (
+                            <Link
+                                href={`/repairs/${repair.id}/edit`}
+                                className="flex items-center justify-center gap-2 p-4 bg-zinc-50 rounded-xl text-sm text-zinc-500 hover:bg-zinc-100 transition-colors"
+                            >
+                                <User className="h-4 w-4" />
+                                Assigner un mécanicien
+                            </Link>
+                        )}
+                    </div>
+
                     {/* Détail intervention */}
-                    <div className="bg-white rounded-2xl border border-zinc-200 p-6">
-                        <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-4">Détail de l'intervention</h2>
+                    <div className="bg-white rounded-xl border border-[var(--border-light)] p-5" style={{ boxShadow: 'var(--shadow-sm)' }}>
+                        <h2 className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-4">Détail de l'intervention</h2>
 
                         {lignes.length === 0 ? (
                             <div className="text-center py-8 bg-zinc-50 rounded-xl">
@@ -395,8 +437,8 @@ export default function RepairDetailPage() {
                 {/* Sidebar */}
                 <div className="space-y-6">
                     {/* Récapitulatif */}
-                    <div className="bg-white rounded-2xl border border-zinc-200 p-6 sticky top-6">
-                        <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-4">Récapitulatif</h2>
+                    <div className="bg-white rounded-xl border border-[var(--border-light)] p-5 sticky top-6" style={{ boxShadow: 'var(--shadow-sm)' }}>
+                        <h2 className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-4">Récapitulatif</h2>
 
                         <div className="space-y-3 text-sm">
                             <div className="flex justify-between">
@@ -423,8 +465,8 @@ export default function RepairDetailPage() {
                     </div>
 
                     {/* Infos */}
-                    <div className="bg-white rounded-2xl border border-zinc-200 p-6">
-                        <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-4">Informations</h2>
+                    <div className="bg-white rounded-xl border border-[var(--border-light)] p-5" style={{ boxShadow: 'var(--shadow-sm)' }}>
+                        <h2 className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-4">Informations</h2>
 
                         <div className="space-y-4 text-sm">
                             <div>
@@ -480,8 +522,8 @@ export default function RepairDetailPage() {
                     </div>
 
                     {/* Priorité */}
-                    <div className="bg-white rounded-2xl border border-zinc-200 p-6">
-                        <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider mb-4">Priorité</h2>
+                    <div className="bg-white rounded-xl border border-[var(--border-light)] p-5" style={{ boxShadow: 'var(--shadow-sm)' }}>
+                        <h2 className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-4">Priorité</h2>
                         <div className="flex gap-2">
                             {(['normal', 'prioritaire', 'urgent'] as const).map(p => (
                                 <button
