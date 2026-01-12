@@ -125,6 +125,7 @@ function NewRepairForm() {
     const [vehicules, setVehicules] = useState<Vehicule[]>([])
     const [vehicleHistory, setVehicleHistory] = useState<Reparation[]>([])
     const [articles, setArticles] = useState<Article[]>([])
+    const [personnel, setPersonnel] = useState<Personnel[]>([])
     const [loadingData, setLoadingData] = useState(true)
 
     // Catalog picker
@@ -156,6 +157,7 @@ function NewRepairForm() {
         priorite: "normal" as "normal" | "prioritaire" | "urgent",
         dateSortiePrevue: "",
         tempsEstime: 60,
+        mecanicienId: "",
         notes: "",
     })
 
@@ -228,14 +230,16 @@ function NewRepairForm() {
         if (!garage?.id) return
         setLoadingData(true)
         try {
-            const [clientsData, vehiculesData, articlesData] = await Promise.all([
+            const [clientsData, vehiculesData, articlesData, personnelData] = await Promise.all([
                 getClients(garage.id),
                 getVehicules(garage.id),
-                getArticles(garage.id)
+                getArticles(garage.id),
+                getActivePersonnel(garage.id)
             ])
             setClients(clientsData)
             setVehicules(vehiculesData)
             setArticles(articlesData)
+            setPersonnel(personnelData)
         } catch (error) {
             console.error("Erreur chargement données:", error)
         } finally {
@@ -426,6 +430,7 @@ function NewRepairForm() {
                 dateSortiePrevue: formData.dateSortiePrevue
                     ? Timestamp.fromDate(new Date(formData.dateSortiePrevue))
                     : undefined,
+                mecanicienId: formData.mecanicienId || undefined,
                 tempsEstime: formData.tempsEstime,
                 tempsPasse: 0,
                 montantHT: totalHT,
@@ -849,6 +854,27 @@ function NewRepairForm() {
                             ))}
                         </div>
                     </div>
+
+                    {/* Mécanicien assigné */}
+                    {personnel.length > 0 && (
+                        <div>
+                            <label className="block text-[13px] font-medium text-zinc-500 mb-2">
+                                Mécanicien assigné
+                            </label>
+                            <select
+                                value={formData.mecanicienId}
+                                onChange={(e) => updateField("mecanicienId", e.target.value)}
+                                className="w-full h-11 px-4 bg-white border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900 appearance-none"
+                            >
+                                <option value="">Non assigné</option>
+                                {personnel.map(p => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.prenom} {p.nom} ({p.role})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
 
                     {/* Dates - Clean Grid */}
                     <div className="grid sm:grid-cols-2 gap-4">

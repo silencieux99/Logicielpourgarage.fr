@@ -320,7 +320,7 @@ export default function RepairEditPage() {
             {/* Véhicule Info */}
             {vehicule && (
                 <div className="flex items-center gap-4 p-4 bg-white rounded-2xl" style={{ boxShadow: 'var(--shadow-sm)' }}>
-                    <BrandLogo brand={vehicule.marque} size="md" />
+                    <BrandLogo brand={vehicule.marque} size={32} />
                     <div className="flex-1">
                         <p className="font-medium text-[var(--text-primary)]">
                             {vehicule.marque} {vehicule.modele}

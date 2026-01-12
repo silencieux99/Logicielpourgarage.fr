@@ -27,9 +27,11 @@ import {
     getReparations,
     getClients,
     getVehicules,
+    getActivePersonnel,
     Reparation,
     Client,
-    Vehicule
+    Vehicule,
+    Personnel
 } from "@/lib/database"
 import { BrandLogo } from "@/components/ui/brand-logo"
 import { RepairCard } from "@/components/RepairCard"
@@ -55,9 +57,11 @@ const prioriteConfig = {
 export default function RepairsPage() {
     const { garage } = useAuth()
     const [repairs, setRepairs] = useState<ReparationWithDetails[]>([])
+    const [personnel, setPersonnel] = useState<Personnel[]>([])
     const [loading, setLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState("")
     const [filterStatus, setFilterStatus] = useState<"all" | "en_attente" | "en_cours" | "termine" | "facture">("all")
+    const [filterMecanicien, setFilterMecanicien] = useState<string>("all")
     const [sortBy, setSortBy] = useState<"date" | "priority" | "amount">("date")
     const [viewMode, setViewMode] = useState<"list" | "board">("list")
 
@@ -74,10 +78,11 @@ export default function RepairsPage() {
 
         setLoading(true)
         try {
-            const [reparationsData, clientsData, vehiculesData] = await Promise.all([
+            const [reparationsData, clientsData, vehiculesData, personnelData] = await Promise.all([
                 getReparations(garage.id),
                 getClients(garage.id),
-                getVehicules(garage.id)
+                getVehicules(garage.id),
+                getActivePersonnel(garage.id)
             ])
 
             // Enrichir les réparations avec les données clients et véhicules
@@ -88,6 +93,7 @@ export default function RepairsPage() {
             })
 
             setRepairs(reparationsWithDetails)
+            setPersonnel(personnelData)
         } catch (error) {
             console.error("Erreur chargement réparations:", error)
         } finally {
@@ -107,8 +113,9 @@ export default function RepairsPage() {
                 r.client?.prenom?.toLowerCase().includes(query)
 
             const matchesFilter = filterStatus === "all" || r.statut === filterStatus
+            const matchesMecanicien = filterMecanicien === "all" || r.mecanicienId === filterMecanicien
 
-            return matchesSearch && matchesFilter
+            return matchesSearch && matchesFilter && matchesMecanicien
         })
         .sort((a, b) => {
             if (sortBy === "date") {
@@ -226,6 +233,21 @@ export default function RepairsPage() {
                                 </button>
                             ))}
                         </div>
+                        {/* Filtre mécanicien */}
+                        {personnel.length > 0 && (
+                            <select
+                                value={filterMecanicien}
+                                onChange={(e) => setFilterMecanicien(e.target.value)}
+                                className="h-10 px-3 bg-white border border-zinc-200 rounded-xl text-sm focus:outline-none hidden sm:block"
+                            >
+                                <option value="all">Tous les mécaniciens</option>
+                                {personnel.map(p => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.prenom} {p.nom}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
                         <select
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value as any)}
