@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import {
@@ -26,20 +26,25 @@ import {
     Printer,
     Share2,
     Phone,
-    MessageSquare
+    MessageSquare,
+    Camera,
+    Upload
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
 import {
     getClient,
     updateReparation,
+    updateVehicule,
     getPersonnelById,
+    getActivePersonnel,
     Client,
     Vehicule,
     Reparation,
     LigneReparation,
     Personnel
 } from "@/lib/database"
+import { useUpload } from "@/hooks/use-upload"
 import {
     doc,
     getDoc,
@@ -74,16 +79,53 @@ export default function RepairDetailPage() {
     const [client, setClient] = useState<Client | null>(null)
     const [vehicule, setVehicule] = useState<Vehicule | null>(null)
     const [mecanicien, setMecanicien] = useState<Personnel | null>(null)
+    const [personnel, setPersonnel] = useState<Personnel[]>([])
     const [lignes, setLignes] = useState<LigneReparation[]>([])
     const [loading, setLoading] = useState(true)
     const [updating, setUpdating] = useState(false)
+    const [assigningMecanicien, setAssigningMecanicien] = useState(false)
     const [deleteConfirm, setDeleteConfirm] = useState(false)
+    const [showVehicleModal, setShowVehicleModal] = useState(false)
+    const [savingVehicle, setSavingVehicle] = useState(false)
+    const [vehicleForm, setVehicleForm] = useState({
+        couleur: "",
+        carburant: "",
+        kilometrage: 0,
+        vin: "",
+        notes: "",
+    })
+    const [existingAvant, setExistingAvant] = useState<{ url: string; uploadedAt?: string }[]>([])
+    const [existingApres, setExistingApres] = useState<{ url: string; uploadedAt?: string }[]>([])
+    const fileInputAvantRef = useRef<HTMLInputElement>(null)
+    const fileInputApresRef = useRef<HTMLInputElement>(null)
+    const {
+        files: vehicleFiles,
+        uploadFiles,
+        removeFile,
+        clearFiles,
+        getFilesByType,
+        uploading
+    } = useUpload({ folder: 'vehicles', maxFiles: 20 })
 
     useEffect(() => {
         if (id && typeof id === 'string') {
             loadRepairData(id)
         }
     }, [id])
+
+    useEffect(() => {
+        if (!showVehicleModal || !vehicule) return
+        setVehicleForm({
+            couleur: vehicule.couleur || "",
+            carburant: vehicule.carburant || "",
+            kilometrage: vehicule.kilometrage || 0,
+            vin: vehicule.vin || "",
+            notes: vehicule.notes || "",
+        })
+        setExistingAvant(vehicule.photosAvant || [])
+        setExistingApres(vehicule.photosApres || [])
+        clearFiles()
+    }, [showVehicleModal, vehicule, clearFiles])
 
     const loadRepairData = async (repairId: string) => {
         setLoading(true)
@@ -116,6 +158,11 @@ export default function RepairDetailPage() {
             if (repairData.mecanicienId) {
                 const mecanicienData = await getPersonnelById(repairData.mecanicienId)
                 setMecanicien(mecanicienData)
+            }
+
+            if (garage?.id) {
+                const personnelData = await getActivePersonnel(garage.id)
+                setPersonnel(personnelData)
             }
 
             // Charger les lignes de réparation
@@ -168,6 +215,66 @@ export default function RepairDetailPage() {
         }
     }
 
+    const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'avant' | 'apres') => {
+        const fileList = e.target.files
+        if (!fileList) return
+        await uploadFiles(fileList, type)
+        e.target.value = ""
+    }
+
+    const handleSaveVehicle = async () => {
+        if (!vehicule?.id) return
+        setSavingVehicle(true)
+        try {
+            const avantUploads = getFilesByType('avant').filter(f => f.url).map(f => ({ url: f.url, uploadedAt: new Date().toISOString() }))
+            const apresUploads = getFilesByType('apres').filter(f => f.url).map(f => ({ url: f.url, uploadedAt: new Date().toISOString() }))
+            const updatedAvant = [...existingAvant, ...avantUploads]
+            const updatedApres = [...existingApres, ...apresUploads]
+
+            await updateVehicule(vehicule.id, {
+                couleur: vehicleForm.couleur || undefined,
+                carburant: vehicleForm.carburant || undefined,
+                kilometrage: vehicleForm.kilometrage || 0,
+                vin: vehicleForm.vin || undefined,
+                notes: vehicleForm.notes || undefined,
+                photosAvant: updatedAvant,
+                photosApres: updatedApres,
+            })
+
+            setVehicule(prev => prev ? {
+                ...prev,
+                ...vehicleForm,
+                photosAvant: updatedAvant,
+                photosApres: updatedApres,
+            } : prev)
+            setShowVehicleModal(false)
+        } catch (error) {
+            console.error("Erreur sauvegarde véhicule:", error)
+        } finally {
+            setSavingVehicle(false)
+        }
+    }
+
+    const handleAssignMecanicien = async (mecanicienId: string) => {
+        if (!repair?.id) return
+        setAssigningMecanicien(true)
+        try {
+            const nextId = mecanicienId === "none" ? undefined : mecanicienId
+            await updateReparation(repair.id, { mecanicienId: nextId })
+            setRepair(prev => prev ? { ...prev, mecanicienId: nextId } : null)
+            if (nextId) {
+                const selected = personnel.find(p => p.id === nextId) || null
+                setMecanicien(selected)
+            } else {
+                setMecanicien(null)
+            }
+        } catch (error) {
+            console.error("Erreur assignation mécanicien:", error)
+        } finally {
+            setAssigningMecanicien(false)
+        }
+    }
+
     // Calculs
     const totalMO = lignes
         .filter(l => l.type === 'main_oeuvre')
@@ -205,16 +312,17 @@ export default function RepairDetailPage() {
     const priorite = prioriteConfig[repair.priorite]
 
     return (
-        <div className="space-y-6">
+        <>
+        <div className="space-y-4 sm:space-y-6">
             {/* Header */}
-            <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
                     <Link href="/repairs" className="p-2 hover:bg-zinc-100 rounded-lg transition-colors">
-                        <ArrowLeft className="h-5 w-5 text-zinc-600" />
+                        <ArrowLeft className="h-4 w-4 text-zinc-600" />
                     </Link>
                     <div>
                         <div className="flex items-center gap-3 mb-1">
-                            <span className="text-sm font-mono text-zinc-400">{repair.numero}</span>
+                            <span className="text-xs font-mono text-zinc-400">{repair.numero}</span>
                             <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1", status.color)}>
                                 <StatusIcon className="h-3 w-3" />
                                 {status.label}
@@ -223,7 +331,7 @@ export default function RepairDetailPage() {
                                 {priorite.label}
                             </span>
                         </div>
-                        <h1 className="text-lg sm:text-xl font-semibold text-[var(--text-primary)] tracking-tight line-clamp-2">
+                        <h1 className="text-base sm:text-lg font-semibold text-[var(--text-primary)] tracking-tight line-clamp-2">
                             {repair.description}
                         </h1>
                     </div>
@@ -231,12 +339,12 @@ export default function RepairDetailPage() {
             </div>
 
             {/* Quick Actions */}
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
                 {repair.statut === 'en_attente' && (
                     <>
                         <Link
                             href={`/invoices/new?type=devis&reparationId=${repair.id}`}
-                            className="h-9 px-4 bg-amber-50 text-amber-700 text-[13px] font-medium rounded-lg flex items-center gap-2 hover:bg-amber-100 transition-colors"
+                            className="h-10 sm:h-9 px-3 sm:px-4 bg-amber-50 text-amber-700 text-[12px] sm:text-[13px] font-medium rounded-lg flex items-center justify-center gap-2 hover:bg-amber-100 transition-colors"
                         >
                             <FileText className="h-4 w-4" />
                             Créer devis
@@ -244,7 +352,7 @@ export default function RepairDetailPage() {
                         <button
                             onClick={() => updateStatus('en_cours')}
                             disabled={updating}
-                            className="h-9 px-4 bg-[var(--accent-primary)] text-white text-[13px] font-medium rounded-lg flex items-center gap-2 hover:bg-[var(--accent-hover)] transition-colors"
+                            className="h-10 sm:h-9 px-3 sm:px-4 bg-[var(--accent-primary)] text-white text-[12px] sm:text-[13px] font-medium rounded-lg flex items-center justify-center gap-2 hover:bg-[var(--accent-hover)] transition-colors"
                         >
                             <Play className="h-4 w-4" />
                             Démarrer
@@ -256,7 +364,7 @@ export default function RepairDetailPage() {
                         <button
                             onClick={() => updateStatus('termine')}
                             disabled={updating}
-                            className="h-9 px-4 bg-emerald-600 text-white text-[13px] font-medium rounded-lg flex items-center gap-2 hover:bg-emerald-700 transition-colors"
+                            className="h-10 sm:h-9 px-3 sm:px-4 bg-emerald-600 text-white text-[12px] sm:text-[13px] font-medium rounded-lg flex items-center justify-center gap-2 hover:bg-emerald-700 transition-colors"
                         >
                             <CheckCircle className="h-4 w-4" />
                             Terminer
@@ -264,7 +372,7 @@ export default function RepairDetailPage() {
                         <button
                             onClick={() => updateStatus('en_attente')}
                             disabled={updating}
-                            className="h-9 px-4 bg-amber-50 text-amber-700 text-[13px] font-medium rounded-lg flex items-center gap-2 hover:bg-amber-100 transition-colors"
+                            className="h-10 sm:h-9 px-3 sm:px-4 bg-amber-50 text-amber-700 text-[12px] sm:text-[13px] font-medium rounded-lg flex items-center justify-center gap-2 hover:bg-amber-100 transition-colors"
                         >
                             <Pause className="h-4 w-4" />
                             Mettre en pause
@@ -274,7 +382,7 @@ export default function RepairDetailPage() {
                 {repair.statut === 'termine' && (
                     <Link
                         href={`/invoices/new?type=facture&reparationId=${repair.id}`}
-                        className="h-9 px-4 bg-violet-600 text-white text-[13px] font-medium rounded-lg flex items-center gap-2 hover:bg-violet-700 transition-colors"
+                        className="h-10 sm:h-9 px-3 sm:px-4 bg-violet-600 text-white text-[12px] sm:text-[13px] font-medium rounded-lg flex items-center justify-center gap-2 hover:bg-violet-700 transition-colors"
                     >
                         <FileText className="h-4 w-4" />
                         Créer la facture
@@ -282,12 +390,12 @@ export default function RepairDetailPage() {
                 )}
                 <Link
                     href={`/repairs/${repair.id}/edit`}
-                    className="h-9 px-4 bg-[var(--bg-tertiary)] text-[var(--text-secondary)] text-[13px] font-medium rounded-lg flex items-center gap-2 hover:bg-[var(--border-default)] transition-colors"
+                    className="h-10 sm:h-9 px-3 sm:px-4 bg-[var(--bg-tertiary)] text-[var(--text-secondary)] text-[12px] sm:text-[13px] font-medium rounded-lg flex items-center justify-center gap-2 hover:bg-[var(--border-default)] transition-colors"
                 >
                     <Edit className="h-4 w-4" />
                     Modifier
                 </Link>
-                <button className="h-9 px-4 bg-[var(--bg-tertiary)] text-[var(--text-secondary)] text-[13px] font-medium rounded-lg flex items-center gap-2 hover:bg-[var(--border-default)] transition-colors">
+                <button className="h-10 sm:h-9 px-3 sm:px-4 bg-[var(--bg-tertiary)] text-[var(--text-secondary)] text-[12px] sm:text-[13px] font-medium rounded-lg flex items-center justify-center gap-2 hover:bg-[var(--border-default)] transition-colors">
                     <Printer className="h-4 w-4" />
                     Imprimer OR
                 </button>
@@ -298,44 +406,57 @@ export default function RepairDetailPage() {
                 <div className="lg:col-span-2 space-y-6">
                     {/* Véhicule */}
                     {vehicule && (
-                        <div className="bg-white rounded-xl border border-[var(--border-light)] p-5" style={{ boxShadow: 'var(--shadow-sm)' }}>
+                        <div className="bg-white rounded-xl border border-[var(--border-light)] p-4 sm:p-5" style={{ boxShadow: 'var(--shadow-sm)' }}>
                             <h2 className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-4">Véhicule</h2>
-                            <Link href={`/vehicles/${vehicule.id}`} className="flex items-center gap-4 p-4 bg-zinc-50 rounded-xl hover:bg-zinc-100 transition-colors">
-                                <div className="w-14 h-14 rounded-xl bg-white border border-zinc-200 flex items-center justify-center">
-                                    <BrandLogo brand={vehicule.marque} size={32} />
+                            <button
+                                type="button"
+                                onClick={() => setShowVehicleModal(true)}
+                                className="w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-zinc-50 rounded-xl hover:bg-zinc-100 transition-colors text-left"
+                            >
+                                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-white border border-zinc-200 flex items-center justify-center">
+                                    <BrandLogo brand={vehicule.marque} size={28} />
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-lg font-semibold text-zinc-900">
+                                    <p className="text-base sm:text-lg font-semibold text-zinc-900">
                                         {vehicule.marque} {vehicule.modele}
                                     </p>
-                                    <div className="flex items-center gap-3 text-sm text-zinc-500">
+                                    <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-zinc-500">
                                         <span className="font-mono bg-zinc-200 px-2 py-0.5 rounded">{vehicule.plaque}</span>
                                         <span>{vehicule.annee}</span>
                                         <span>{vehicule.kilometrage?.toLocaleString()} km</span>
                                     </div>
                                 </div>
-                                <ChevronRight className="h-5 w-5 text-zinc-400" />
-                            </Link>
+                                <div className="flex items-center gap-2">
+                                    <Link
+                                        href={`/vehicles/${vehicule.id}`}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="text-xs text-[var(--accent-primary)] hover:underline"
+                                    >
+                                        Voir fiche
+                                    </Link>
+                                    <ChevronRight className="h-5 w-5 text-zinc-400" />
+                                </div>
+                            </button>
                         </div>
                     )}
 
                     {/* Client */}
                     {client && (
-                        <div className="bg-white rounded-xl border border-[var(--border-light)] p-5" style={{ boxShadow: 'var(--shadow-sm)' }}>
+                        <div className="bg-white rounded-xl border border-[var(--border-light)] p-4 sm:p-5" style={{ boxShadow: 'var(--shadow-sm)' }}>
                             <h2 className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-4">Client</h2>
-                            <div className="flex items-center gap-4 p-4 bg-zinc-50 rounded-xl">
+                            <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4">
                                 <Link href={`/clients/${client.id}`} className="flex items-center gap-4 flex-1 hover:opacity-80 transition-opacity">
-                                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-zinc-200 to-zinc-300 flex items-center justify-center">
-                                        <span className="text-lg font-bold text-zinc-600">
+                                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-zinc-200 to-zinc-300 flex items-center justify-center">
+                                        <span className="text-base sm:text-lg font-bold text-zinc-600">
                                             {client.prenom?.[0]}{client.nom?.[0]}
                                         </span>
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-lg font-semibold text-zinc-900">
+                                        <p className="text-base sm:text-lg font-semibold text-zinc-900">
                                             {client.civilite} {client.prenom} {client.nom}
                                         </p>
                                         {client.telephone && (
-                                            <p className="text-sm text-zinc-500">{client.telephone}</p>
+                                            <p className="text-xs sm:text-sm text-zinc-500">{client.telephone}</p>
                                         )}
                                     </div>
                                 </Link>
@@ -371,21 +492,33 @@ export default function RepairDetailPage() {
                                     <p className="font-semibold text-zinc-900">{mecanicien.prenom} {mecanicien.nom}</p>
                                     <p className="text-sm text-zinc-500 capitalize">{mecanicien.role}</p>
                                 </div>
-                                <Link
-                                    href={`/repairs/${repair.id}/edit`}
-                                    className="text-sm text-[var(--accent-primary)] font-medium hover:underline"
-                                >
-                                    Changer
-                                </Link>
                             </div>
                         ) : (
-                            <Link
-                                href={`/repairs/${repair.id}/edit`}
-                                className="flex items-center justify-center gap-2 p-4 bg-zinc-50 rounded-xl text-sm text-zinc-500 hover:bg-zinc-100 transition-colors"
-                            >
+                            <div className="flex items-center justify-center gap-2 p-4 bg-zinc-50 rounded-xl text-sm text-zinc-500">
                                 <User className="h-4 w-4" />
-                                Assigner un mécanicien
-                            </Link>
+                                Aucun mécanicien assigné
+                            </div>
+                        )}
+                        {personnel.length > 0 && (
+                            <div className="mt-4">
+                                <label className="block text-[12px] font-medium text-zinc-500 mb-2">Assigner</label>
+                                <select
+                                    value={repair?.mecanicienId || "none"}
+                                    onChange={(e) => handleAssignMecanicien(e.target.value)}
+                                    disabled={assigningMecanicien}
+                                    className="w-full h-10 px-3 bg-white border border-zinc-200 rounded-lg text-sm focus:outline-none"
+                                >
+                                    <option value="none">Non assigné</option>
+                                    {personnel.map(p => (
+                                        <option key={p.id} value={p.id}>
+                                            {p.prenom} {p.nom} ({p.role})
+                                        </option>
+                                    ))}
+                                </select>
+                                {assigningMecanicien && (
+                                    <p className="text-xs text-zinc-400 mt-2">Mise à jour...</p>
+                                )}
+                            </div>
                         )}
                     </div>
 
@@ -449,7 +582,7 @@ export default function RepairDetailPage() {
                                 <span className="text-zinc-500">Pièces</span>
                                 <span className="font-medium">{totalPieces.toFixed(2)} €</span>
                             </div>
-                            <div className="flex justify-between pt-3 border-t border-zinc-200">
+                            <div className="flex justify-between pt-3">
                                 <span className="text-zinc-500">Total HT</span>
                                 <span className="font-medium">{totalHT.toFixed(2)} €</span>
                             </div>
@@ -457,7 +590,7 @@ export default function RepairDetailPage() {
                                 <span className="text-zinc-500">TVA (20%)</span>
                                 <span className="font-medium">{tva.toFixed(2)} €</span>
                             </div>
-                            <div className="flex justify-between pt-3 border-t border-zinc-200">
+                            <div className="flex justify-between pt-3">
                                 <span className="font-semibold text-zinc-900">Total TTC</span>
                                 <span className="text-xl font-bold text-zinc-900">{totalTTC.toFixed(2)} €</span>
                             </div>
@@ -546,5 +679,204 @@ export default function RepairDetailPage() {
                 </div>
             </div>
         </div>
+
+        {/* Vehicle Details Modal */}
+        {showVehicleModal && vehicule && (
+            <div className="fixed inset-0 z-50">
+                <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowVehicleModal(false)} />
+                <div className="absolute inset-x-0 bottom-0 sm:inset-0 sm:flex sm:items-center sm:justify-center p-0 sm:p-4 safe-area-bottom">
+                    <div className="w-full sm:max-w-2xl bg-white rounded-t-2xl sm:rounded-2xl border border-zinc-200 shadow-2xl overflow-hidden max-h-[85vh] sm:max-h-[90vh] flex flex-col">
+                        <div className="p-4 sm:p-5 border-b border-zinc-100 flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-semibold text-zinc-900">Détails du véhicule</p>
+                                <p className="text-xs text-zinc-500">{vehicule.marque} {vehicule.modele} • {vehicule.plaque}</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowVehicleModal(false)}
+                                className="p-2 hover:bg-zinc-100 rounded-lg"
+                            >
+                                <X className="h-4 w-4 text-zinc-400" />
+                            </button>
+                        </div>
+
+                        <div className="p-4 sm:p-5 space-y-5 overflow-y-auto">
+                            <div className="grid sm:grid-cols-2 gap-3">
+                                <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-3">
+                                    <p className="text-[11px] text-zinc-400 uppercase tracking-wide">Marque</p>
+                                    <p className="text-sm font-medium text-zinc-900">{vehicule.marque}</p>
+                                </div>
+                                <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-3">
+                                    <p className="text-[11px] text-zinc-400 uppercase tracking-wide">Modèle</p>
+                                    <p className="text-sm font-medium text-zinc-900">{vehicule.modele}</p>
+                                </div>
+                                <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-3">
+                                    <p className="text-[11px] text-zinc-400 uppercase tracking-wide">Plaque</p>
+                                    <p className="text-sm font-mono font-semibold text-zinc-900">{vehicule.plaque}</p>
+                                </div>
+                                <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-3">
+                                    <p className="text-[11px] text-zinc-400 uppercase tracking-wide">Année</p>
+                                    <p className="text-sm font-medium text-zinc-900">{vehicule.annee}</p>
+                                </div>
+                            </div>
+
+                            <div className="grid sm:grid-cols-3 gap-3">
+                                <div>
+                                    <label className="block text-[12px] font-medium text-zinc-500 mb-1.5">Carburant</label>
+                                    <input
+                                        type="text"
+                                        value={vehicleForm.carburant}
+                                        onChange={(e) => setVehicleForm(prev => ({ ...prev, carburant: e.target.value }))}
+                                        className="w-full h-10 px-3 bg-white border border-zinc-200 rounded-xl text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[12px] font-medium text-zinc-500 mb-1.5">Couleur</label>
+                                    <input
+                                        type="text"
+                                        value={vehicleForm.couleur}
+                                        onChange={(e) => setVehicleForm(prev => ({ ...prev, couleur: e.target.value }))}
+                                        className="w-full h-10 px-3 bg-white border border-zinc-200 rounded-xl text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[12px] font-medium text-zinc-500 mb-1.5">Kilométrage</label>
+                                    <input
+                                        type="number"
+                                        value={vehicleForm.kilometrage}
+                                        onChange={(e) => setVehicleForm(prev => ({ ...prev, kilometrage: parseInt(e.target.value || "0") }))}
+                                        min={0}
+                                        className="w-full h-10 px-3 bg-white border border-zinc-200 rounded-xl text-sm"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-[12px] font-medium text-zinc-500 mb-1.5">VIN</label>
+                                    <input
+                                        type="text"
+                                        value={vehicleForm.vin}
+                                        onChange={(e) => setVehicleForm(prev => ({ ...prev, vin: e.target.value.toUpperCase() }))}
+                                        className="w-full h-10 px-3 bg-white border border-zinc-200 rounded-xl text-sm font-mono"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[12px] font-medium text-zinc-500 mb-1.5">Notes</label>
+                                    <input
+                                        type="text"
+                                        value={vehicleForm.notes}
+                                        onChange={(e) => setVehicleForm(prev => ({ ...prev, notes: e.target.value }))}
+                                        className="w-full h-10 px-3 bg-white border border-zinc-200 rounded-xl text-sm"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid sm:grid-cols-2 gap-4">
+                                <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <p className="text-[12px] font-medium text-zinc-500">Photos avant</p>
+                                        <button
+                                            type="button"
+                                            onClick={() => fileInputAvantRef.current?.click()}
+                                            className="text-xs text-[var(--accent-primary)] hover:underline flex items-center gap-1"
+                                        >
+                                            <Upload className="h-3 w-3" />
+                                            Ajouter
+                                        </button>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {existingAvant.map((photo, idx) => (
+                                            <div key={`avant-${idx}`} className="aspect-square rounded-lg overflow-hidden bg-zinc-100">
+                                                <img src={photo.url} alt="" className="w-full h-full object-cover" />
+                                            </div>
+                                        ))}
+                                        {getFilesByType('avant').map(file => (
+                                            <div key={file.id} className="relative aspect-square rounded-lg overflow-hidden bg-zinc-100">
+                                                {file.uploading ? (
+                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                        <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
+                                                    </div>
+                                                ) : (
+                                                    <img src={file.url || file.preview} alt="" className="w-full h-full object-cover" />
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeFile(file.id)}
+                                                    className="absolute top-1 right-1 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center"
+                                                >
+                                                    <X className="h-3 w-3" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <input ref={fileInputAvantRef} type="file" accept="image/*" multiple onChange={(e) => handlePhotoUpload(e, "avant")} className="hidden" />
+                                </div>
+
+                                <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <p className="text-[12px] font-medium text-zinc-500">Photos après</p>
+                                        <button
+                                            type="button"
+                                            onClick={() => fileInputApresRef.current?.click()}
+                                            className="text-xs text-[var(--accent-primary)] hover:underline flex items-center gap-1"
+                                        >
+                                            <Upload className="h-3 w-3" />
+                                            Ajouter
+                                        </button>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {existingApres.map((photo, idx) => (
+                                            <div key={`apres-${idx}`} className="aspect-square rounded-lg overflow-hidden bg-zinc-100">
+                                                <img src={photo.url} alt="" className="w-full h-full object-cover" />
+                                            </div>
+                                        ))}
+                                        {getFilesByType('apres').map(file => (
+                                            <div key={file.id} className="relative aspect-square rounded-lg overflow-hidden bg-zinc-100">
+                                                {file.uploading ? (
+                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                        <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
+                                                    </div>
+                                                ) : (
+                                                    <img src={file.url || file.preview} alt="" className="w-full h-full object-cover" />
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeFile(file.id)}
+                                                    className="absolute top-1 right-1 w-6 h-6 bg-black/60 text-white rounded-full flex items-center justify-center"
+                                                >
+                                                    <X className="h-3 w-3" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <input ref={fileInputApresRef} type="file" accept="image/*" multiple onChange={(e) => handlePhotoUpload(e, "apres")} className="hidden" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-4 bg-zinc-50 border-t border-zinc-100 flex items-center justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setShowVehicleModal(false)}
+                                className="h-10 px-4 text-sm text-zinc-600 hover:text-zinc-900 rounded-lg"
+                            >
+                                Fermer
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSaveVehicle}
+                                disabled={savingVehicle || uploading}
+                                className="h-10 px-5 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] disabled:bg-zinc-300 text-white text-sm font-medium rounded-lg flex items-center gap-2"
+                            >
+                                {savingVehicle ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                                Enregistrer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+        </>
     )
 }

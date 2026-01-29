@@ -191,155 +191,185 @@ export default function ClientDetailPage() {
     const clientName = `${client.civilite || ''} ${client.prenom || ''} ${client.nom}`.trim()
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
             {/* Header */}
-            <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-4">
-                    <Link href="/clients" className="p-2 hover:bg-zinc-100 rounded-lg transition-colors">
-                        <ArrowLeft className="h-5 w-5 text-zinc-600" />
-                    </Link>
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-[var(--bg-tertiary)] flex items-center justify-center">
-                            <span className="text-[15px] font-semibold text-[var(--text-muted)]">
-                                {client.prenom?.[0]}{client.nom?.[0]}
-                            </span>
-                        </div>
+            <div className="flex flex-col gap-3">
+                <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                        <Link href="/clients" className="h-9 w-9 rounded-lg border border-zinc-200 flex items-center justify-center hover:bg-zinc-50 transition-colors">
+                            <ArrowLeft className="h-4 w-4 text-zinc-600" />
+                        </Link>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h1 className="text-lg sm:text-xl font-semibold text-[var(--text-primary)] tracking-tight">{clientName}</h1>
-                                <button
-                                    onClick={toggleVIP}
-                                    className={cn(
-                                        "p-1.5 rounded-lg transition-colors",
-                                        client.isVIP ? "bg-amber-100 text-amber-600" : "hover:bg-zinc-100 text-zinc-400"
-                                    )}
-                                    title={client.isVIP ? "Retirer VIP" : "Marquer VIP"}
-                                >
-                                    <Star className={cn("h-5 w-5", client.isVIP && "fill-amber-500")} />
-                                </button>
+                                <div className="w-10 h-10 rounded-xl bg-[var(--bg-tertiary)] flex items-center justify-center">
+                                    <span className="text-[14px] font-semibold text-[var(--text-muted)]">
+                                        {client.prenom?.[0]}{client.nom?.[0]}
+                                    </span>
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h1 className="text-base sm:text-lg font-semibold text-[var(--text-primary)] tracking-tight">{clientName}</h1>
+                                        <button
+                                            onClick={toggleVIP}
+                                            className={cn(
+                                                "p-1.5 rounded-lg transition-colors",
+                                                client.isVIP ? "bg-amber-100 text-amber-600" : "hover:bg-zinc-100 text-zinc-400"
+                                            )}
+                                            title={client.isVIP ? "Retirer VIP" : "Marquer VIP"}
+                                        >
+                                            <Star className={cn("h-4 w-4", client.isVIP && "fill-amber-500")} />
+                                        </button>
+                                    </div>
+                                    <p className="text-[11px] text-[var(--text-tertiary)]">
+                                        Client depuis le {client.createdAt.toDate().toLocaleDateString('fr-FR')}
+                                    </p>
+                                </div>
                             </div>
-                            <p className="text-[12px] text-[var(--text-tertiary)]">
-                                Client depuis le {client.createdAt.toDate().toLocaleDateString('fr-FR')}
-                            </p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                                {client.telephone && (
+                                    <a
+                                        href={`tel:${client.telephone}`}
+                                        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[var(--bg-tertiary)] text-[var(--text-secondary)] text-[11px] font-medium rounded-full"
+                                    >
+                                        <Phone className="h-3 w-3" />
+                                        {client.telephone}
+                                    </a>
+                                )}
+                                {client.email && (
+                                    <a
+                                        href={`mailto:${client.email}`}
+                                        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[var(--bg-tertiary)] text-[var(--text-secondary)] text-[11px] font-medium rounded-full"
+                                    >
+                                        <Mail className="h-3 w-3" />
+                                        {client.email}
+                                    </a>
+                                )}
+                            </div>
                         </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        {!isEditing ? (
+                            <>
+                                <button
+                                    onClick={() => setIsEditing(true)}
+                                    className="h-9 px-3 text-[var(--text-secondary)] text-[12px] font-medium rounded-lg hover:bg-[var(--bg-tertiary)] items-center gap-2 transition-colors hidden sm:flex"
+                                >
+                                    <Edit className="h-4 w-4" />
+                                    Modifier
+                                </button>
+                                <button
+                                    onClick={() => setDeleteConfirm(true)}
+                                    className="h-9 w-9 text-red-600 rounded-lg hover:bg-red-50 transition-colors hidden sm:flex items-center justify-center"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <button
+                                    onClick={() => setIsEditing(false)}
+                                    className="h-9 px-3 text-zinc-700 text-[12px] font-medium rounded-lg hover:bg-zinc-100 flex items-center gap-2 transition-colors"
+                                >
+                                    <X className="h-4 w-4" />
+                                    Annuler
+                                </button>
+                                <button
+                                    onClick={handleSave}
+                                    disabled={saving}
+                                    className="h-9 px-3 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white text-[12px] font-medium rounded-lg flex items-center gap-2 transition-colors"
+                                >
+                                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                                    Enregistrer
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    {!isEditing ? (
-                        <>
-                            <button
-                                onClick={() => setIsEditing(true)}
-                                className="hidden sm:flex h-9 px-4 text-[var(--text-secondary)] text-[13px] font-medium rounded-lg hover:bg-[var(--bg-tertiary)] items-center gap-2 transition-colors"
-                            >
-                                <Edit className="h-4 w-4" />
-                                Modifier
-                            </button>
-                            <button
-                                onClick={() => setDeleteConfirm(true)}
-                                className="hidden sm:flex h-9 px-4 text-red-600 text-[13px] font-medium rounded-lg hover:bg-red-50 items-center gap-2 transition-colors"
-                            >
-                                <Trash2 className="h-4 w-4" />
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <button
-                                onClick={() => setIsEditing(false)}
-                                className="h-10 px-4 text-zinc-700 text-sm font-medium rounded-xl hover:bg-zinc-100 flex items-center gap-2 transition-colors"
-                            >
-                                <X className="h-4 w-4" />
-                                Annuler
-                            </button>
-                            <button
-                                onClick={handleSave}
-                                disabled={saving}
-                                className="h-9 px-4 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white text-[13px] font-medium rounded-lg flex items-center gap-2 transition-colors"
-                            >
-                                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                                Enregistrer
-                            </button>
-                        </>
-                    )}
-                </div>
+                {/* Mobile actions */}
+                {!isEditing && (
+                    <div className="sm:hidden grid grid-cols-2 gap-2">
+                        <button
+                            onClick={() => setIsEditing(true)}
+                            className="h-10 px-3 bg-[var(--bg-tertiary)] text-[var(--text-secondary)] text-[12px] font-medium rounded-lg flex items-center justify-center gap-2"
+                        >
+                            <Edit className="h-4 w-4" />
+                            Modifier
+                        </button>
+                        <button
+                            onClick={() => setDeleteConfirm(true)}
+                            className="h-10 px-3 bg-red-50 text-red-600 text-[12px] font-medium rounded-lg flex items-center justify-center gap-2"
+                        >
+                            <Trash2 className="h-4 w-4" />
+                            Supprimer
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="bg-white rounded-xl border border-[var(--border-light)] p-4" style={{ boxShadow: 'var(--shadow-sm)' }}>
-                    <div className="flex items-center gap-2 text-[var(--text-muted)] mb-1">
-                        <Car className="h-4 w-4" strokeWidth={1.5} />
-                        <span className="text-[11px]">Véhicules</span>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                {[
+                    { label: "Véhicules", value: vehicles.length, icon: Car },
+                    { label: "Réparations", value: reparations.length, icon: Wrench },
+                    { label: "CA Total", value: `${totalCA.toLocaleString()} €`, icon: Euro },
+                    { label: "Documents", value: documents.length, icon: FileText },
+                ].map((stat) => (
+                    <div key={stat.label} className="bg-white rounded-xl border border-[var(--border-light)] p-3" style={{ boxShadow: 'var(--shadow-sm)' }}>
+                        <div className="flex items-center gap-2 text-[var(--text-muted)] mb-1">
+                            <stat.icon className="h-3.5 w-3.5" strokeWidth={1.5} />
+                            <span className="text-[10px]">{stat.label}</span>
+                        </div>
+                        <p className="text-lg font-semibold text-[var(--text-primary)]">{stat.value}</p>
                     </div>
-                    <p className="text-xl font-semibold text-[var(--text-primary)]">{vehicles.length}</p>
-                </div>
-                <div className="bg-white rounded-xl border border-[var(--border-light)] p-4" style={{ boxShadow: 'var(--shadow-sm)' }}>
-                    <div className="flex items-center gap-2 text-[var(--text-muted)] mb-1">
-                        <Wrench className="h-4 w-4" strokeWidth={1.5} />
-                        <span className="text-[11px]">Réparations</span>
-                    </div>
-                    <p className="text-xl font-semibold text-[var(--text-primary)]">{reparations.length}</p>
-                </div>
-                <div className="bg-white rounded-xl border border-[var(--border-light)] p-4" style={{ boxShadow: 'var(--shadow-sm)' }}>
-                    <div className="flex items-center gap-2 text-[var(--text-muted)] mb-1">
-                        <Euro className="h-4 w-4" strokeWidth={1.5} />
-                        <span className="text-[11px]">CA Total</span>
-                    </div>
-                    <p className="text-xl font-semibold text-[var(--text-primary)]">{totalCA.toLocaleString()} €</p>
-                </div>
-                <div className="bg-white rounded-xl border border-[var(--border-light)] p-4" style={{ boxShadow: 'var(--shadow-sm)' }}>
-                    <div className="flex items-center gap-2 text-[var(--text-muted)] mb-1">
-                        <FileText className="h-4 w-4" strokeWidth={1.5} />
-                        <span className="text-[11px]">Documents</span>
-                    </div>
-                    <p className="text-xl font-semibold text-[var(--text-primary)]">{documents.length}</p>
-                </div>
+                ))}
             </div>
 
             {/* Alerts */}
             {(reparationsEnCours > 0 || devisEnAttente > 0) && (
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-2">
                     {reparationsEnCours > 0 && (
-                        <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
-                            <Wrench className="h-4 w-4 text-amber-600" />
-                            <span className="text-sm text-amber-800">{reparationsEnCours} réparation(s) en cours</span>
+                        <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-full text-xs">
+                            <Wrench className="h-3.5 w-3.5 text-amber-600" />
+                            <span className="text-amber-800">{reparationsEnCours} réparation(s) en cours</span>
                         </div>
                     )}
                     {devisEnAttente > 0 && (
-                        <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
-                            <FileText className="h-4 w-4 text-blue-600" />
-                            <span className="text-sm text-blue-800">{devisEnAttente} devis en attente</span>
+                        <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-full text-xs">
+                            <FileText className="h-3.5 w-3.5 text-blue-600" />
+                            <span className="text-blue-800">{devisEnAttente} devis en attente</span>
                         </div>
                     )}
                 </div>
             )}
 
             {/* Quick Actions */}
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
                 <Link
                     href={`/repairs/new?clientId=${client.id}`}
-                    className="h-9 px-4 bg-amber-50 text-amber-700 text-[13px] font-medium rounded-lg flex items-center gap-2 hover:bg-amber-100 transition-colors"
+                    className="h-10 sm:h-9 px-3 sm:px-4 bg-amber-50 text-amber-700 text-[12px] sm:text-[13px] font-medium rounded-lg flex items-center justify-center gap-2 hover:bg-amber-100 transition-colors"
                 >
                     <Wrench className="h-4 w-4" />
                     Nouvelle réparation
                 </Link>
                 <Link
                     href={`/invoices/new?type=devis&clientId=${client.id}`}
-                    className="h-9 px-4 bg-blue-50 text-blue-700 text-[13px] font-medium rounded-lg flex items-center gap-2 hover:bg-blue-100 transition-colors"
+                    className="h-10 sm:h-9 px-3 sm:px-4 bg-blue-50 text-blue-700 text-[12px] sm:text-[13px] font-medium rounded-lg flex items-center justify-center gap-2 hover:bg-blue-100 transition-colors"
                 >
                     <FileText className="h-4 w-4" />
                     Nouveau devis
                 </Link>
                 <Link
                     href={`/vehicles/new?clientId=${client.id}`}
-                    className="h-9 px-4 bg-emerald-50 text-emerald-700 text-[13px] font-medium rounded-lg flex items-center gap-2 hover:bg-emerald-100 transition-colors"
+                    className="h-10 sm:h-9 px-3 sm:px-4 bg-emerald-50 text-emerald-700 text-[12px] sm:text-[13px] font-medium rounded-lg flex items-center justify-center gap-2 hover:bg-emerald-100 transition-colors"
                 >
                     <Car className="h-4 w-4" />
                     Ajouter véhicule
                 </Link>
                 <Link
                     href={`/schedule/new?clientId=${client.id}`}
-                    className="h-9 px-4 bg-violet-50 text-violet-700 text-[13px] font-medium rounded-lg flex items-center gap-2 hover:bg-violet-100 transition-colors"
+                    className="h-10 sm:h-9 px-3 sm:px-4 bg-violet-50 text-violet-700 text-[12px] sm:text-[13px] font-medium rounded-lg flex items-center justify-center gap-2 hover:bg-violet-100 transition-colors"
                 >
                     <Calendar className="h-4 w-4" />
                     Planifier RDV
@@ -347,7 +377,7 @@ export default function ClientDetailPage() {
                 {client.telephone && (
                     <a
                         href={`tel:${client.telephone}`}
-                        className="h-9 px-4 bg-[var(--bg-tertiary)] text-[var(--text-secondary)] text-[13px] font-medium rounded-lg flex items-center gap-2 hover:bg-[var(--border-default)] transition-colors"
+                        className="h-10 sm:h-9 px-3 sm:px-4 bg-[var(--bg-tertiary)] text-[var(--text-secondary)] text-[12px] sm:text-[13px] font-medium rounded-lg flex items-center justify-center gap-2 hover:bg-[var(--border-default)] transition-colors"
                     >
                         <Phone className="h-4 w-4" />
                         Appeler
@@ -356,8 +386,8 @@ export default function ClientDetailPage() {
             </div>
 
             {/* Tabs */}
-            <div className="border-b border-[var(--border-light)]">
-                <div className="flex gap-0.5 -mb-px">
+            <div className="border-b border-[var(--border-light)] overflow-x-auto scroll-hide -mx-4 px-4 touch-pan-x">
+                <div className="flex gap-0.5 -mb-px min-w-max snap-x snap-mandatory">
                     {[
                         { id: "info", label: "Informations", icon: null },
                         { id: "vehicles", label: "Véhicules", icon: Car, count: vehicles.length },
@@ -368,7 +398,7 @@ export default function ClientDetailPage() {
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as any)}
                             className={cn(
-                                "px-4 py-3 text-[13px] font-medium border-b-2 transition-all flex items-center gap-2",
+                                "px-3 py-2.5 text-[12px] font-medium border-b-2 transition-all flex items-center gap-2 whitespace-nowrap snap-start",
                                 activeTab === tab.id
                                     ? "border-[var(--accent-primary)] text-[var(--text-primary)]"
                                     : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
@@ -512,7 +542,7 @@ export default function ClientDetailPage() {
                                 <p className="text-sm text-zinc-500 mb-4">Ce client n'a pas encore de véhicule enregistré</p>
                                 <Link
                                     href={`/vehicles/new?clientId=${client.id}`}
-                                    className="inline-flex h-10 px-5 bg-zinc-900 text-white text-sm font-medium rounded-xl items-center gap-2"
+                                    className="inline-flex h-10 px-5 bg-[var(--accent-primary)] text-white text-sm font-medium rounded-xl items-center gap-2"
                                 >
                                     <Plus className="h-4 w-4" />
                                     Ajouter un véhicule
@@ -553,7 +583,7 @@ export default function ClientDetailPage() {
                                 <p className="text-sm text-zinc-500 mb-4">Aucun historique de réparation pour ce client</p>
                                 <Link
                                     href={`/repairs/new?clientId=${client.id}`}
-                                    className="inline-flex h-10 px-5 bg-zinc-900 text-white text-sm font-medium rounded-xl items-center gap-2"
+                                    className="inline-flex h-10 px-5 bg-[var(--accent-primary)] text-white text-sm font-medium rounded-xl items-center gap-2"
                                 >
                                     <Plus className="h-4 w-4" />
                                     Nouvelle réparation
@@ -612,7 +642,7 @@ export default function ClientDetailPage() {
                                 <p className="text-sm text-zinc-500 mb-4">Aucun devis ou facture pour ce client</p>
                                 <Link
                                     href={`/invoices/new?type=devis&clientId=${client.id}`}
-                                    className="inline-flex h-10 px-5 bg-zinc-900 text-white text-sm font-medium rounded-xl items-center gap-2"
+                                    className="inline-flex h-10 px-5 bg-[var(--accent-primary)] text-white text-sm font-medium rounded-xl items-center gap-2"
                                 >
                                     <Plus className="h-4 w-4" />
                                     Nouveau devis

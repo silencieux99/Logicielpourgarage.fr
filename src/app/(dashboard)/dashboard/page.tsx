@@ -26,7 +26,9 @@ import {
     getStats,
     getRendezVous,
     getDocuments,
-    getReparationsEnCours
+    getReparationsEnCours,
+    checkClientLimit,
+    checkVehiculeLimit
 } from "@/lib/database"
 
 interface DashboardStats {
@@ -51,6 +53,8 @@ export default function DashboardPage() {
     const { user, garage, loading: authLoading } = useAuth()
     const [loading, setLoading] = useState(true)
     const [stats, setStats] = useState<DashboardStats | null>(null)
+    const [clientLimit, setClientLimit] = useState<{ allowed: boolean; current: number; limit: number; isPro: boolean } | null>(null)
+    const [vehiculeLimit, setVehiculeLimit] = useState<{ allowed: boolean; current: number; limit: number; isPro: boolean } | null>(null)
     const [recentItems, setRecentItems] = useState<RecentItem[]>([])
     const [fabOpen, setFabOpen] = useState(false)
 
@@ -89,11 +93,13 @@ export default function DashboardPage() {
         if (!garage?.id) return
         setLoading(true)
         try {
-            const [statsData, rdvToday, documents, reparationsEnCours] = await Promise.all([
+            const [statsData, rdvToday, documents, reparationsEnCours, clientLimitData, vehiculeLimitData] = await Promise.all([
                 getStats(garage.id),
                 getRendezVous(garage.id, new Date()),
                 getDocuments(garage.id, 'facture'),
-                getReparationsEnCours(garage.id)
+                getReparationsEnCours(garage.id),
+                checkClientLimit(garage.id),
+                checkVehiculeLimit(garage.id)
             ])
 
             const today = new Date()
@@ -124,6 +130,8 @@ export default function DashboardPage() {
             }))
 
             setRecentItems(recentRepairs)
+            setClientLimit(clientLimitData)
+            setVehiculeLimit(vehiculeLimitData)
 
         } catch (error) {
             console.error("Erreur chargement dashboard:", error)
@@ -151,6 +159,10 @@ export default function DashboardPage() {
     ]
 
     const isPro = garage?.plan === 'pro' && garage?.subscriptionStatus === 'active'
+    const clientRemaining = clientLimit ? Math.max(0, clientLimit.limit - clientLimit.current) : 0
+    const vehiculeRemaining = vehiculeLimit ? Math.max(0, vehiculeLimit.limit - vehiculeLimit.current) : 0
+    const clientPercent = clientLimit ? Math.min(100, Math.round((clientLimit.current / clientLimit.limit) * 100)) : 0
+    const vehiculePercent = vehiculeLimit ? Math.min(100, Math.round((vehiculeLimit.current / vehiculeLimit.limit) * 100)) : 0
 
     if (loading) {
         return (
@@ -183,27 +195,63 @@ export default function DashboardPage() {
 
             {/* Subscription Banner */}
             {!isPro && (
-                <div className="bg-[var(--accent-primary)] rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
-                            <TrendingUp className="h-4 w-4 text-white/70" />
+                <div className="bg-white rounded-2xl border border-[var(--border-light)] p-4 sm:p-5" style={{ boxShadow: 'var(--shadow-sm)' }}>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-[var(--accent-soft)] flex items-center justify-center flex-shrink-0">
+                                <TrendingUp className="h-5 w-5 text-[var(--accent-primary)]" />
+                            </div>
+                            <div>
+                                <p className="text-[14px] font-semibold text-[var(--text-primary)]">Plan Démo</p>
+                                <p className="text-[12px] text-[var(--text-tertiary)]">
+                                    5 clients et 5 véhicules • Passez au Pro pour un accès illimité
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-[13px] font-medium text-white">
-                                Plan Démo — 5 clients, 5 véhicules max
-                            </p>
-                            <p className="text-[12px] text-white/60 mt-0.5">
-                                Passez au Pro pour un accès illimité
-                            </p>
-                        </div>
+                        <Link
+                            href="/upgrade"
+                            className="h-9 px-4 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white text-[13px] font-medium rounded-lg flex items-center gap-1.5 transition-colors"
+                        >
+                            <span>Passer au Pro</span>
+                            <ChevronRight className="h-3.5 w-3.5" />
+                        </Link>
                     </div>
-                    <Link
-                        href="/upgrade"
-                        className="flex-shrink-0 h-8 px-3 bg-white hover:bg-white/90 text-[var(--accent-primary)] text-[13px] font-medium rounded-md flex items-center gap-1.5 transition-colors"
-                    >
-                        <span>Passer au Pro</span>
-                        <ChevronRight className="h-3.5 w-3.5" />
-                    </Link>
+
+                    {clientLimit && vehiculeLimit && (
+                        <div className="mt-4 grid sm:grid-cols-2 gap-3">
+                            <div className="rounded-xl border border-[var(--border-light)] bg-[var(--bg-secondary)] p-3">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[12px] text-[var(--text-tertiary)]">Clients restants</span>
+                                    <span className="text-[12px] font-medium text-[var(--text-primary)]">{clientRemaining}/{clientLimit.limit}</span>
+                                </div>
+                                <div className="mt-2 h-2 rounded-full bg-white border border-[var(--border-light)] overflow-hidden">
+                                    <div
+                                        className="h-full bg-[var(--accent-primary)]"
+                                        style={{ width: `${clientPercent}%` }}
+                                    />
+                                </div>
+                                <p className="mt-1 text-[11px] text-[var(--text-tertiary)]">
+                                    Utilisés: {clientLimit.current}/{clientLimit.limit}
+                                </p>
+                            </div>
+
+                            <div className="rounded-xl border border-[var(--border-light)] bg-[var(--bg-secondary)] p-3">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[12px] text-[var(--text-tertiary)]">Véhicules restants</span>
+                                    <span className="text-[12px] font-medium text-[var(--text-primary)]">{vehiculeRemaining}/{vehiculeLimit.limit}</span>
+                                </div>
+                                <div className="mt-2 h-2 rounded-full bg-white border border-[var(--border-light)] overflow-hidden">
+                                    <div
+                                        className="h-full bg-[var(--accent-primary)]"
+                                        style={{ width: `${vehiculePercent}%` }}
+                                    />
+                                </div>
+                                <p className="mt-1 text-[11px] text-[var(--text-tertiary)]">
+                                    Utilisés: {vehiculeLimit.current}/{vehiculeLimit.limit}
+                                </p>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -217,6 +265,7 @@ export default function DashboardPage() {
                     </p>
                 </div>
             )}
+
 
             {/* Quick Actions - Mobile */}
             <div className="sm:hidden">
@@ -422,7 +471,7 @@ export default function DashboardPage() {
             {/* Mobile FAB Button */}
             <button
                 onClick={() => setFabOpen(true)}
-                className="sm:hidden fixed right-4 bottom-20 w-12 h-12 bg-[var(--accent-primary)] text-white rounded-full flex items-center justify-center z-30 active:scale-95 transition-transform"
+                className="sm:hidden fixed right-4 fab-bottom w-12 h-12 bg-[var(--accent-primary)] text-white rounded-full flex items-center justify-center z-30 active:scale-95 transition-transform"
                 style={{ boxShadow: 'var(--shadow-lg)' }}
             >
                 <Plus className="h-5 w-5" strokeWidth={2} />

@@ -140,13 +140,13 @@ export default function RepairsPage() {
         .reduce((sum, r) => sum + (r.montantTTC || 0), 0)
 
     return (
-        <div className="space-y-4 sm:space-y-6">
+        <div className="space-y-3 sm:space-y-5">
             {/* Header */}
             <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-xl sm:text-2xl font-semibold text-[var(--text-primary)] tracking-tight">Réparations</h1>
-                        <p className="text-[13px] text-[var(--text-tertiary)] mt-0.5">
+                        <h1 className="text-lg sm:text-xl font-semibold text-[var(--text-primary)] tracking-tight">Réparations</h1>
+                        <p className="text-[12px] text-[var(--text-tertiary)] mt-0.5">
                             {totalRepairs} réparation{totalRepairs !== 1 ? 's' : ''}
                             {urgentes > 0 && (
                                 <span className="ml-2 text-red-500">• {urgentes} urgente{urgentes !== 1 ? 's' : ''}</span>
@@ -163,7 +163,7 @@ export default function RepairsPage() {
                 </div>
 
                 {/* Stats Cards - Desktop */}
-                <div className="hidden sm:grid grid-cols-4 gap-3">
+                <div className="hidden sm:grid grid-cols-4 gap-2.5">
                     {[
                         { label: "En attente", value: enAttente, icon: Clock },
                         { label: "En cours", value: enCours, icon: Wrench },
@@ -172,14 +172,14 @@ export default function RepairsPage() {
                     ].map((stat) => (
                         <div
                             key={stat.label}
-                            className="bg-white rounded-xl border border-[var(--border-light)] p-4"
+                            className="bg-white rounded-xl border border-[var(--border-light)] p-3"
                             style={{ boxShadow: 'var(--shadow-sm)' }}
                         >
                             <div className="flex items-center gap-3">
-                                <stat.icon className="h-4 w-4 text-[var(--text-muted)]" strokeWidth={1.5} />
+                                <stat.icon className="h-3.5 w-3.5 text-[var(--text-muted)]" strokeWidth={1.5} />
                                 <div>
-                                    <p className="text-xl font-semibold text-[var(--text-primary)]">{stat.value}</p>
-                                    <p className="text-[11px] text-[var(--text-muted)]">{stat.label}</p>
+                                    <p className="text-lg font-semibold text-[var(--text-primary)]">{stat.value}</p>
+                                    <p className="text-[10px] text-[var(--text-muted)]">{stat.label}</p>
                                 </div>
                             </div>
                         </div>
@@ -193,9 +193,9 @@ export default function RepairsPage() {
                         { label: "En cours", value: enCours, color: "bg-blue-100 text-blue-700" },
                         { label: "Terminées", value: terminees, color: "bg-emerald-100 text-emerald-700" },
                     ].map(stat => (
-                        <div key={stat.label} className={cn("px-4 py-2 rounded-xl flex items-center gap-2 whitespace-nowrap", stat.color)}>
-                            <span className="text-lg font-bold">{stat.value}</span>
-                            <span className="text-sm">{stat.label}</span>
+                        <div key={stat.label} className={cn("px-3 py-1.5 rounded-lg flex items-center gap-2 whitespace-nowrap", stat.color)}>
+                            <span className="text-base font-semibold">{stat.value}</span>
+                            <span className="text-xs">{stat.label}</span>
                         </div>
                     ))}
                 </div>
@@ -209,10 +209,10 @@ export default function RepairsPage() {
                             placeholder="Rechercher par plaque, client, description..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full h-10 pl-10 pr-4 bg-white border border-[var(--border-default)] rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-transparent transition-shadow"
+                            className="w-full h-9 pl-10 pr-4 bg-white border border-[var(--border-default)] rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-transparent transition-shadow"
                         />
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                         <div className="flex gap-0.5 p-1 bg-[var(--bg-tertiary)] rounded-lg overflow-x-auto">
                             {[
                                 { id: "all", label: "Toutes" },
@@ -238,7 +238,7 @@ export default function RepairsPage() {
                             <select
                                 value={filterMecanicien}
                                 onChange={(e) => setFilterMecanicien(e.target.value)}
-                                className="h-10 px-3 bg-white border border-zinc-200 rounded-xl text-sm focus:outline-none hidden sm:block"
+                                className="h-9 px-3 bg-white border border-zinc-200 rounded-xl text-sm focus:outline-none hidden sm:block"
                             >
                                 <option value="all">Tous les mécaniciens</option>
                                 {personnel.map(p => (
@@ -251,13 +251,13 @@ export default function RepairsPage() {
                         <select
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value as any)}
-                            className="h-10 px-3 bg-white border border-zinc-200 rounded-xl text-sm focus:outline-none hidden sm:block"
+                            className="h-9 px-3 bg-white border border-zinc-200 rounded-xl text-sm focus:outline-none hidden sm:block"
                         >
                             <option value="date">Plus récentes</option>
                             <option value="priority">Par priorité</option>
                             <option value="amount">Par montant</option>
                         </select>
-                        <div className="flex bg-zinc-100 rounded-xl p-1 gap-1">
+                        <div className="flex bg-[var(--bg-tertiary)] rounded-xl p-1 gap-1">
                             <button
                                 onClick={() => setViewMode("list")}
                                 className={cn(
@@ -300,14 +300,14 @@ export default function RepairsPage() {
                     </Link>
                 </div>
             ) : filteredRepairs.length === 0 ? (
-                <div className="bg-white rounded-xl sm:rounded-2xl border border-zinc-200 p-8 sm:p-16 text-center">
-                    <div className="w-16 h-16 rounded-2xl bg-zinc-100 flex items-center justify-center mx-auto mb-4">
-                        <Wrench className="h-8 w-8 text-zinc-400" />
+                <div className="bg-white rounded-xl sm:rounded-2xl border border-zinc-200 p-6 sm:p-12 text-center">
+                    <div className="w-12 h-12 rounded-xl bg-zinc-100 flex items-center justify-center mx-auto mb-3">
+                        <Wrench className="h-6 w-6 text-zinc-400" />
                     </div>
                     <h3 className="text-lg font-semibold text-zinc-900 mb-2">
                         {searchQuery || filterStatus !== "all" ? "Aucun résultat" : "Aucune réparation"}
                     </h3>
-                    <p className="text-sm text-zinc-500 mb-6 max-w-md mx-auto">
+                    <p className="text-sm text-zinc-500 mb-4 max-w-md mx-auto">
                         {searchQuery || filterStatus !== "all"
                             ? "Aucune réparation ne correspond à vos critères"
                             : "Commencez par créer votre première réparation"}
@@ -315,7 +315,7 @@ export default function RepairsPage() {
                     {!searchQuery && filterStatus === "all" && (
                         <Link
                             href="/repairs/new"
-                            className="inline-flex h-11 px-6 bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-medium rounded-xl items-center gap-2 transition-colors"
+                            className="inline-flex h-10 px-5 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white text-sm font-medium rounded-xl items-center gap-2 transition-colors"
                         >
                             <Plus className="h-4 w-4" />
                             Nouvelle réparation
@@ -335,10 +335,10 @@ export default function RepairsPage() {
 
                     {/* Kanban View */}
                     {viewMode === "board" && !loading && garage?.id && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 overflow-x-auto pb-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 overflow-x-auto pb-4">
                             {/* Colonne En attente */}
-                            <div className="min-w-[300px] flex flex-col gap-4">
-                                <div className="flex items-center justify-between sticky top-0 bg-zinc-50 z-10 py-2">
+                            <div className="min-w-[260px] flex flex-col gap-3">
+                                <div className="flex items-center justify-between sticky top-0 bg-zinc-50 z-10 py-1.5">
                                     <div className="flex items-center gap-2">
                                         <div className="p-1.5 bg-amber-100 rounded-lg">
                                             <Clock className="h-4 w-4 text-amber-700" />
@@ -349,7 +349,7 @@ export default function RepairsPage() {
                                         </span>
                                     </div>
                                 </div>
-                                <div className="flex flex-col gap-3 min-h-[200px]">
+                                <div className="flex flex-col gap-2 min-h-[160px]">
                                     {filteredRepairs.filter(r => r.statut === "en_attente").map(repair => (
                                         <RepairCard key={repair.id} repair={repair} />
                                     ))}
@@ -357,8 +357,8 @@ export default function RepairsPage() {
                             </div>
 
                             {/* Colonne En cours */}
-                            <div className="min-w-[300px] flex flex-col gap-4">
-                                <div className="flex items-center justify-between sticky top-0 bg-zinc-50 z-10 py-2">
+                            <div className="min-w-[260px] flex flex-col gap-3">
+                                <div className="flex items-center justify-between sticky top-0 bg-zinc-50 z-10 py-1.5">
                                     <div className="flex items-center gap-2">
                                         <div className="p-1.5 bg-blue-100 rounded-lg">
                                             <Wrench className="h-4 w-4 text-blue-700" />
@@ -369,7 +369,7 @@ export default function RepairsPage() {
                                         </span>
                                     </div>
                                 </div>
-                                <div className="flex flex-col gap-3 min-h-[200px]">
+                                <div className="flex flex-col gap-2 min-h-[160px]">
                                     {filteredRepairs.filter(r => r.statut === "en_cours").map(repair => (
                                         <RepairCard key={repair.id} repair={repair} />
                                     ))}
@@ -377,8 +377,8 @@ export default function RepairsPage() {
                             </div>
 
                             {/* Colonne Terminé */}
-                            <div className="min-w-[300px] flex flex-col gap-4">
-                                <div className="flex items-center justify-between sticky top-0 bg-zinc-50 z-10 py-2">
+                            <div className="min-w-[260px] flex flex-col gap-3">
+                                <div className="flex items-center justify-between sticky top-0 bg-zinc-50 z-10 py-1.5">
                                     <div className="flex items-center gap-2">
                                         <div className="p-1.5 bg-emerald-100 rounded-lg">
                                             <CheckCircle className="h-4 w-4 text-emerald-700" />
@@ -389,7 +389,7 @@ export default function RepairsPage() {
                                         </span>
                                     </div>
                                 </div>
-                                <div className="flex flex-col gap-3 min-h-[200px]">
+                                <div className="flex flex-col gap-2 min-h-[160px]">
                                     {filteredRepairs.filter(r => ["termine", "facture"].includes(r.statut)).map(repair => (
                                         <RepairCard key={repair.id} repair={repair} />
                                     ))}
@@ -401,9 +401,9 @@ export default function RepairsPage() {
                     {/* Mobile FAB */}
                     <Link
                         href="/repairs/new"
-                        className="md:hidden fixed right-4 bottom-20 w-14 h-14 bg-zinc-900 hover:bg-zinc-800 text-white rounded-full shadow-lg flex items-center justify-center z-30 active:scale-95 transition-transform"
+                        className="md:hidden fixed right-4 fab-bottom w-12 h-12 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white rounded-full shadow-lg flex items-center justify-center z-30 active:scale-95 transition-transform"
                     >
-                        <Plus className="h-6 w-6" />
+                        <Plus className="h-5 w-5" />
                     </Link>
                 </>
             )}

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 import {
     User,
@@ -26,7 +27,9 @@ import {
     X,
     Hash,
     Euro,
-    Zap
+    Zap,
+    Sun,
+    Moon
 } from "lucide-react"
 import { useUpload } from "@/hooks/use-upload"
 import { useAuth } from "@/lib/auth-context"
@@ -43,6 +46,27 @@ const settingsSections = [
     { id: "securite", label: "Sécurité", icon: Shield, description: "Mot de passe" },
     { id: "apparence", label: "Apparence", icon: Palette, description: "Thème et affichage" },
 ]
+
+const civilites = ["M.", "Mme"]
+const fonctions = ["Gérant", "Directeur", "Responsable atelier", "Chef mécanicien", "Secrétaire", "Autre"]
+const statutsJuridiques = [
+    "Auto-entrepreneur",
+    "EURL",
+    "SARL",
+    "SAS",
+    "SASU",
+    "SA",
+    "Entreprise individuelle",
+    "Autre",
+]
+const effectifs = [
+    "1 personne (moi seul)",
+    "2-5 personnes",
+    "6-10 personnes",
+    "11-20 personnes",
+    "Plus de 20 personnes",
+]
+const paysOptions = ["France", "Belgique", "Suisse", "Luxembourg", "Canada", "Autre"]
 
 export default function SettingsPage() {
     const { user, garage, loading } = useAuth()
@@ -91,22 +115,28 @@ export default function SettingsPage() {
 
     // Form states
     const [profileData, setProfileData] = useState({
+        civilite: "",
         prenom: "",
         nom: "",
+        fonction: "",
         email: "",
         telephone: "",
     })
 
     const [garageData, setGarageData] = useState({
         nom: "",
+        statutJuridique: "",
         siret: "",
         tva: "",
+        activitePrincipale: "",
         adresse: "",
         codePostal: "",
         ville: "",
+        pays: "",
         telephone: "",
         email: "",
         siteWeb: "",
+        effectif: "",
     })
 
     const [documentSettings, setDocumentSettings] = useState({
@@ -127,6 +157,76 @@ export default function SettingsPage() {
         rappelDelai: 24,
     })
 
+    const [preferencesData, setPreferencesData] = useState({
+        acceptCGU: false,
+        acceptNewsletter: false,
+    })
+    const [theme, setTheme] = useState<"light" | "dark">("light")
+    const [accentColor, setAccentColor] = useState("#4f46e5")
+    const [textColor, setTextColor] = useState("#111111")
+
+    const activeSectionMeta = settingsSections.find((section) => section.id === activeSection)
+
+    useEffect(() => {
+        if (typeof window === "undefined") return
+        const storedTheme = localStorage.getItem("theme") as "light" | "dark" | null
+        const currentTheme = storedTheme || (document.documentElement.dataset.theme as "light" | "dark") || "light"
+        setTheme(currentTheme)
+        const storedAccent = localStorage.getItem("accentColor")
+        if (storedAccent) setAccentColor(storedAccent)
+        const storedText = localStorage.getItem("textColor")
+        if (storedText) setTextColor(storedText)
+    }, [])
+
+    const clamp = (value: number) => Math.max(0, Math.min(255, value))
+    const hexToRgb = (hex: string) => {
+        const clean = hex.replace("#", "")
+        const normalized = clean.length === 3
+            ? clean.split("").map((c) => c + c).join("")
+            : clean
+        const r = parseInt(normalized.slice(0, 2), 16)
+        const g = parseInt(normalized.slice(2, 4), 16)
+        const b = parseInt(normalized.slice(4, 6), 16)
+        return { r, g, b }
+    }
+    const darken = (value: number, factor: number) => clamp(Math.round(value * factor))
+
+    const applyTheme = (nextTheme: "light" | "dark") => {
+        setTheme(nextTheme)
+        if (typeof window === "undefined") return
+        document.documentElement.dataset.theme = nextTheme
+        document.documentElement.classList.toggle("dark", nextTheme === "dark")
+        localStorage.setItem("theme", nextTheme)
+    }
+
+    const applyAccent = (color: string) => {
+        setAccentColor(color)
+        if (typeof window === "undefined") return
+        const root = document.documentElement
+        const { r, g, b } = hexToRgb(color)
+        const hover = `rgb(${darken(r, 0.88)}, ${darken(g, 0.88)}, ${darken(b, 0.88)})`
+        const soft = `rgba(${r}, ${g}, ${b}, 0.12)`
+        root.style.setProperty("--accent-primary", color)
+        root.style.setProperty("--accent-hover", hover)
+        root.style.setProperty("--accent-soft", soft)
+        localStorage.setItem("accentColor", color)
+    }
+
+    const applyTextColor = (color: string) => {
+        setTextColor(color)
+        if (typeof window === "undefined") return
+        const root = document.documentElement
+        const { r, g, b } = hexToRgb(color)
+        const secondary = `rgb(${darken(r, 0.78)}, ${darken(g, 0.78)}, ${darken(b, 0.78)})`
+        const tertiary = `rgb(${darken(r, 0.62)}, ${darken(g, 0.62)}, ${darken(b, 0.62)})`
+        const muted = `rgb(${darken(r, 0.5)}, ${darken(g, 0.5)}, ${darken(b, 0.5)})`
+        root.style.setProperty("--text-primary", color)
+        root.style.setProperty("--text-secondary", secondary)
+        root.style.setProperty("--text-tertiary", tertiary)
+        root.style.setProperty("--text-muted", muted)
+        localStorage.setItem("textColor", color)
+    }
+
     // Charger les données initiales
     useEffect(() => {
         const loadInitialData = async () => {
@@ -143,8 +243,10 @@ export default function SettingsPage() {
                     // Charger les données du profil utilisateur
                     setProfileData(prev => ({
                         ...prev,
+                        civilite: garageDataFetched.ownerCivilite || "",
                         prenom: garageDataFetched.ownerPrenom || "",
                         nom: garageDataFetched.ownerNom || "",
+                        fonction: garageDataFetched.ownerFonction || "",
                         telephone: garageDataFetched.ownerTelephone || "",
                     }));
 
@@ -158,15 +260,24 @@ export default function SettingsPage() {
 
                     setGarageData({
                         nom: garageDataFetched.nom || "",
+                        statutJuridique: garageDataFetched.statutJuridique || "",
                         siret: garageDataFetched.siret || "",
                         tva: garageDataFetched.numeroTVA || "",
+                        activitePrincipale: garageDataFetched.activitePrincipale || "",
                         adresse: garageDataFetched.adresse || "",
                         codePostal: garageDataFetched.codePostal || "",
                         ville: garageDataFetched.ville || "",
+                        pays: garageDataFetched.pays || "",
                         telephone: garageDataFetched.telephone || "",
                         email: garageDataFetched.email || "",
                         siteWeb: garageDataFetched.siteWeb || "",
+                        effectif: garageDataFetched.effectif || "",
                     });
+
+                    setPreferencesData({
+                        acceptCGU: garageDataFetched.acceptCGU ?? false,
+                        acceptNewsletter: garageDataFetched.acceptNewsletter ?? false,
+                    })
 
                     if (garageDataFetched.id) {
                         const configDataFetched = await getGarageConfig(garageDataFetched.id);
@@ -244,17 +355,25 @@ export default function SettingsPage() {
             // Mettre à jour le garage (+ données profil)
             const garageUpdateData: any = {
                 nom: garageData.nom,
+                statutJuridique: garageData.statutJuridique,
                 siret: garageData.siret,
                 numeroTVA: garageData.tva,
+                activitePrincipale: garageData.activitePrincipale,
                 adresse: garageData.adresse,
                 codePostal: garageData.codePostal,
                 ville: garageData.ville,
+                pays: garageData.pays,
                 telephone: garageData.telephone,
                 email: garageData.email,
                 siteWeb: garageData.siteWeb,
+                effectif: garageData.effectif,
+                acceptCGU: preferencesData.acceptCGU,
+                acceptNewsletter: preferencesData.acceptNewsletter,
                 // Données profil utilisateur
+                ownerCivilite: profileData.civilite,
                 ownerPrenom: profileData.prenom,
                 ownerNom: profileData.nom,
+                ownerFonction: profileData.fonction,
                 ownerTelephone: profileData.telephone,
             }
 
@@ -361,12 +480,26 @@ export default function SettingsPage() {
                         </div>
                         <div className="grid sm:grid-cols-2 gap-4">
                             <div>
+                                <label className="block text-sm font-medium text-zinc-700 mb-2">Civilité</label>
+                                <select value={profileData.civilite} onChange={(e) => setProfileData({ ...profileData, civilite: e.target.value })} className="w-full h-11 px-4 border border-zinc-300 rounded-xl text-sm bg-white">
+                                    <option value="">Sélectionner...</option>
+                                    {civilites.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                            </div>
+                            <div>
                                 <label className="block text-sm font-medium text-zinc-700 mb-2">Prénom</label>
                                 <input type="text" value={profileData.prenom} onChange={(e) => setProfileData({ ...profileData, prenom: e.target.value })} placeholder="Jean" className="w-full h-11 px-4 border border-zinc-300 rounded-xl text-sm" />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-zinc-700 mb-2">Nom</label>
                                 <input type="text" value={profileData.nom} onChange={(e) => setProfileData({ ...profileData, nom: e.target.value })} placeholder="Dupont" className="w-full h-11 px-4 border border-zinc-300 rounded-xl text-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-zinc-700 mb-2">Fonction</label>
+                                <select value={profileData.fonction} onChange={(e) => setProfileData({ ...profileData, fonction: e.target.value })} className="w-full h-11 px-4 border border-zinc-300 rounded-xl text-sm bg-white">
+                                    <option value="">Sélectionner...</option>
+                                    {fonctions.map(f => <option key={f} value={f}>{f}</option>)}
+                                </select>
                             </div>
                             <div className="sm:col-span-2">
                                 <label className="block text-sm font-medium text-zinc-700 mb-2">Email</label>
@@ -380,6 +513,12 @@ export default function SettingsPage() {
                                 <div className="relative">
                                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
                                     <input type="tel" value={profileData.telephone} onChange={(e) => setProfileData({ ...profileData, telephone: e.target.value })} placeholder="06 12 34 56 78" className="w-full h-11 pl-10 pr-4 border border-zinc-300 rounded-xl text-sm" />
+                                </div>
+                            </div>
+                            <div className="sm:col-span-2">
+                                <label className="block text-sm font-medium text-zinc-700 mb-2">CGU</label>
+                                <div className="h-11 px-4 border border-zinc-200 rounded-xl text-sm flex items-center text-zinc-600 bg-zinc-50">
+                                    {preferencesData.acceptCGU ? "Acceptées" : "Non acceptées"}
                                 </div>
                             </div>
                         </div>
@@ -427,6 +566,26 @@ export default function SettingsPage() {
                             </div>
                             <div className="grid sm:grid-cols-2 gap-4">
                                 <div>
+                                    <label className="block text-sm font-medium text-zinc-700 mb-2">Statut juridique</label>
+                                    <select value={garageData.statutJuridique} onChange={(e) => setGarageData({ ...garageData, statutJuridique: e.target.value })} className="w-full h-11 px-4 border border-zinc-300 rounded-xl text-sm bg-white">
+                                        <option value="">Sélectionner...</option>
+                                        {statutsJuridiques.map(s => <option key={s} value={s}>{s}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-zinc-700 mb-2">Effectif</label>
+                                    <select value={garageData.effectif} onChange={(e) => setGarageData({ ...garageData, effectif: e.target.value })} className="w-full h-11 px-4 border border-zinc-300 rounded-xl text-sm bg-white">
+                                        <option value="">Sélectionner...</option>
+                                        {effectifs.map(e => <option key={e} value={e}>{e}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-zinc-700 mb-2">Activité principale</label>
+                                <input type="text" value={garageData.activitePrincipale} onChange={(e) => setGarageData({ ...garageData, activitePrincipale: e.target.value })} placeholder="Mécanique générale" className="w-full h-11 px-4 border border-zinc-300 rounded-xl text-sm" />
+                            </div>
+                            <div className="grid sm:grid-cols-2 gap-4">
+                                <div>
                                     <label className="block text-sm font-medium text-zinc-700 mb-2">SIRET</label>
                                     <input type="text" value={garageData.siret} onChange={(e) => setGarageData({ ...garageData, siret: e.target.value })} placeholder="123 456 789 00012" className="w-full h-11 px-4 border border-zinc-300 rounded-xl text-sm" />
                                 </div>
@@ -450,6 +609,36 @@ export default function SettingsPage() {
                                 <div className="col-span-2">
                                     <label className="block text-sm font-medium text-zinc-700 mb-2">Ville</label>
                                     <input type="text" value={garageData.ville} onChange={(e) => setGarageData({ ...garageData, ville: e.target.value })} placeholder="Paris" className="w-full h-11 px-4 border border-zinc-300 rounded-xl text-sm" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-zinc-700 mb-2">Pays</label>
+                                <select value={garageData.pays} onChange={(e) => setGarageData({ ...garageData, pays: e.target.value })} className="w-full h-11 px-4 border border-zinc-300 rounded-xl text-sm bg-white">
+                                    <option value="">Sélectionner...</option>
+                                    {paysOptions.map(p => <option key={p} value={p}>{p}</option>)}
+                                </select>
+                            </div>
+                            <div className="grid sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-zinc-700 mb-2">Téléphone du garage</label>
+                                    <div className="relative">
+                                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                                        <input type="tel" value={garageData.telephone} onChange={(e) => setGarageData({ ...garageData, telephone: e.target.value })} placeholder="01 23 45 67 89" className="w-full h-11 pl-10 pr-4 border border-zinc-300 rounded-xl text-sm" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-zinc-700 mb-2">Email du garage</label>
+                                    <div className="relative">
+                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                                        <input type="email" value={garageData.email} onChange={(e) => setGarageData({ ...garageData, email: e.target.value })} placeholder="contact@garage.fr" className="w-full h-11 pl-10 pr-4 border border-zinc-300 rounded-xl text-sm" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-zinc-700 mb-2">Site web</label>
+                                <div className="relative">
+                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                                    <input type="url" value={garageData.siteWeb} onChange={(e) => setGarageData({ ...garageData, siteWeb: e.target.value })} placeholder="https://www.mongarage.fr" className="w-full h-11 pl-10 pr-4 border border-zinc-300 rounded-xl text-sm" />
                                 </div>
                             </div>
                         </div>
@@ -658,6 +847,18 @@ export default function SettingsPage() {
                                     </button>
                                 </div>
                             ))}
+                            <div className="flex items-center justify-between p-4 bg-zinc-50 rounded-xl">
+                                <div className="flex items-center gap-3">
+                                    <Mail className="h-5 w-5 text-zinc-400" />
+                                    <div>
+                                        <p className="text-sm font-medium text-zinc-900">Newsletter</p>
+                                        <p className="text-xs text-zinc-500">Recevoir des conseils par email</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => setPreferencesData({ ...preferencesData, acceptNewsletter: !preferencesData.acceptNewsletter })} className={cn("w-12 h-7 rounded-full transition-colors relative", preferencesData.acceptNewsletter ? "bg-zinc-900" : "bg-zinc-300")}>
+                                    <span className={cn("absolute w-5 h-5 bg-white rounded-full top-1 transition-all", preferencesData.acceptNewsletter ? "left-6" : "left-1")} />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )
@@ -964,15 +1165,124 @@ export default function SettingsPage() {
                             <h2 className="text-lg font-semibold text-zinc-900 mb-1">Apparence</h2>
                             <p className="text-sm text-zinc-500">Personnalisez l'affichage</p>
                         </div>
-                        <div className="grid grid-cols-3 gap-3">
-                            <button className="p-4 rounded-xl border-2 border-zinc-900 bg-white text-center">
-                                <div className="w-12 h-8 bg-white border border-zinc-200 rounded mx-auto mb-2" />
-                                <span className="text-sm font-medium text-zinc-900">Clair</span>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                onClick={() => applyTheme("light")}
+                                className={cn(
+                                    "p-4 rounded-2xl border-2 text-left transition-all",
+                                    theme === "light" ? "border-[var(--accent-primary)] bg-[var(--accent-soft)]" : "border-zinc-200 bg-white hover:border-zinc-300"
+                                )}
+                            >
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className={cn(
+                                        "w-9 h-9 rounded-xl flex items-center justify-center",
+                                        theme === "light" ? "bg-[var(--accent-primary)] text-white" : "bg-zinc-100 text-zinc-600"
+                                    )}>
+                                        <Sun className="h-4 w-4" />
+                                    </div>
+                                    {theme === "light" && <Check className="h-4 w-4 text-[var(--accent-primary)]" />}
+                                </div>
+                                <div className="h-14 rounded-xl border border-zinc-200 bg-white mb-3 shadow-[var(--shadow-xs)]" />
+                                <p className="text-sm font-semibold text-zinc-900">Clair</p>
+                                <p className="text-xs text-zinc-500 mt-0.5">Contraste doux, lisible</p>
                             </button>
-                            <button className="p-4 rounded-xl border-2 border-zinc-200 bg-white text-center hover:border-zinc-300">
-                                <div className="w-12 h-8 bg-zinc-900 rounded mx-auto mb-2" />
-                                <span className="text-sm font-medium text-zinc-600">Sombre</span>
+
+                            <button
+                                onClick={() => applyTheme("dark")}
+                                className={cn(
+                                    "p-4 rounded-2xl border-2 text-left transition-all",
+                                    theme === "dark" ? "border-[var(--accent-primary)] bg-[var(--accent-soft)]" : "border-zinc-200 bg-white hover:border-zinc-300"
+                                )}
+                            >
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className={cn(
+                                        "w-9 h-9 rounded-xl flex items-center justify-center",
+                                        theme === "dark" ? "bg-[var(--accent-primary)] text-white" : "bg-zinc-100 text-zinc-600"
+                                    )}>
+                                        <Moon className="h-4 w-4" />
+                                    </div>
+                                    {theme === "dark" && <Check className="h-4 w-4 text-[var(--accent-primary)]" />}
+                                </div>
+                                <div className="h-14 rounded-xl bg-zinc-900 border border-zinc-800 mb-3 shadow-[var(--shadow-xs)]" />
+                                <p className="text-sm font-semibold text-zinc-900">Sombre</p>
+                                <p className="text-xs text-zinc-500 mt-0.5">Confort visuel nocturne</p>
                             </button>
+                        </div>
+                        <div className="bg-white rounded-2xl border border-zinc-200 p-4">
+                            <div className="flex items-center justify-between mb-3">
+                                <div>
+                                    <p className="text-sm font-semibold text-zinc-900">Couleur principale</p>
+                                    <p className="text-xs text-zinc-500">Personnalisez l’accent de l’interface</p>
+                                </div>
+                                <div className="w-9 h-9 rounded-lg border border-zinc-200" style={{ backgroundColor: accentColor }} />
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="color"
+                                    value={accentColor}
+                                    onChange={(e) => applyAccent(e.target.value)}
+                                    className="h-10 w-14 p-0 border border-zinc-200 rounded-lg bg-white"
+                                />
+                                <input
+                                    type="text"
+                                    value={accentColor}
+                                    onChange={(e) => applyAccent(e.target.value)}
+                                    className="flex-1 h-10 px-3 border border-zinc-300 rounded-lg text-sm font-mono"
+                                />
+                            </div>
+                            <div className="grid grid-cols-6 gap-2 mt-3">
+                                {["#4f46e5", "#2563eb", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444"].map((color) => (
+                                    <button
+                                        key={color}
+                                        type="button"
+                                        onClick={() => applyAccent(color)}
+                                        className={cn(
+                                            "h-8 rounded-lg border transition-all",
+                                            accentColor.toLowerCase() === color ? "border-[var(--accent-primary)]" : "border-zinc-200"
+                                        )}
+                                        style={{ backgroundColor: color }}
+                                        aria-label={`Choisir ${color}`}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                        <div className="bg-white rounded-2xl border border-zinc-200 p-4">
+                            <div className="flex items-center justify-between mb-3">
+                                <div>
+                                    <p className="text-sm font-semibold text-zinc-900">Couleur du texte</p>
+                                    <p className="text-xs text-zinc-500">Choisissez la teinte principale du texte</p>
+                                </div>
+                                <div className="w-9 h-9 rounded-lg border border-zinc-200" style={{ backgroundColor: textColor }} />
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="color"
+                                    value={textColor}
+                                    onChange={(e) => applyTextColor(e.target.value)}
+                                    className="h-10 w-14 p-0 border border-zinc-200 rounded-lg bg-white"
+                                />
+                                <input
+                                    type="text"
+                                    value={textColor}
+                                    onChange={(e) => applyTextColor(e.target.value)}
+                                    className="flex-1 h-10 px-3 border border-zinc-300 rounded-lg text-sm font-mono"
+                                />
+                            </div>
+                            <div className="grid grid-cols-6 gap-2 mt-3">
+                                {["#111111", "#1f2937", "#334155", "#6b7280", "#0f172a", "#ffffff"].map((color) => (
+                                    <button
+                                        key={color}
+                                        type="button"
+                                        onClick={() => applyTextColor(color)}
+                                        className={cn(
+                                            "h-8 rounded-lg border transition-all",
+                                            textColor.toLowerCase() === color ? "border-[var(--accent-primary)]" : "border-zinc-200"
+                                        )}
+                                        style={{ backgroundColor: color }}
+                                        aria-label={`Choisir ${color}`}
+                                    />
+                                ))}
+                            </div>
                         </div>
                     </div>
                 )
@@ -983,9 +1293,18 @@ export default function SettingsPage() {
 
     return (
         <div className="space-y-4 sm:space-y-6">
-            <div>
-                <h1 className="text-xl sm:text-2xl font-semibold text-[var(--text-primary)] tracking-tight">Paramètres</h1>
-                <p className="text-[13px] text-[var(--text-tertiary)] mt-0.5">Gérez votre compte et vos préférences</p>
+            <div className="flex items-start gap-3">
+                <Link
+                    href="/dashboard"
+                    className="h-9 w-9 rounded-lg border border-zinc-200 flex items-center justify-center text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 transition-colors"
+                    aria-label="Retour au tableau de bord"
+                >
+                    <ChevronRight className="h-4 w-4 rotate-180" />
+                </Link>
+                <div>
+                    <h1 className="text-xl sm:text-2xl font-semibold text-[var(--text-primary)] tracking-tight">Paramètres</h1>
+                    <p className="text-[13px] text-[var(--text-tertiary)] mt-0.5">Gérez votre compte et vos préférences</p>
+                </div>
             </div>
 
             <div className="lg:hidden">
@@ -1006,18 +1325,26 @@ export default function SettingsPage() {
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        <button
-                            onClick={() => setMobileContentOpen(false)}
-                            className="flex items-center gap-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors"
-                        >
-                            <ChevronRight className="h-4 w-4 rotate-180" />
-                            Retour aux paramètres
-                        </button>
+                        <div className="sticky top-0 z-20 -mx-4 px-4 py-2 bg-white border-b border-zinc-200 flex items-center gap-2">
+                            <button
+                                onClick={() => setMobileContentOpen(false)}
+                                className="h-9 w-9 rounded-lg border border-zinc-200 flex items-center justify-center text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 transition-colors"
+                                aria-label="Retour aux paramètres"
+                            >
+                                <ChevronRight className="h-4 w-4 rotate-180" />
+                            </button>
+                            <div className="min-w-0">
+                                <p className="text-[13px] text-zinc-500">Paramètres</p>
+                                <p className="text-[14px] font-medium text-zinc-900 truncate">
+                                    {activeSectionMeta?.label || "Section"}
+                                </p>
+                            </div>
+                        </div>
                         <div className="bg-white rounded-xl border border-[var(--border-light)] p-4 sm:p-5" style={{ boxShadow: 'var(--shadow-sm)' }}>
                             <div ref={mobileContentRef}>
                                 {renderContent()}
                             </div>
-                            <div className="flex justify-end pt-6 mt-6 border-t border-zinc-200">
+                            <div className="flex justify-end pt-6 mt-6">
                                 <button
                                     onClick={handleSave}
                                     disabled={isSaving || avatarUploading || logoUploading}
@@ -1067,7 +1394,7 @@ export default function SettingsPage() {
                     <div ref={mobileContentRef}>
                         {renderContent()}
                     </div>
-                    <div className="flex justify-end pt-6 mt-6 border-t border-zinc-200">
+                    <div className="flex justify-end pt-6 mt-6">
                         <button
                             onClick={handleSave}
                             disabled={isSaving || avatarUploading || logoUploading}

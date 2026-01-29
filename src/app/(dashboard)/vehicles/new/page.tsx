@@ -20,11 +20,14 @@ import {
     Fuel,
     Gauge,
     Calendar,
-    Palette
+    Palette,
+    ChevronRight
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUpload } from "@/hooks/use-upload"
 import { BrandLogo } from "@/components/ui/brand-logo"
+import { useAuth } from "@/lib/auth-context"
+import { checkVehiculeLimit, createVehicule } from "@/lib/database"
 
 const etatsVehicule = [
     { id: "excellent", label: "Excellent", color: "bg-emerald-50 text-emerald-600 border-emerald-200", icon: CheckCircle },
@@ -38,8 +41,10 @@ const couleurs = ["Blanc", "Noir", "Gris", "Bleu", "Rouge", "Vert", "Beige", "Ma
 
 export default function NewVehiclePage() {
     const router = useRouter()
+    const { garage } = useAuth()
     const [isLoading, setIsLoading] = useState(false)
     const [isSearching, setIsSearching] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
     const fileInputAvantRef = useRef<HTMLInputElement>(null)
     const fileInputApresRef = useRef<HTMLInputElement>(null)
@@ -147,23 +152,53 @@ export default function NewVehiclePage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
+        setError(null)
 
         try {
+            if (!garage?.id) {
+                setError("Veuillez d'abord configurer votre garage")
+                setIsLoading(false)
+                return
+            }
+
+            const vehiculeLimit = await checkVehiculeLimit(garage.id)
+            if (!vehiculeLimit.allowed) {
+                setError(`Limite atteinte : ${vehiculeLimit.current}/${vehiculeLimit.limit} véhicules. Passez au plan Pro pour ajouter des véhicules illimités.`)
+                setIsLoading(false)
+                return
+            }
+
             const photosAvantUrls = photosAvant.map(p => ({ url: p.url, uploadedAt: new Date().toISOString() }))
             const photosApresUrls = photosApres.map(p => ({ url: p.url, uploadedAt: new Date().toISOString() }))
 
             const vehicleData = {
-                ...formData,
+                garageId: garage.id,
+                clientId: formData.clientId || "",
+                plaque: formData.plaque.toUpperCase(),
+                vin: formData.vin || undefined,
+                marque: formData.marque,
+                modele: formData.modele,
+                version: formData.version || undefined,
+                annee: formData.annee,
+                couleur: formData.couleur || undefined,
+                carburant: formData.carburant,
+                kilometrage: formData.kilometrage,
+                // Champs additionnels stockés si besoin futur
                 photosAvant: photosAvantUrls,
                 photosApres: photosApresUrls,
-                createdAt: new Date().toISOString(),
+                notes: formData.notes || undefined,
+                etat: formData.etat || undefined,
+                etatCarrosserie: formData.etatCarrosserie || undefined,
+                etatInterieur: formData.etatInterieur || undefined,
+                etatMecanique: formData.etatMecanique || undefined,
+                remarquesEtat: formData.remarquesEtat || undefined,
             }
 
-            console.log('Vehicle data to save:', vehicleData)
-            await new Promise(resolve => setTimeout(resolve, 500))
+            await createVehicule(vehicleData)
             router.push("/vehicles")
         } catch (error) {
             console.error("Erreur lors de la création:", error)
+            setError("Une erreur est survenue lors de la création du véhicule")
         } finally {
             setIsLoading(false)
         }
@@ -183,6 +218,26 @@ export default function NewVehiclePage() {
                     <p className="text-xs sm:text-sm text-zinc-500">Ajoutez un véhicule</p>
                 </div>
             </div>
+
+            {error && (
+                <div className="max-w-2xl bg-red-50 border border-red-200 rounded-xl p-4">
+                    <div className="flex items-start gap-3">
+                        <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                            <p className="text-sm font-medium text-red-800">{error}</p>
+                            {error.includes("Limite atteinte") && (
+                                <Link
+                                    href="/upgrade"
+                                    className="inline-flex items-center gap-1 mt-2 text-sm font-semibold text-red-700 hover:text-red-900 transition-colors"
+                                >
+                                    Passer au Pro
+                                    <ChevronRight className="h-4 w-4" />
+                                </Link>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="max-w-2xl space-y-4 sm:space-y-5">
                 {/* Identification */}

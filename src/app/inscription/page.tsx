@@ -119,10 +119,19 @@ export default function InscriptionPage() {
                 userId: user.uid,
                 nom: formData.nomGarage,
                 statutJuridique: formData.statutJuridique,
+                activitePrincipale: formData.activitePrincipale,
                 adresse: formData.adresse,
                 codePostal: formData.codePostal,
                 ville: formData.ville,
+                pays: formData.pays,
                 email: formData.email,
+                acceptCGU: formData.acceptCGU,
+                acceptNewsletter: formData.acceptNewsletter,
+                ownerPrenom: formData.prenom,
+                ownerNom: formData.nom,
+                ownerCivilite: formData.civilite,
+                ownerFonction: formData.fonction,
+                ownerTelephone: formData.telephonePersonnel,
             }
             // Ajouter les champs optionnels seulement s'ils ont une valeur
             if (formData.siret) garageData.siret = formData.siret
@@ -133,6 +142,9 @@ export default function InscriptionPage() {
 
             const garageId = await createGarage(garageData)
             await createGarageConfig({ garageId })
+
+            // Rafraîchir le contexte auth pour charger les nouvelles infos
+            await refreshGarage()
 
             // 4. Sauvegarder les données temporaires pour l'onboarding
             if (typeof window !== 'undefined') {

@@ -35,17 +35,23 @@ export interface Garage {
     siret?: string
     numeroTVA?: string
     tvaIntracommunautaire?: string
+    activitePrincipale?: string
     adresse: string
     codePostal: string
     ville: string
+    pays?: string
     telephone?: string
     email?: string
     siteWeb?: string
     effectif?: string
     logo?: string
+    acceptCGU?: boolean
+    acceptNewsletter?: boolean
     // Owner info
+    ownerCivilite?: string
     ownerPrenom?: string
     ownerNom?: string
+    ownerFonction?: string
     ownerTelephone?: string
     ownerAvatar?: string
     // Subscription fields
@@ -125,8 +131,15 @@ export interface Vehicule {
     couleur?: string
     carburant: string
     kilometrage: number
-    dateDerniereVisite?: Timestamp
+    photosAvant?: { url: string; uploadedAt?: string }[]
+    photosApres?: { url: string; uploadedAt?: string }[]
     notes?: string
+    etat?: string
+    etatCarrosserie?: string
+    etatInterieur?: string
+    etatMecanique?: string
+    remarquesEtat?: string
+    dateDerniereVisite?: Timestamp
     createdAt: Timestamp
     updatedAt: Timestamp
 }

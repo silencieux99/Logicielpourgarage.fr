@@ -25,7 +25,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
-import { getClients, deleteClient, Client, getVehiculesByClient } from "@/lib/database"
+import { getClients, deleteClient, Client, getVehiculesByClient, checkClientLimit } from "@/lib/database"
 
 interface ClientWithStats extends Client {
     vehiculesCount?: number
@@ -35,6 +35,7 @@ export default function ClientsPage() {
     const { garage } = useAuth()
     const [clients, setClients] = useState<ClientWithStats[]>([])
     const [loading, setLoading] = useState(true)
+    const [clientLimit, setClientLimit] = useState<{ allowed: boolean; current: number; limit: number; isPro: boolean } | null>(null)
     const [searchQuery, setSearchQuery] = useState("")
     const [filterType, setFilterType] = useState<"all" | "vip" | "recent">("all")
     const [selectedClients, setSelectedClients] = useState<string[]>([])
@@ -45,6 +46,7 @@ export default function ClientsPage() {
     useEffect(() => {
         if (garage?.id) {
             loadClients()
+            loadClientLimit()
         } else {
             setLoading(false)
         }
@@ -73,6 +75,20 @@ export default function ClientsPage() {
             console.error("Erreur chargement clients:", error)
         } finally {
             setLoading(false)
+        }
+    }
+
+    const loadClientLimit = async () => {
+        if (!garage?.id) {
+            setClientLimit(null)
+            return
+        }
+
+        try {
+            const limit = await checkClientLimit(garage.id)
+            setClientLimit(limit)
+        } catch (error) {
+            console.error("Erreur chargement limite clients:", error)
         }
     }
 
@@ -156,6 +172,9 @@ export default function ClientsPage() {
                         <p className="text-[13px] text-[var(--text-tertiary)] mt-0.5">
                             {totalClients} client{totalClients !== 1 ? 's' : ''}
                             {vipClients > 0 && <span className="ml-2">• {vipClients} VIP</span>}
+                            {clientLimit && !clientLimit.isPro && (
+                                <span className="ml-2">• Quota {clientLimit.current}/{clientLimit.limit}</span>
+                            )}
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -164,13 +183,23 @@ export default function ClientsPage() {
                                 {selectedClients.length} sélectionné(s)
                             </span>
                         )}
-                        <Link
-                            href="/clients/new"
-                            className="hidden sm:inline-flex h-9 px-4 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white text-[13px] font-medium rounded-lg items-center gap-2 transition-colors"
-                        >
-                            <Plus className="h-4 w-4" />
-                            <span>Nouveau client</span>
-                        </Link>
+                        {clientLimit && !clientLimit.allowed ? (
+                            <Link
+                                href="/upgrade"
+                                className="hidden sm:inline-flex h-9 px-4 bg-amber-600 hover:bg-amber-700 text-white text-[13px] font-medium rounded-lg items-center gap-2 transition-colors"
+                            >
+                                <AlertCircle className="h-4 w-4" />
+                                <span>Limite atteinte</span>
+                            </Link>
+                        ) : (
+                            <Link
+                                href="/clients/new"
+                                className="hidden sm:inline-flex h-9 px-4 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white text-[13px] font-medium rounded-lg items-center gap-2 transition-colors"
+                            >
+                                <Plus className="h-4 w-4" />
+                                <span>Nouveau client</span>
+                            </Link>
+                        )}
                     </div>
                 </div>
 
@@ -272,13 +301,23 @@ export default function ClientsPage() {
                             : "Commencez par ajouter votre premier client"}
                     </p>
                     {!searchQuery && (
-                        <Link
-                            href="/clients/new"
-                            className="inline-flex h-11 px-6 bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-medium rounded-xl items-center gap-2 transition-colors"
-                        >
-                            <Plus className="h-4 w-4" />
-                            Ajouter un client
-                        </Link>
+                        clientLimit && !clientLimit.allowed ? (
+                            <Link
+                                href="/upgrade"
+                                className="inline-flex h-11 px-6 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-xl items-center gap-2 transition-colors"
+                            >
+                                <AlertCircle className="h-4 w-4" />
+                                Limite atteinte • Passer au Pro
+                            </Link>
+                        ) : (
+                            <Link
+                                href="/clients/new"
+                                className="inline-flex h-11 px-6 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white text-sm font-medium rounded-xl items-center gap-2 transition-colors"
+                            >
+                                <Plus className="h-4 w-4" />
+                                Ajouter un client
+                            </Link>
+                        )
                     )}
                 </div>
             ) : (
@@ -442,12 +481,22 @@ export default function ClientsPage() {
             )}
 
             {/* Mobile FAB */}
-            <Link
-                href="/clients/new"
-                className="md:hidden fixed right-4 bottom-20 w-14 h-14 bg-zinc-900 hover:bg-zinc-800 text-white rounded-full shadow-lg flex items-center justify-center z-30 active:scale-95 transition-transform"
-            >
-                <Plus className="h-6 w-6" />
-            </Link>
+            {clientLimit && !clientLimit.allowed ? (
+                <Link
+                    href="/upgrade"
+                    className="md:hidden fixed right-4 fab-bottom w-14 h-14 bg-amber-600 hover:bg-amber-700 text-white rounded-full shadow-lg flex items-center justify-center z-30 active:scale-95 transition-transform"
+                    title="Limite atteinte"
+                >
+                    <AlertCircle className="h-6 w-6" />
+                </Link>
+            ) : (
+                <Link
+                    href="/clients/new"
+                    className="md:hidden fixed right-4 fab-bottom w-14 h-14 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white rounded-full shadow-lg flex items-center justify-center z-30 active:scale-95 transition-transform"
+                >
+                    <Plus className="h-6 w-6" />
+                </Link>
+            )}
         </div>
     )
 }

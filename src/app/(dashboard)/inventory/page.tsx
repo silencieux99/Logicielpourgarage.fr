@@ -188,7 +188,7 @@ export default function InventoryPage() {
             {/* Mobile FAB */}
             <Link
                 href="/inventory/new"
-                className="md:hidden fixed right-4 bottom-20 w-12 h-12 bg-[var(--accent-primary)] text-white rounded-full flex items-center justify-center z-30"
+                className="md:hidden fixed right-4 fab-bottom w-12 h-12 bg-[var(--accent-primary)] text-white rounded-full flex items-center justify-center z-30"
                 style={{ boxShadow: 'var(--shadow-lg)' }}
             >
                 <Plus className="h-5 w-5" />

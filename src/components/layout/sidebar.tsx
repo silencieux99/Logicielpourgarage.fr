@@ -477,32 +477,37 @@ export function Sidebar() {
                             </div>
 
                             {/* Secondary actions */}
-                            <div className="flex gap-2 pt-4 border-t border-zinc-100">
-                                {secondaryNav.map((item) => {
-                                    const isActive = pathname === item.href
-                                    return (
-                                        <Link
-                                            key={item.href}
-                                            href={item.href}
-                                            onClick={() => setShowMoreMenu(false)}
-                                            className={cn(
-                                                "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-all",
-                                                isActive
-                                                    ? "bg-[var(--accent-soft)] text-[var(--text-primary)]"
-                                                    : "bg-zinc-50 text-[var(--text-secondary)]"
-                                            )}
-                                        >
-                                            <item.icon className="h-4 w-4" strokeWidth={1.75} />
-                                            <span className="text-[13px] font-medium">{item.name}</span>
-                                        </Link>
-                                    )
-                                })}
+                            <div className="mt-4 space-y-2">
+                                <div className="grid grid-cols-2 gap-2">
+                                    {secondaryNav.map((item) => {
+                                        const isActive = pathname === item.href
+                                        return (
+                                            <Link
+                                                key={item.href}
+                                                href={item.href}
+                                                onClick={() => setShowMoreMenu(false)}
+                                                className={cn(
+                                                    "flex items-center justify-center gap-2 py-3 rounded-xl transition-all",
+                                                    isActive
+                                                        ? "bg-[var(--accent-soft)] text-[var(--text-primary)]"
+                                                        : "bg-zinc-50 text-[var(--text-secondary)]"
+                                                )}
+                                            >
+                                                <item.icon className="h-4 w-4" strokeWidth={1.75} />
+                                                <span className="text-[13px] font-medium">{item.name}</span>
+                                            </Link>
+                                        )
+                                    })}
+                                </div>
                                 <button
                                     onClick={handleLogout}
-                                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-red-50 text-red-600 transition-all active:bg-red-100"
+                                    className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-red-200 bg-red-50 text-red-700 transition-all active:bg-red-100"
                                 >
-                                    <LogOut className="h-4 w-4" strokeWidth={1.75} />
-                                    <span className="text-[13px] font-medium">Déco.</span>
+                                    <div className="flex items-center gap-2">
+                                        <LogOut className="h-4 w-4" strokeWidth={1.75} />
+                                        <span className="text-[13px] font-medium">Déconnexion</span>
+                                    </div>
+                                    <ChevronRight className="h-4 w-4 text-red-300" />
                                 </button>
                             </div>
                         </nav>

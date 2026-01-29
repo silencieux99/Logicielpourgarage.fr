@@ -10,10 +10,13 @@ import {
     Calendar,
     Gauge,
     ChevronRight,
-    Loader2
+    Loader2,
+    AlertCircle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { BrandLogo } from "@/components/ui/brand-logo"
+import { useAuth } from "@/lib/auth-context"
+import { getVehicules, Vehicule, checkVehiculeLimit } from "@/lib/database"
 
 interface Vehicle {
     id: string
@@ -27,22 +30,54 @@ interface Vehicle {
 }
 
 export default function VehiclesPage() {
+    const { garage } = useAuth()
     const [vehicles, setVehicles] = useState<Vehicle[]>([])
     const [loading, setLoading] = useState(true)
+    const [vehiculeLimit, setVehiculeLimit] = useState<{ allowed: boolean; current: number; limit: number; isPro: boolean } | null>(null)
     const [searchQuery, setSearchQuery] = useState("")
 
     useEffect(() => {
         loadVehicles()
-    }, [])
+        loadVehiculeLimit()
+    }, [garage?.id])
 
     const loadVehicles = async () => {
+        if (!garage?.id) {
+            setVehicles([])
+            setLoading(false)
+            return
+        }
+
         setLoading(true)
         try {
-            setVehicles([])
+            const data = await getVehicules(garage.id)
+            setVehicles(data.map((v: Vehicule) => ({
+                id: v.id || "",
+                plaque: v.plaque,
+                marque: v.marque,
+                modele: v.modele,
+                annee: v.annee,
+                carburant: v.carburant,
+                kilometrage: v.kilometrage,
+            })))
         } catch (error) {
             console.error("Erreur chargement véhicules:", error)
         } finally {
             setLoading(false)
+        }
+    }
+
+    const loadVehiculeLimit = async () => {
+        if (!garage?.id) {
+            setVehiculeLimit(null)
+            return
+        }
+
+        try {
+            const limit = await checkVehiculeLimit(garage.id)
+            setVehiculeLimit(limit)
+        } catch (error) {
+            console.error("Erreur chargement limite véhicules:", error)
         }
     }
 
@@ -60,15 +95,30 @@ export default function VehiclesPage() {
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-xl sm:text-2xl font-semibold text-[var(--text-primary)] tracking-tight">Véhicules</h1>
-                        <p className="text-[13px] text-[var(--text-tertiary)] mt-0.5">{vehicles.length} véhicule{vehicles.length !== 1 ? 's' : ''}</p>
+                        <p className="text-[13px] text-[var(--text-tertiary)] mt-0.5">
+                            {vehicles.length} véhicule{vehicles.length !== 1 ? 's' : ''}
+                            {vehiculeLimit && !vehiculeLimit.isPro && (
+                                <span className="ml-2">• Quota {vehiculeLimit.current}/{vehiculeLimit.limit}</span>
+                            )}
+                        </p>
                     </div>
-                    <Link
-                        href="/vehicles/new"
-                        className="hidden sm:inline-flex h-9 px-4 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white text-[13px] font-medium rounded-lg items-center gap-2 transition-colors"
-                    >
-                        <Plus className="h-4 w-4" />
-                        <span>Nouveau véhicule</span>
-                    </Link>
+                    {vehiculeLimit && !vehiculeLimit.allowed ? (
+                        <Link
+                            href="/upgrade"
+                            className="hidden sm:inline-flex h-9 px-4 bg-amber-600 hover:bg-amber-700 text-white text-[13px] font-medium rounded-lg items-center gap-2 transition-colors"
+                        >
+                            <AlertCircle className="h-4 w-4" />
+                            <span>Limite atteinte</span>
+                        </Link>
+                    ) : (
+                        <Link
+                            href="/vehicles/new"
+                            className="hidden sm:inline-flex h-9 px-4 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white text-[13px] font-medium rounded-lg items-center gap-2 transition-colors"
+                        >
+                            <Plus className="h-4 w-4" />
+                            <span>Nouveau véhicule</span>
+                        </Link>
+                    )}
                 </div>
 
                 {/* Search */}
@@ -103,13 +153,23 @@ export default function VehiclesPage() {
                             : "Commencez par ajouter votre premier véhicule"}
                     </p>
                     {!searchQuery && (
-                        <Link
-                            href="/vehicles/new"
-                            className="inline-flex h-9 px-4 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white text-[13px] font-medium rounded-lg items-center gap-2 transition-colors"
-                        >
-                            <Plus className="h-4 w-4" />
-                            Ajouter un véhicule
-                        </Link>
+                        vehiculeLimit && !vehiculeLimit.allowed ? (
+                            <Link
+                                href="/upgrade"
+                                className="inline-flex h-9 px-4 bg-amber-600 hover:bg-amber-700 text-white text-[13px] font-medium rounded-lg items-center gap-2 transition-colors"
+                            >
+                                <AlertCircle className="h-4 w-4" />
+                                Limite atteinte • Passer au Pro
+                            </Link>
+                        ) : (
+                            <Link
+                                href="/vehicles/new"
+                                className="inline-flex h-9 px-4 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white text-[13px] font-medium rounded-lg items-center gap-2 transition-colors"
+                            >
+                                <Plus className="h-4 w-4" />
+                                Ajouter un véhicule
+                            </Link>
+                        )
                     )}
                 </div>
             ) : (
@@ -160,13 +220,24 @@ export default function VehiclesPage() {
             )}
 
             {/* Mobile FAB */}
-            <Link
-                href="/vehicles/new"
-                className="md:hidden fixed right-4 bottom-20 w-12 h-12 bg-[var(--accent-primary)] text-white rounded-full flex items-center justify-center z-30"
-                style={{ boxShadow: 'var(--shadow-lg)' }}
-            >
-                <Plus className="h-5 w-5" />
-            </Link>
+            {vehiculeLimit && !vehiculeLimit.allowed ? (
+                <Link
+                    href="/upgrade"
+                    className="md:hidden fixed right-4 fab-bottom w-12 h-12 bg-amber-600 text-white rounded-full flex items-center justify-center z-30"
+                    style={{ boxShadow: 'var(--shadow-lg)' }}
+                    title="Limite atteinte"
+                >
+                    <AlertCircle className="h-5 w-5" />
+                </Link>
+            ) : (
+                <Link
+                    href="/vehicles/new"
+                    className="md:hidden fixed right-4 fab-bottom w-12 h-12 bg-[var(--accent-primary)] text-white rounded-full flex items-center justify-center z-30"
+                    style={{ boxShadow: 'var(--shadow-lg)' }}
+                >
+                    <Plus className="h-5 w-5" />
+                </Link>
+            )}
         </div>
     )
 }

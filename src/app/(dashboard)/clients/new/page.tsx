@@ -25,7 +25,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
-import { createClient, createVehicule, updateVehicule, getVehicules, Vehicule, checkClientLimit } from "@/lib/database"
+import { createClient, createVehicule, updateVehicule, getVehicules, Vehicule, checkClientLimit, checkVehiculeLimit } from "@/lib/database"
 
 interface Vehicle {
     id: string
@@ -179,6 +179,12 @@ export default function NewClientPage() {
 
             // 2. Gérer le véhicule
             if (vehicleMode === "new" && newVehicle.plaque) {
+                const vehiculeLimit = await checkVehiculeLimit(garage.id)
+                if (!vehiculeLimit.allowed) {
+                    setError(`Limite atteinte : ${vehiculeLimit.current}/${vehiculeLimit.limit} véhicules. Passez au plan Pro pour ajouter des véhicules illimités.`)
+                    setIsLoading(false)
+                    return
+                }
                 // Créer un nouveau véhicule
                 await createVehicule({
                     garageId: garage.id,
@@ -290,7 +296,7 @@ export default function NewClientPage() {
                                 >
                                     <div className={cn(
                                         "w-10 h-10 rounded-xl flex items-center justify-center",
-                                        formData.type === "particulier" ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-600"
+                                        formData.type === "particulier" ? "bg-[var(--accent-primary)] text-white" : "bg-zinc-100 text-zinc-600"
                                     )}>
                                         <User className="h-5 w-5" />
                                     </div>
@@ -309,7 +315,7 @@ export default function NewClientPage() {
                                 >
                                     <div className={cn(
                                         "w-10 h-10 rounded-xl flex items-center justify-center",
-                                        formData.type === "societe" ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-600"
+                                        formData.type === "societe" ? "bg-[var(--accent-primary)] text-white" : "bg-zinc-100 text-zinc-600"
                                     )}>
                                         <Building2 className="h-5 w-5" />
                                     </div>
@@ -415,7 +421,7 @@ export default function NewClientPage() {
                                                     onClick={() => updateField("civilite", c)}
                                                     className={cn(
                                                         "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                                                        formData.civilite === c ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+                                                        formData.civilite === c ? "bg-[var(--accent-primary)] text-white" : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
                                                     )}
                                                 >
                                                     {c}
@@ -560,7 +566,7 @@ export default function NewClientPage() {
                                 type="button"
                                 onClick={() => setStep("vehicle")}
                                 disabled={!canProceedToVehicle}
-                                className="h-11 px-6 bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-300 text-white text-sm font-semibold rounded-xl flex items-center gap-2 transition-colors"
+                                className="h-11 px-6 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] disabled:bg-zinc-300 text-white text-sm font-semibold rounded-xl flex items-center gap-2 transition-colors"
                             >
                                 Continuer
                                 <ChevronRight className="h-4 w-4" />
@@ -789,7 +795,7 @@ export default function NewClientPage() {
                                 <ArrowLeft className="h-4 w-4" />
                                 Retour
                             </button>
-                            <button type="button" onClick={() => setStep("action")} className="h-11 px-6 bg-zinc-900 hover:bg-zinc-800 text-white text-sm font-semibold rounded-xl flex items-center gap-2 transition-colors">
+                            <button type="button" onClick={() => setStep("action")} className="h-11 px-6 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white text-sm font-semibold rounded-xl flex items-center gap-2 transition-colors">
                                 Continuer
                                 <ChevronRight className="h-4 w-4" />
                             </button>
@@ -821,7 +827,7 @@ export default function NewClientPage() {
                                         <div className={cn(
                                             "w-12 h-12 rounded-xl flex items-center justify-center",
                                             afterSaveAction === action.id
-                                                ? action.color === "zinc" ? "bg-zinc-900 text-white" : action.color === "blue" ? "bg-blue-600 text-white" : "bg-amber-600 text-white"
+                                                ? action.color === "zinc" ? "bg-[var(--accent-primary)] text-white" : action.color === "blue" ? "bg-blue-600 text-white" : "bg-amber-600 text-white"
                                                 : action.color === "zinc" ? "bg-zinc-100 text-zinc-600" : action.color === "blue" ? "bg-blue-100 text-blue-600" : "bg-amber-100 text-amber-600"
                                         )}>
                                             <action.icon className="h-6 w-6" />
@@ -867,7 +873,7 @@ export default function NewClientPage() {
                             <button
                                 type="submit"
                                 disabled={!canSubmit || isLoading}
-                                className="h-11 px-6 bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-300 text-white text-sm font-semibold rounded-xl flex items-center gap-2 transition-colors"
+                                className="h-11 px-6 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] disabled:bg-zinc-300 text-white text-sm font-semibold rounded-xl flex items-center gap-2 transition-colors"
                             >
                                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                                 {isLoading ? "Création..." : "Créer le client"}
