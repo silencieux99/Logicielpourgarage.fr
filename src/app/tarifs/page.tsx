@@ -50,7 +50,7 @@ export default function TarifsPage() {
                             Tarifs transparents
                         </h1>
                         <p className="text-[16px] sm:text-[18px] text-zinc-600 max-w-xl mx-auto">
-                            Un seul prix, sans surprise. Annulez à tout moment.
+                            Un seul prix, sans surprise. Sans engagement, résiliable à tout moment.
                         </p>
                     </div>
 
@@ -99,7 +99,7 @@ export default function TarifsPage() {
                                 </div>
                             </div>
 
-                            <p className="text-[13px] text-emerald-400 mb-6">Sans engagement • Sans frais cachés</p>
+                            <p className="text-[13px] text-emerald-400 mb-6">Sans engagement • Résiliation à tout moment • Sans frais cachés</p>
 
                             <div className="space-y-3 mb-8">
                                 {benefitsPro.map((b) => (
@@ -115,7 +115,7 @@ export default function TarifsPage() {
                                 S'abonner maintenant
                             </button>
 
-                            <p className="text-[12px] text-zinc-500 mt-4 text-center">Paiement sécurisé par Stripe</p>
+                                <p className="text-[12px] text-zinc-500 mt-4 text-center">Paiement sécurisé par Stripe • Résiliable à tout moment</p>
                         </div>
                     </div>
 
@@ -135,7 +135,7 @@ export default function TarifsPage() {
                                     <X className="h-5 w-5" />
                                     <span className="text-[14px] font-medium">Aucun engagement</span>
                                 </div>
-                                <p className="text-[13px] text-zinc-500">Annulez quand vous voulez</p>
+                                <p className="text-[13px] text-zinc-500">Résiliation possible à tout moment</p>
                             </div>
                             <div className="text-center">
                                 <div className="flex items-center justify-center gap-2 text-red-500 mb-2">

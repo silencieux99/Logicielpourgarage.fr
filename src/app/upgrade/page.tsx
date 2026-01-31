@@ -176,7 +176,7 @@ function UpgradePageContent() {
                                         <span className="text-zinc-400 text-lg">/mois</span>
                                     </div>
                                     <p className="text-sm text-zinc-400">
-                                        {priceTTC.toFixed(2).replace(".", ",")}€ TTC • Sans engagement
+                                        {priceTTC.toFixed(2).replace(".", ",")}€ TTC • Sans engagement, résiliable à tout moment
                                     </p>
                                 </div>
 
@@ -201,7 +201,7 @@ function UpgradePageContent() {
                                     </button>
 
                                     <p className="text-center text-xs text-zinc-400 mt-4">
-                                        Annulable à tout moment • Paiement via Stripe
+                                        Sans engagement — résiliation possible à tout moment • Paiement via Stripe
                                     </p>
                                 </div>
                             </div>

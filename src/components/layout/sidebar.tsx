@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils"
 import { useSidebar } from "@/lib/sidebar-context"
 import { signOut } from "@/lib/auth"
 import { useAuth } from "@/lib/auth-context"
+import { ThemeToggleButton } from "@/components/ui/theme-toggle-button"
 
 const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -234,6 +235,13 @@ export function Sidebar() {
 
                 {/* Toggle & Logout */}
                 <div className="px-2 py-2 border-t border-[var(--border-light)] space-y-0.5">
+                    <ThemeToggleButton
+                        showLabel={!isCollapsed}
+                        className={cn(
+                            "w-full",
+                            isCollapsed ? "justify-center px-0" : "justify-start"
+                        )}
+                    />
                     <button
                         onClick={toggleSidebar}
                         className={cn(
@@ -322,6 +330,13 @@ export function Sidebar() {
                 </nav>
 
                 <div className="px-2 py-2 border-t border-[var(--border-light)] space-y-0.5">
+                    <ThemeToggleButton
+                        showLabel={tabletExpanded}
+                        className={cn(
+                            "w-full",
+                            tabletExpanded ? "justify-start" : "justify-center"
+                        )}
+                    />
                     <button
                         onClick={toggleTabletSidebar}
                         className={cn(
@@ -499,6 +514,7 @@ export function Sidebar() {
                                         )
                                     })}
                                 </div>
+                                <ThemeToggleButton className="w-full justify-center" />
                                 <button
                                     onClick={handleLogout}
                                     className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-red-200 bg-red-50 text-red-700 transition-all active:bg-red-100"

@@ -168,6 +168,12 @@ body {
   color: #ffffff !important;
 }
 
+/* Invert brand logo in dark mode */
+:root[data-theme="dark"] .logo-invert,
+.dark .logo-invert {
+  filter: invert(1) brightness(2) contrast(1.1);
+}
+
 :root[data-theme="dark"] .hover\:bg-zinc-800:hover,
 .dark .hover\:bg-zinc-800:hover {
   background-color: var(--accent-hover) !important;

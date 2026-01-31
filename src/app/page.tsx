@@ -11,12 +11,16 @@ import {
   Menu,
   X,
   Loader2,
-  CreditCard
+  CreditCard,
+  Search,
+  Car
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
+import { BrandLogo } from "@/components/ui/brand-logo"
+import { ThemeToggleButton } from "@/components/ui/theme-toggle-button"
 
 const features = [
   { title: "Gestion clients", description: "Centralisez toutes les informations de vos clients et leur historique." },
@@ -146,7 +150,7 @@ function CheckoutModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
               </button>
 
               <p className="text-xs text-zinc-400 text-center mt-4">
-                Paiement sécurisé par Stripe • Sans engagement
+                Paiement sécurisé par Stripe • Sans engagement, résiliable à tout moment
               </p>
             </form>
 
@@ -174,9 +178,37 @@ export default function HomePage() {
   const { user, loading } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
+  const [plate, setPlate] = useState("")
+  const [lookupLoading, setLookupLoading] = useState(false)
+  const [lookupError, setLookupError] = useState<string | null>(null)
+  const [lookupResult, setLookupResult] = useState<any>(null)
 
   const openCheckout = () => {
     setCheckoutOpen(true)
+  }
+
+  const handlePlateLookup = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const cleanPlate = plate.trim()
+    if (!cleanPlate || cleanPlate.length < 5) return
+
+    setLookupLoading(true)
+    setLookupError(null)
+    setLookupResult(null)
+
+    try {
+      const formatted = cleanPlate.toUpperCase().replace(/\s+/g, '-')
+      const response = await fetch(`/api/vehicle-lookup?type=plate&value=${encodeURIComponent(formatted)}`)
+      const result = await response.json()
+      if (!result.success || !result.data) {
+        throw new Error(result.error || "Véhicule introuvable")
+      }
+      setLookupResult(result.data)
+    } catch (err: any) {
+      setLookupError(err.message || "Une erreur est survenue")
+    } finally {
+      setLookupLoading(false)
+    }
   }
 
   return (
@@ -188,7 +220,7 @@ export default function HomePage() {
       />
 
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-zinc-100">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[var(--bg-primary)]/95 backdrop-blur-sm border-b border-[var(--border-light)]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-20 sm:h-22 md:h-24 flex items-center justify-between">
           <Link href="/" className="flex items-center -ml-4 mt-3">
             <img
@@ -196,7 +228,7 @@ export default function HomePage() {
               alt="GaragePro"
               width="300"
               height="75"
-              className="w-[180px] sm:w-[220px] md:w-[260px] h-auto"
+              className="w-[180px] sm:w-[220px] md:w-[260px] h-auto logo-invert"
             />
           </Link>
 
@@ -207,6 +239,7 @@ export default function HomePage() {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
+            <ThemeToggleButton />
             <Link href="/login" className="text-[14px] font-medium text-zinc-600 hover:text-zinc-900 px-3 py-2">
               Connexion
             </Link>
@@ -225,11 +258,12 @@ export default function HomePage() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-zinc-100 px-4 py-4 space-y-3">
+          <div className="md:hidden bg-[var(--bg-primary)] border-t border-[var(--border-light)] px-4 py-4 space-y-3">
             <a href="#features" className="block text-[15px] text-zinc-700 py-2" onClick={() => setMobileMenuOpen(false)}>Fonctionnalités</a>
             <a href="#pricing" className="block text-[15px] text-zinc-700 py-2" onClick={() => setMobileMenuOpen(false)}>Tarifs</a>
             <a href="#faq" className="block text-[15px] text-zinc-700 py-2" onClick={() => setMobileMenuOpen(false)}>FAQ</a>
             <div className="pt-3 border-t border-zinc-100 space-y-2">
+              <ThemeToggleButton className="w-full justify-center" />
               <Link href="/login" className="block w-full h-11 bg-zinc-100 text-zinc-900 text-[15px] font-medium rounded-lg text-center leading-[44px]">
                 Connexion
               </Link>
@@ -243,42 +277,138 @@ export default function HomePage() {
 
       {/* Hero */}
       <section className="pt-28 sm:pt-32 md:pt-36 pb-16 sm:pb-24 px-4 sm:px-6">
-        <div className="max-w-3xl mx-auto text-center">
-          <p className="inline-block px-3 py-1.5 bg-zinc-100 rounded-full text-zinc-700 text-[13px] font-medium mb-6">
-            Version gratuite • 5 clients & 5 véhicules
-          </p>
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-10 items-center">
+          <div className="text-center lg:text-left">
+            <p className="inline-block px-3 py-1.5 bg-zinc-100 rounded-full text-zinc-700 text-[13px] font-medium mb-6">
+              Version gratuite • 5 clients & 5 véhicules
+            </p>
 
-          <h1 className="text-[32px] sm:text-[44px] lg:text-[52px] font-bold text-zinc-900 leading-[1.15] tracking-tight mb-5">
-            Le logiciel de gestion pour votre garage
-          </h1>
+            <h1 className="text-[32px] sm:text-[44px] lg:text-[52px] font-bold text-zinc-900 leading-[1.15] tracking-tight mb-5">
+              Le logiciel de gestion pour votre garage
+            </h1>
 
-          <p className="text-[16px] sm:text-[18px] text-zinc-600 leading-relaxed max-w-2xl mx-auto mb-8">
-            Gérez vos clients, véhicules, réparations et factures depuis une interface simple. Gagnez du temps au quotidien.
-          </p>
+            <p className="text-[16px] sm:text-[18px] text-zinc-600 leading-relaxed max-w-2xl mx-auto lg:mx-0 mb-8">
+              Gérez vos clients, véhicules, réparations et factures depuis une interface simple. Gagnez du temps au quotidien.
+            </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">
-            <Link href="/inscription" className="w-full sm:w-auto h-12 px-6 bg-zinc-900 text-white text-[15px] font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors">
-              Démarrer l'essai gratuit
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <a href="#pricing" className="w-full sm:w-auto h-12 px-6 bg-zinc-100 text-zinc-900 text-[15px] font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-zinc-200 transition-colors">
-              Voir les tarifs
-            </a>
+            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 mb-8">
+              <Link href="/inscription" className="w-full sm:w-auto h-12 px-6 bg-zinc-900 text-white text-[15px] font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors">
+                Démarrer l'essai gratuit
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <a href="#pricing" className="w-full sm:w-auto h-12 px-6 bg-zinc-100 text-zinc-900 text-[15px] font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-zinc-200 transition-colors">
+                Voir les tarifs
+              </a>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-6 gap-y-2 text-[13px] text-zinc-500">
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                Sans engagement
+              </span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                Sans frais cachés
+              </span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                Support inclus
+              </span>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[13px] text-zinc-500">
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-              Sans engagement
-            </span>
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-              Sans frais cachés
-            </span>
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-              Support inclus
-            </span>
+          {/* Plate Lookup Demo */}
+          <div className="bg-white rounded-xl sm:rounded-2xl border border-zinc-200 p-4 sm:p-6 shadow-sm sm:shadow-lg">
+            <p className="text-zinc-900 font-semibold text-center mb-1">Testez la détection</p>
+            <p className="text-zinc-500 text-xs sm:text-sm text-center mb-5">Entrez une immatriculation française</p>
+
+            <form onSubmit={handlePlateLookup} className="space-y-3">
+              {/* French License Plate - forced light colors */}
+              <div 
+                className="flex items-stretch h-12 sm:h-14 rounded overflow-hidden border-2"
+                style={{ backgroundColor: "#ffffff", borderColor: "#27272a" }}
+              >
+                {/* Left EU band */}
+                <div className="w-8 sm:w-10 flex flex-col items-center justify-center shrink-0" style={{ backgroundColor: "#003399" }}>
+                  <svg className="w-3 sm:w-4 h-2.5 sm:h-3 mb-0.5" viewBox="0 0 16 12">
+                    <circle cx="8" cy="2" r="0.8" fill="#FFCC00"/>
+                    <circle cx="5" cy="3" r="0.8" fill="#FFCC00"/>
+                    <circle cx="11" cy="3" r="0.8" fill="#FFCC00"/>
+                    <circle cx="4" cy="6" r="0.8" fill="#FFCC00"/>
+                    <circle cx="12" cy="6" r="0.8" fill="#FFCC00"/>
+                    <circle cx="5" cy="9" r="0.8" fill="#FFCC00"/>
+                    <circle cx="11" cy="9" r="0.8" fill="#FFCC00"/>
+                    <circle cx="8" cy="10" r="0.8" fill="#FFCC00"/>
+                  </svg>
+                  <span className="text-[9px] sm:text-[11px] font-bold" style={{ color: "#ffffff" }}>F</span>
+                </div>
+                {/* Plate input */}
+                <input
+                  type="text"
+                  value={plate}
+                  onChange={(e) => setPlate(e.target.value.toUpperCase())}
+                  placeholder="AB-123-CD"
+                  maxLength={9}
+                  className="flex-1 min-w-0 text-base sm:text-xl font-bold tracking-wider text-center outline-none px-2"
+                  style={{ backgroundColor: "#ffffff", color: "#18181b" }}
+                />
+                {/* Right region band */}
+                <div className="w-8 sm:w-10 flex flex-col items-center justify-center shrink-0" style={{ backgroundColor: "#003399" }}>
+                  <span className="text-[8px] sm:text-[10px] font-bold mb-0.5" style={{ color: "#ffffff" }}>IDF</span>
+                  {/* French flag - vertical stripes */}
+                  <div className="w-3 sm:w-4 h-2 sm:h-3 rounded-[1px] overflow-hidden flex flex-row">
+                    <div className="flex-1" style={{ backgroundColor: "#002395" }}></div>
+                    <div className="flex-1" style={{ backgroundColor: "#ffffff" }}></div>
+                    <div className="flex-1" style={{ backgroundColor: "#ED2939" }}></div>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={lookupLoading}
+                className="w-full h-10 sm:h-11 bg-zinc-900 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors"
+              >
+                {lookupLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                Rechercher
+              </button>
+
+              {lookupError && (
+                <p className="text-xs sm:text-sm text-red-600 text-center">{lookupError}</p>
+              )}
+
+              {lookupResult && (
+                <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 sm:p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-white border border-zinc-200 flex items-center justify-center shrink-0">
+                      <BrandLogo brand={lookupResult.make || ""} size={24} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-zinc-900 text-sm sm:text-base font-semibold truncate">
+                        {lookupResult.make} {lookupResult.model}
+                      </p>
+                      <p className="text-zinc-500 text-xs sm:text-sm">
+                        {lookupResult.year} • {lookupResult.fuel || "—"}
+                      </p>
+                    </div>
+                  </div>
+                  {lookupResult.vin && (
+                    <p className="text-zinc-400 text-[10px] sm:text-xs font-mono mt-2 sm:mt-3 truncate">VIN {lookupResult.vin}</p>
+                  )}
+                  <Link
+                    href="/inscription"
+                    className="mt-3 w-full h-9 sm:h-10 bg-zinc-900 hover:bg-zinc-800 text-white text-xs sm:text-sm font-medium rounded-lg flex items-center justify-center gap-2 transition-colors"
+                  >
+                    Créer un devis
+                    <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  </Link>
+                </div>
+              )}
+            </form>
+
+            <p className="text-zinc-400 text-[10px] sm:text-xs text-center mt-4">
+              Données SIV en temps réel
+            </p>
           </div>
         </div>
       </section>
@@ -487,7 +617,7 @@ export default function HomePage() {
                 alt="GaragePro"
                 width="240"
                 height="60"
-                className="w-[160px] sm:w-[200px] h-auto"
+                className="w-[160px] sm:w-[200px] h-auto logo-invert"
               />
             </div>
 
