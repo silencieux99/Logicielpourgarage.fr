@@ -22,6 +22,7 @@ import {
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
 import { InvoiceTemplate, InvoiceTemplateData } from "@/components/InvoiceTemplate"
+import { generatePDF } from "@/lib/pdf-generator"
 import {
     getGarageByUserId,
     getGarageConfig,
@@ -57,7 +58,7 @@ function NewInvoiceContent() {
 
     const [isLoading, setIsLoading] = useState(false)
     const [showPreview, setShowPreview] = useState(true)
-    const [showPrintView, setShowPrintView] = useState(false)
+    const [generatingPDF, setGeneratingPDF] = useState(false)
     const [garageId, setGarageId] = useState<string | null>(null)
     const [configId, setConfigId] = useState<string | null>(null)
 
@@ -95,6 +96,9 @@ function NewInvoiceContent() {
         vehiculeId: "",
         dateEcheance: "",
         notes: "",
+        modePaiement: "",
+        estPaye: false,
+        datePaiement: "",
     })
 
     const [selectedClient, setSelectedClient] = useState<Client | null>(null)
@@ -325,7 +329,10 @@ function NewInvoiceContent() {
         totalTVA,
         totalTTC,
         mentionsLegales: documentConfig.mentionsLegales,
-        notes: formData.notes
+        notes: formData.notes,
+        modePaiement: formData.modePaiement || undefined,
+        estPaye: formData.estPaye,
+        datePaiement: formData.datePaiement ? new Date(formData.datePaiement) : undefined
     }
 
     const handleSubmit = async (action: "save" | "send") => {
@@ -348,7 +355,9 @@ function NewInvoiceContent() {
                 ...(selectedVehicule?.id && { vehiculeId: selectedVehicule.id }),
                 ...(reparationId && { reparationId }),
                 ...(formData.dateEcheance && { dateEcheance: Timestamp.fromDate(new Date(formData.dateEcheance)) }),
-                ...(formData.notes && { notes: formData.notes })
+                ...(formData.notes && { notes: formData.notes }),
+                ...(formData.modePaiement && { modePaiement: formData.modePaiement }),
+                ...(formData.estPaye && formData.datePaiement && { datePaiement: Timestamp.fromDate(new Date(formData.datePaiement)) })
             } as Omit<GarageDocument, 'id' | 'createdAt' | 'updatedAt'>
 
             const documentLignes = lignes.filter(l => l.designation).map(l => ({
@@ -681,22 +690,90 @@ function NewInvoiceContent() {
                                 </button>
 
                                 <button
-                                    onClick={() => {
-                                        setShowPrintView(true)
-                                        setTimeout(() => {
-                                            window.print()
-                                            setShowPrintView(false)
-                                        }, 100)
+                                    onClick={async () => {
+                                        setGeneratingPDF(true)
+                                        try {
+                                            const filename = `${type === 'facture' ? 'Facture' : 'Devis'}_${numeroDocument}.pdf`
+                                            await generatePDF('pdf-template', filename)
+                                        } catch (error) {
+                                            console.error('Erreur génération PDF:', error)
+                                            alert('Erreur lors de la génération du PDF')
+                                        } finally {
+                                            setGeneratingPDF(false)
+                                        }
                                     }}
-                                    disabled={!hasContent}
+                                    disabled={!hasContent || generatingPDF}
                                     className="w-full h-12 bg-zinc-100 hover:bg-zinc-200 disabled:bg-zinc-50 text-zinc-700 disabled:text-zinc-400 text-sm font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
                                 >
-                                    <Printer className="h-4 w-4" />
-                                    Imprimer / PDF
+                                    {generatingPDF ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                                    {generatingPDF ? 'Génération...' : 'Télécharger PDF'}
                                 </button>
                             </div>
                         </div>
                     </div>
+
+                    {/* Payment Info - For Invoices Only */}
+                    {type === "facture" && (
+                        <div className="bg-white rounded-2xl border border-zinc-200 p-6">
+                            <h2 className="text-[15px] font-semibold text-zinc-900 mb-4">
+                                Informations de paiement
+                            </h2>
+
+                            <div className="grid sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-zinc-700 mb-2">
+                                        Mode de paiement
+                                    </label>
+                                    <select
+                                        value={formData.modePaiement}
+                                        onChange={(e) => updateField("modePaiement", e.target.value)}
+                                        className="w-full h-11 px-4 bg-white border border-zinc-300 rounded-xl text-sm"
+                                    >
+                                        <option value="">Non spécifié</option>
+                                        <option value="Espèces">Espèces</option>
+                                        <option value="Carte bancaire">Carte bancaire</option>
+                                        <option value="Chèque">Chèque</option>
+                                        <option value="Virement">Virement</option>
+                                        <option value="Prélèvement">Prélèvement</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-zinc-700 mb-2">
+                                        Statut
+                                    </label>
+                                    <label className="flex items-center gap-2 h-11 px-4 bg-zinc-50 border border-zinc-300 rounded-xl cursor-pointer hover:bg-zinc-100 transition-colors">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.estPaye}
+                                            onChange={(e) => {
+                                                setFormData(prev => ({ ...prev, estPaye: e.target.checked }))
+                                                if (e.target.checked && !formData.datePaiement) {
+                                                    setFormData(prev => ({ ...prev, datePaiement: new Date().toISOString().split('T')[0] }))
+                                                }
+                                            }}
+                                            className="w-4 h-4 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500"
+                                        />
+                                        <span className="text-sm font-medium text-zinc-700">Facture payée</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {formData.estPaye && (
+                                <div className="mt-4">
+                                    <label className="block text-sm font-medium text-zinc-700 mb-2">
+                                        Date de paiement
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={formData.datePaiement}
+                                        onChange={(e) => updateField("datePaiement", e.target.value)}
+                                        className="w-full h-11 px-4 bg-white border border-zinc-300 rounded-xl text-sm"
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Live Preview */}
@@ -807,16 +884,21 @@ function NewInvoiceContent() {
                 </>
             )}
 
-            {/* Print View - Only visible during printing */}
-            {showPrintView && (
-                <div
-                    id="print-container"
-                    className="fixed inset-0 bg-white z-[9999] overflow-auto"
-                    style={{ padding: '20px' }}
-                >
-                    <InvoiceTemplate data={templateData} scale={1} />
-                </div>
-            )}
+            {/* Hidden PDF Template - For PDF Generation */}
+            <div
+                id="pdf-template"
+                style={{
+                    position: 'fixed',
+                    left: '-100vw',
+                    top: 0,
+                    width: '210mm',
+                    minHeight: '297mm',
+                    backgroundColor: 'white',
+                    zIndex: -1
+                }}
+            >
+                <InvoiceTemplate data={templateData} scale={1} />
+            </div>
         </div>
     )
 }

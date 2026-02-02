@@ -45,58 +45,7 @@ import { Timestamp, addDoc, collection } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { BrandLogo } from "@/components/ui/brand-logo"
 
-// Templates de réparations courantes - design épuré
-const repairTemplates = [
-    {
-        id: "vidange",
-        label: "Vidange",
-        lignes: [
-            { type: "main_oeuvre" as const, designation: "Vidange moteur", quantite: 0.5, prixUnitaireHT: 55 },
-            { type: "piece" as const, designation: "Huile moteur 5L", quantite: 1, prixUnitaireHT: 45 },
-            { type: "piece" as const, designation: "Filtre à huile", quantite: 1, prixUnitaireHT: 15 },
-        ]
-    },
-    {
-        id: "freins",
-        label: "Freins",
-        lignes: [
-            { type: "main_oeuvre" as const, designation: "Changement plaquettes", quantite: 1.5, prixUnitaireHT: 55 },
-            { type: "piece" as const, designation: "Plaquettes de frein", quantite: 1, prixUnitaireHT: 65 },
-        ]
-    },
-    {
-        id: "revision",
-        label: "Révision",
-        lignes: [
-            { type: "main_oeuvre" as const, designation: "Révision complète", quantite: 2, prixUnitaireHT: 55 },
-            { type: "piece" as const, designation: "Kit filtres", quantite: 1, prixUnitaireHT: 75 },
-            { type: "piece" as const, designation: "Huile moteur 5L", quantite: 1, prixUnitaireHT: 45 },
-        ]
-    },
-    {
-        id: "pneus",
-        label: "Pneus",
-        lignes: [
-            { type: "main_oeuvre" as const, designation: "Montage équilibrage x4", quantite: 1, prixUnitaireHT: 60 },
-        ]
-    },
-    {
-        id: "clim",
-        label: "Climatisation",
-        lignes: [
-            { type: "main_oeuvre" as const, designation: "Recharge climatisation", quantite: 1, prixUnitaireHT: 55 },
-            { type: "piece" as const, designation: "Gaz réfrigérant", quantite: 1, prixUnitaireHT: 45 },
-        ]
-    },
-    {
-        id: "batterie",
-        label: "Batterie",
-        lignes: [
-            { type: "main_oeuvre" as const, designation: "Remplacement batterie", quantite: 0.5, prixUnitaireHT: 55 },
-            { type: "piece" as const, designation: "Batterie 12V", quantite: 1, prixUnitaireHT: 120 },
-        ]
-    },
-]
+
 
 const priorites = [
     { id: "normal", label: "Normal", desc: "Standard" },
@@ -112,7 +61,7 @@ interface LigneIntervention {
     prixUnitaireHT: number
 }
 
-const DRAFT_KEY = "repair_draft"
+const DRAFT_KEY = "repair_draft_v2"
 
 function NewRepairForm() {
     const router = useRouter()
@@ -209,6 +158,19 @@ function NewRepairForm() {
             }
         }
     }, [])
+
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (formData.description || lignes.length > 0 || selectedClient) {
+                e.preventDefault()
+                e.returnValue = ''
+            }
+        }
+        window.addEventListener('beforeunload', handleBeforeUnload)
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+    }, [formData, lignes, selectedClient])
+
+
 
     useEffect(() => {
         const interval = setInterval(saveDraft, 5000)
@@ -449,18 +411,7 @@ function NewRepairForm() {
         setFormData(prev => ({ ...prev, [field]: value }))
     }
 
-    const applyTemplate = (template: typeof repairTemplates[0]) => {
-        const templateLignes = template.lignes.map(l => ({
-            ...l,
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-            prixUnitaireHT: l.type === "main_oeuvre" ? (config?.tauxHoraireMO || l.prixUnitaireHT) : l.prixUnitaireHT
-        }))
-        setLignes(prev => [...prev, ...templateLignes])
-        setFormData(prev => ({
-            ...prev,
-            description: prev.description ? prev.description + "\n" + template.label : template.label
-        }))
-    }
+
 
     const addLigne = (type: "main_oeuvre" | "piece" | "forfait") => {
         const tauxHoraire = config?.tauxHoraireMO || 55
@@ -573,6 +524,57 @@ function NewRepairForm() {
         } catch (error) {
             console.error("Erreur création réparation:", error)
             setError("Une erreur est survenue lors de la création")
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const saveAsDraft = async () => {
+        if (!garage?.id) return
+        if (!selectedClient?.id) {
+            setError("Veuillez sélectionner un client pour sauvegarder le brouillon")
+            return
+        }
+
+        setIsLoading(true)
+        try {
+            const reparationId = await createReparation({
+                garageId: garage.id,
+                clientId: selectedClient.id,
+                vehiculeId: selectedVehicle?.id || "",
+                numero: generateNumero(),
+                statut: "brouillon",
+                priorite: formData.priorite,
+                description: formData.description || "Brouillon",
+                dateEntree: Timestamp.now(),
+                dateSortiePrevue: formData.dateSortiePrevue
+                    ? Timestamp.fromDate(new Date(`${formData.dateSortiePrevue}T${formData.heureSortiePrevue || "09:00"}:00`))
+                    : undefined,
+                mecanicienId: formData.mecanicienId || undefined,
+                tempsEstime: formData.tempsEstime,
+                tempsPasse: 0,
+                montantHT: totalHT,
+                montantTTC: totalTTC,
+                notes: formData.notes || undefined,
+            })
+
+            for (const ligne of lignes) {
+                await addDoc(collection(db, 'lignesReparation'), {
+                    reparationId,
+                    type: ligne.type,
+                    designation: ligne.designation,
+                    quantite: ligne.quantite,
+                    prixUnitaireHT: ligne.prixUnitaireHT,
+                    tauxTVA: tauxTVA,
+                    montantHT: ligne.quantite * ligne.prixUnitaireHT
+                })
+            }
+
+            clearDraft()
+            router.push('/repairs')
+        } catch (error) {
+            console.error("Erreur sauvegarde brouillon:", error)
+            setError("Une erreur est survenue")
         } finally {
             setIsLoading(false)
         }
@@ -777,13 +779,22 @@ function NewRepairForm() {
                                                                 className="w-full h-10 px-3 bg-white border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900"
                                                             />
                                                         )}
-                                                        <input
-                                                            type="tel"
-                                                            value={newClientData.telephone}
-                                                            onChange={(e) => setNewClientData(prev => ({ ...prev, telephone: e.target.value }))}
-                                                            placeholder="Téléphone"
-                                                            className="w-full h-10 px-3 bg-white border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900"
-                                                        />
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <input
+                                                                type="tel"
+                                                                value={newClientData.telephone}
+                                                                onChange={(e) => setNewClientData(prev => ({ ...prev, telephone: e.target.value }))}
+                                                                placeholder="Téléphone"
+                                                                className="h-10 px-3 bg-white border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                                                            />
+                                                            <input
+                                                                type="email"
+                                                                value={newClientData.email}
+                                                                onChange={(e) => setNewClientData(prev => ({ ...prev, email: e.target.value }))}
+                                                                placeholder="Email"
+                                                                className="h-10 px-3 bg-white border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                                                            />
+                                                        </div>
                                                         <button
                                                             type="button"
                                                             onClick={handleQuickClientCreate}
@@ -955,22 +966,7 @@ function NewRepairForm() {
                         />
                     </div>
 
-                    {/* Templates - Minimal Pills */}
-                    <div>
-                        <label className="block text-[13px] font-medium text-zinc-500 mb-3">Raccourcis</label>
-                        <div className="flex flex-wrap gap-2">
-                            {repairTemplates.map((template) => (
-                                <button
-                                    key={template.id}
-                                    type="button"
-                                    onClick={() => applyTemplate(template)}
-                                    className="h-9 px-4 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-sm font-medium rounded-full transition-colors"
-                                >
-                                    {template.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+
 
                     {/* Priorité - Minimal Segmented Control */}
                     <div>
@@ -1019,6 +1015,7 @@ function NewRepairForm() {
                                 </div>
                                 <Link
                                     href="/personnel"
+                                    target="_blank"
                                     className="inline-flex h-9 px-3 text-[13px] font-medium text-[var(--accent-primary)] hover:text-[var(--accent-hover)]"
                                 >
                                     Ajouter un mécanicien
@@ -1174,7 +1171,7 @@ function NewRepairForm() {
                                                     {articles.length === 0 ? "Aucun article dans le catalogue" : "Aucun résultat"}
                                                 </p>
                                                 {articles.length === 0 && (
-                                                    <Link href="/inventory" className="text-xs text-zinc-500 hover:text-zinc-700 underline mt-2 inline-block">
+                                                    <Link href="/inventory" target="_blank" className="text-xs text-zinc-500 hover:text-zinc-700 underline mt-2 inline-block">
                                                         Gérer le stock
                                                     </Link>
                                                 )}
@@ -1405,21 +1402,32 @@ function NewRepairForm() {
                             </div>
                         </div>
 
-                        <button
-                            type="submit"
-                            form="repair-form"
-                            disabled={!canSubmit}
-                            className="w-full h-11 mt-6 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] disabled:bg-zinc-300 text-white text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-colors"
-                        >
-                            {isLoading ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                                <>
-                                    <Save className="h-4 w-4" />
-                                    Créer
-                                </>
-                            )}
-                        </button>
+                        <div className="flex gap-2 mt-6">
+                            <button
+                                type="button"
+                                onClick={saveAsDraft}
+                                disabled={isLoading || !selectedClient}
+                                className="flex-1 h-11 bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                            >
+                                <FileText className="h-4 w-4" />
+                                Brouillon
+                            </button>
+                            <button
+                                type="submit"
+                                form="repair-form"
+                                disabled={!canSubmit}
+                                className="flex-1 h-11 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] disabled:bg-zinc-300 text-white text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-colors"
+                            >
+                                {isLoading ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <>
+                                        <Save className="h-4 w-4" />
+                                        Créer
+                                    </>
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1430,158 +1438,158 @@ function NewRepairForm() {
                     <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowQuickVehicleForm(false)} />
                     <div className="absolute inset-x-0 bottom-0 sm:inset-0 sm:flex sm:items-center sm:justify-center p-0 sm:p-4 safe-area-bottom">
                         <div className="w-full sm:max-w-xl bg-white rounded-t-2xl sm:rounded-2xl border border-zinc-200 shadow-2xl overflow-hidden max-h-[85vh] sm:max-h-[90vh] flex flex-col">
-                        <div className="p-4 sm:p-5 border-b border-zinc-100 flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-semibold text-zinc-900">Ajout rapide d’un véhicule</p>
-                                <p className="text-xs text-zinc-500">Renseignez l’immatriculation pour pré-remplir</p>
+                            <div className="p-4 sm:p-5 border-b border-zinc-100 flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-semibold text-zinc-900">Ajout rapide d’un véhicule</p>
+                                    <p className="text-xs text-zinc-500">Renseignez l’immatriculation pour pré-remplir</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowQuickVehicleForm(false)}
+                                    className="p-2 hover:bg-zinc-100 rounded-lg"
+                                >
+                                    <X className="h-4 w-4 text-zinc-400" />
+                                </button>
                             </div>
-                            <button
-                                type="button"
-                                onClick={() => setShowQuickVehicleForm(false)}
-                                className="p-2 hover:bg-zinc-100 rounded-lg"
-                            >
-                                <X className="h-4 w-4 text-zinc-400" />
-                            </button>
-                        </div>
 
-                        <div className="p-4 sm:p-5 space-y-4 overflow-y-auto">
-                            <div className="grid sm:grid-cols-3 gap-3">
-                                <div className="sm:col-span-2">
-                                    <label className="block text-[12px] font-medium text-zinc-500 mb-1.5">Immatriculation *</label>
-                                    <div className="flex gap-2">
+                            <div className="p-4 sm:p-5 space-y-4 overflow-y-auto">
+                                <div className="grid sm:grid-cols-3 gap-3">
+                                    <div className="sm:col-span-2">
+                                        <label className="block text-[12px] font-medium text-zinc-500 mb-1.5">Immatriculation *</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={newVehicleData.plaque}
+                                                onChange={(e) => setNewVehicleData(prev => ({ ...prev, plaque: e.target.value.toUpperCase() }))}
+                                                placeholder="AA-123-BB"
+                                                className="flex-1 h-11 px-3 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-mono text-center"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={handleVehicleLookup}
+                                                disabled={vehicleLookupLoading || !newVehicleData.plaque}
+                                                className="h-11 px-3 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white rounded-xl flex items-center gap-2 text-sm"
+                                            >
+                                                {vehicleLookupLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                                                <span className="hidden sm:inline">Rechercher</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[12px] font-medium text-zinc-500 mb-1.5">Année</label>
                                         <input
-                                            type="text"
-                                            value={newVehicleData.plaque}
-                                            onChange={(e) => setNewVehicleData(prev => ({ ...prev, plaque: e.target.value.toUpperCase() }))}
-                                            placeholder="AA-123-BB"
-                                            className="flex-1 h-11 px-3 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-mono text-center"
+                                            type="number"
+                                            value={newVehicleData.annee}
+                                            onChange={(e) => setNewVehicleData(prev => ({ ...prev, annee: parseInt(e.target.value || "0") }))}
+                                            min={1900}
+                                            max={new Date().getFullYear() + 1}
+                                            className="w-full h-11 px-3 bg-white border border-zinc-200 rounded-xl text-sm"
                                         />
-                                        <button
-                                            type="button"
-                                            onClick={handleVehicleLookup}
-                                            disabled={vehicleLookupLoading || !newVehicleData.plaque}
-                                            className="h-11 px-3 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white rounded-xl flex items-center gap-2 text-sm"
-                                        >
-                                            {vehicleLookupLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-                                            <span className="hidden sm:inline">Rechercher</span>
-                                        </button>
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="block text-[12px] font-medium text-zinc-500 mb-1.5">Année</label>
-                                    <input
-                                        type="number"
-                                        value={newVehicleData.annee}
-                                        onChange={(e) => setNewVehicleData(prev => ({ ...prev, annee: parseInt(e.target.value || "0") }))}
-                                        min={1900}
-                                        max={new Date().getFullYear() + 1}
-                                        className="w-full h-11 px-3 bg-white border border-zinc-200 rounded-xl text-sm"
-                                    />
+
+                                <div className="grid sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-[12px] font-medium text-zinc-500 mb-1.5">Marque *</label>
+                                        <input
+                                            type="text"
+                                            value={newVehicleData.marque}
+                                            onChange={(e) => setNewVehicleData(prev => ({ ...prev, marque: e.target.value }))}
+                                            placeholder="Renault"
+                                            className="w-full h-11 px-3 bg-white border border-zinc-200 rounded-xl text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[12px] font-medium text-zinc-500 mb-1.5">Modèle *</label>
+                                        <input
+                                            type="text"
+                                            value={newVehicleData.modele}
+                                            onChange={(e) => setNewVehicleData(prev => ({ ...prev, modele: e.target.value }))}
+                                            placeholder="Clio"
+                                            className="w-full h-11 px-3 bg-white border border-zinc-200 rounded-xl text-sm"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-[12px] font-medium text-zinc-500 mb-1.5">Version</label>
+                                        <input
+                                            type="text"
+                                            value={newVehicleData.version}
+                                            onChange={(e) => setNewVehicleData(prev => ({ ...prev, version: e.target.value }))}
+                                            placeholder="1.5 dCi 90ch"
+                                            className="w-full h-11 px-3 bg-white border border-zinc-200 rounded-xl text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[12px] font-medium text-zinc-500 mb-1.5">VIN</label>
+                                        <input
+                                            type="text"
+                                            value={newVehicleData.vin}
+                                            onChange={(e) => setNewVehicleData(prev => ({ ...prev, vin: e.target.value.toUpperCase() }))}
+                                            placeholder="VF1XXXXXX00000000"
+                                            className="w-full h-11 px-3 bg-white border border-zinc-200 rounded-xl text-sm font-mono"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid sm:grid-cols-3 gap-3">
+                                    <div>
+                                        <label className="block text-[12px] font-medium text-zinc-500 mb-1.5">Carburant</label>
+                                        <select
+                                            value={newVehicleData.carburant}
+                                            onChange={(e) => setNewVehicleData(prev => ({ ...prev, carburant: e.target.value }))}
+                                            className="w-full h-11 px-3 bg-white border border-zinc-200 rounded-xl text-sm"
+                                        >
+                                            <option>Essence</option>
+                                            <option>Diesel</option>
+                                            <option>Hybride</option>
+                                            <option>Électrique</option>
+                                            <option>GPL</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[12px] font-medium text-zinc-500 mb-1.5">Couleur</label>
+                                        <input
+                                            type="text"
+                                            value={newVehicleData.couleur}
+                                            onChange={(e) => setNewVehicleData(prev => ({ ...prev, couleur: e.target.value }))}
+                                            placeholder="Gris"
+                                            className="w-full h-11 px-3 bg-white border border-zinc-200 rounded-xl text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[12px] font-medium text-zinc-500 mb-1.5">Kilométrage</label>
+                                        <input
+                                            type="number"
+                                            value={newVehicleData.kilometrage}
+                                            onChange={(e) => setNewVehicleData(prev => ({ ...prev, kilometrage: parseInt(e.target.value || "0") }))}
+                                            min={0}
+                                            className="w-full h-11 px-3 bg-white border border-zinc-200 rounded-xl text-sm"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="grid sm:grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-[12px] font-medium text-zinc-500 mb-1.5">Marque *</label>
-                                    <input
-                                        type="text"
-                                        value={newVehicleData.marque}
-                                        onChange={(e) => setNewVehicleData(prev => ({ ...prev, marque: e.target.value }))}
-                                        placeholder="Renault"
-                                        className="w-full h-11 px-3 bg-white border border-zinc-200 rounded-xl text-sm"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-[12px] font-medium text-zinc-500 mb-1.5">Modèle *</label>
-                                    <input
-                                        type="text"
-                                        value={newVehicleData.modele}
-                                        onChange={(e) => setNewVehicleData(prev => ({ ...prev, modele: e.target.value }))}
-                                        placeholder="Clio"
-                                        className="w-full h-11 px-3 bg-white border border-zinc-200 rounded-xl text-sm"
-                                    />
-                                </div>
+                            <div className="p-4 bg-zinc-50 border-t border-zinc-100 flex items-center justify-end gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowQuickVehicleForm(false)}
+                                    className="h-10 px-4 text-sm text-zinc-600 hover:text-zinc-900 rounded-lg"
+                                >
+                                    Annuler
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleQuickVehicleCreate}
+                                    disabled={creatingVehicle || !selectedClient?.id || !newVehicleData.plaque || !newVehicleData.marque || !newVehicleData.modele}
+                                    className="h-10 px-5 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] disabled:bg-zinc-300 text-white text-sm font-medium rounded-lg flex items-center gap-2"
+                                >
+                                    {creatingVehicle ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                                    Ajouter le véhicule
+                                </button>
                             </div>
-
-                            <div className="grid sm:grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-[12px] font-medium text-zinc-500 mb-1.5">Version</label>
-                                    <input
-                                        type="text"
-                                        value={newVehicleData.version}
-                                        onChange={(e) => setNewVehicleData(prev => ({ ...prev, version: e.target.value }))}
-                                        placeholder="1.5 dCi 90ch"
-                                        className="w-full h-11 px-3 bg-white border border-zinc-200 rounded-xl text-sm"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-[12px] font-medium text-zinc-500 mb-1.5">VIN</label>
-                                    <input
-                                        type="text"
-                                        value={newVehicleData.vin}
-                                        onChange={(e) => setNewVehicleData(prev => ({ ...prev, vin: e.target.value.toUpperCase() }))}
-                                        placeholder="VF1XXXXXX00000000"
-                                        className="w-full h-11 px-3 bg-white border border-zinc-200 rounded-xl text-sm font-mono"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid sm:grid-cols-3 gap-3">
-                                <div>
-                                    <label className="block text-[12px] font-medium text-zinc-500 mb-1.5">Carburant</label>
-                                    <select
-                                        value={newVehicleData.carburant}
-                                        onChange={(e) => setNewVehicleData(prev => ({ ...prev, carburant: e.target.value }))}
-                                        className="w-full h-11 px-3 bg-white border border-zinc-200 rounded-xl text-sm"
-                                    >
-                                        <option>Essence</option>
-                                        <option>Diesel</option>
-                                        <option>Hybride</option>
-                                        <option>Électrique</option>
-                                        <option>GPL</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-[12px] font-medium text-zinc-500 mb-1.5">Couleur</label>
-                                    <input
-                                        type="text"
-                                        value={newVehicleData.couleur}
-                                        onChange={(e) => setNewVehicleData(prev => ({ ...prev, couleur: e.target.value }))}
-                                        placeholder="Gris"
-                                        className="w-full h-11 px-3 bg-white border border-zinc-200 rounded-xl text-sm"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-[12px] font-medium text-zinc-500 mb-1.5">Kilométrage</label>
-                                    <input
-                                        type="number"
-                                        value={newVehicleData.kilometrage}
-                                        onChange={(e) => setNewVehicleData(prev => ({ ...prev, kilometrage: parseInt(e.target.value || "0") }))}
-                                        min={0}
-                                        className="w-full h-11 px-3 bg-white border border-zinc-200 rounded-xl text-sm"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="p-4 bg-zinc-50 border-t border-zinc-100 flex items-center justify-end gap-2">
-                            <button
-                                type="button"
-                                onClick={() => setShowQuickVehicleForm(false)}
-                                className="h-10 px-4 text-sm text-zinc-600 hover:text-zinc-900 rounded-lg"
-                            >
-                                Annuler
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleQuickVehicleCreate}
-                                disabled={creatingVehicle || !selectedClient?.id || !newVehicleData.plaque || !newVehicleData.marque || !newVehicleData.modele}
-                                className="h-10 px-5 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] disabled:bg-zinc-300 text-white text-sm font-medium rounded-lg flex items-center gap-2"
-                            >
-                                {creatingVehicle ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                                Ajouter le véhicule
-                            </button>
-                        </div>
                         </div>
                     </div>
                 </div>
@@ -1595,21 +1603,31 @@ function NewRepairForm() {
                         <p className="text-lg font-semibold text-zinc-900 truncate">{totalTTC.toFixed(2)} €</p>
                         <p className="text-[11px] text-zinc-500">HT {totalHT.toFixed(2)} € • TVA {tauxTVA}%</p>
                     </div>
-                    <button
-                        type="submit"
-                        form="repair-form"
-                        disabled={!canSubmit}
-                        className="h-11 px-6 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] disabled:bg-zinc-200 disabled:text-zinc-400 text-white text-sm font-medium rounded-xl flex items-center gap-2 transition-colors"
-                    >
-                        {isLoading ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                            <>
-                                <Save className="h-4 w-4" />
-                                Créer
-                            </>
-                        )}
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            onClick={saveAsDraft}
+                            disabled={isLoading || !selectedClient}
+                            className="h-11 px-4 bg-zinc-100 text-zinc-700 rounded-xl disabled:opacity-50"
+                        >
+                            <FileText className="h-5 w-5" />
+                        </button>
+                        <button
+                            type="submit"
+                            form="repair-form"
+                            disabled={!canSubmit}
+                            className="flex-1 h-11 px-6 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] disabled:bg-zinc-200 disabled:text-zinc-400 text-white text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-colors"
+                        >
+                            {isLoading ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <>
+                                    <Save className="h-4 w-4" />
+                                    Créer
+                                </>
+                            )}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

@@ -46,6 +46,9 @@ export interface InvoiceTemplateData {
     totalTTC: number
     mentionsLegales?: string
     notes?: string
+    modePaiement?: string
+    datePaiement?: Date | string
+    estPaye?: boolean
 }
 
 interface InvoiceTemplateProps {
@@ -97,15 +100,15 @@ export function InvoiceTemplate({ data, scale = 1, className = "" }: InvoiceTemp
                 lineHeight: '1.5'
             }}
         >
-            {/* Page Padding - Generous margins for premium feel */}
-            <div style={{ padding: `${40 * scale}px ${40 * scale}px` }}>
+            {/* Page Padding - Compact for single page */}
+            <div style={{ padding: `${20 * scale}px ${30 * scale}px` }}>
 
                 {/* 1. HEADER: Logo & Document ID */}
                 <div style={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'flex-start',
-                    marginBottom: `${60 * scale}px`
+                    marginBottom: `${30 * scale}px`
                 }}>
                     {/* Logo Area */}
                     <div>
@@ -114,7 +117,7 @@ export function InvoiceTemplate({ data, scale = 1, className = "" }: InvoiceTemp
                                 src={data.garage.logo}
                                 alt="Logo"
                                 style={{
-                                    height: `${120 * scale}px`, // Increased Logo
+                                    height: `${70 * scale}px`, // Compact Logo
                                     width: 'auto',
                                     objectFit: 'contain',
                                     display: 'block'
@@ -127,8 +130,8 @@ export function InvoiceTemplate({ data, scale = 1, className = "" }: InvoiceTemp
                                 gap: `${16 * scale}px`
                             }}>
                                 <div style={{
-                                    width: `${80 * scale}px`,
-                                    height: `${80 * scale}px`,
+                                    width: `${50 * scale}px`,
+                                    height: `${50 * scale}px`,
                                     background: colors.black,
                                     borderRadius: `${10 * scale}px`,
                                     display: 'flex',
@@ -136,9 +139,9 @@ export function InvoiceTemplate({ data, scale = 1, className = "" }: InvoiceTemp
                                     justifyContent: 'center',
                                     color: 'white'
                                 }}>
-                                    <Building2 size={40 * scale} />
+                                    <Building2 size={25 * scale} />
                                 </div>
-                                <span style={{ fontWeight: 700, fontSize: `${28 * scale}px`, letterSpacing: '-0.02em' }}>
+                                <span style={{ fontWeight: 700, fontSize: `${20 * scale}px`, letterSpacing: '-0.02em' }}>
                                     {data.garage.nom}
                                 </span>
                             </div>
@@ -148,7 +151,7 @@ export function InvoiceTemplate({ data, scale = 1, className = "" }: InvoiceTemp
                     {/* Document ID Block - Right Aligned */}
                     <div style={{ textAlign: 'right' }}>
                         <h1 style={{
-                            fontSize: `${36 * scale}px`,  // Larger Title
+                            fontSize: `${28 * scale}px`,  // Compact Title
                             fontWeight: 800,
                             letterSpacing: '-0.03em',
                             margin: 0,
@@ -173,10 +176,10 @@ export function InvoiceTemplate({ data, scale = 1, className = "" }: InvoiceTemp
                 <div style={{
                     display: 'grid',
                     gridTemplateColumns: '1.2fr 1.2fr 1fr',
-                    gap: `${40 * scale}px`,
-                    marginBottom: `${60 * scale}px`,
+                    gap: `${25 * scale}px`,
+                    marginBottom: `${30 * scale}px`,
                     borderBottom: `1px solid ${colors.lightGray}`,
-                    paddingBottom: `${40 * scale}px`
+                    paddingBottom: `${25 * scale}px`
                 }}>
 
                     {/* FROM (Garage) */}
@@ -278,7 +281,7 @@ export function InvoiceTemplate({ data, scale = 1, className = "" }: InvoiceTemp
                 </div>
 
                 {/* 3. ITEMS TABLE */}
-                <div style={{ marginBottom: `${40 * scale}px` }}>
+                <div style={{ marginBottom: `${20 * scale}px` }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ borderBottom: `1px solid ${colors.black}` }}>
@@ -309,7 +312,7 @@ export function InvoiceTemplate({ data, scale = 1, className = "" }: InvoiceTemp
                 </div>
 
                 {/* 4. TOTALS */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: `${60 * scale}px` }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: `${30 * scale}px` }}>
                     <div style={{ width: '40%' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', padding: `${8 * scale}px 0`, borderBottom: `1px solid ${colors.lightGray}` }}>
                             <span style={{ fontSize: `${12 * scale}px`, color: colors.gray }}>Total HT</span>
@@ -323,13 +326,44 @@ export function InvoiceTemplate({ data, scale = 1, className = "" }: InvoiceTemp
                             <span style={{ fontSize: `${15 * scale}px`, fontWeight: 700, color: colors.black }}>Total TTC</span>
                             <span style={{ fontSize: `${22 * scale}px`, fontWeight: 800, color: colors.black, fontFamily: "'JetBrains Mono', monospace" }}>{formatCurrency(data.totalTTC)}</span>
                         </div>
+
+                        {(data.modePaiement || data.estPaye) && (
+                            <div style={{ marginTop: `${15 * scale}px`, textAlign: 'right', borderTop: `1px solid ${colors.lightGray}`, paddingTop: `${10 * scale}px` }}>
+                                {data.estPaye && (
+                                    <div style={{
+                                        display: 'inline-block',
+                                        padding: `${4 * scale}px ${8 * scale}px`,
+                                        border: `2px solid #059669`,
+                                        color: '#059669',
+                                        fontWeight: 800,
+                                        fontSize: `${14 * scale}px`,
+                                        borderRadius: `${4 * scale}px`,
+                                        transform: 'rotate(-5deg)',
+                                        marginBottom: `${8 * scale}px`,
+                                        textTransform: 'uppercase'
+                                    }}>
+                                        PAYÉE
+                                    </div>
+                                )}
+                                {data.modePaiement && (
+                                    <p style={{ fontSize: `${12 * scale}px`, color: colors.darkGray, marginTop: `${4 * scale}px` }}>
+                                        Règlement par : <strong>{data.modePaiement}</strong>
+                                    </p>
+                                )}
+                                {data.datePaiement && (
+                                    <p style={{ fontSize: `${11 * scale}px`, color: colors.gray, marginTop: `${2 * scale}px` }}>
+                                        Le {formatDate(data.datePaiement)}
+                                    </p>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 {/* 5. NOTES & FOOTER */}
                 <div style={{ marginTop: 'auto' }}>
                     {data.notes && (
-                        <div style={{ marginBottom: `${40 * scale}px` }}>
+                        <div style={{ marginBottom: `${25 * scale}px` }}>
                             <p style={{ fontSize: `${11 * scale}px`, color: colors.gray, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: `${8 * scale}px` }}>Notes</p>
                             <p style={{ fontSize: `${12 * scale}px`, color: colors.darkGray, lineHeight: 1.6 }}>{data.notes}</p>
                         </div>

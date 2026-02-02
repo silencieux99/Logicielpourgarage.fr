@@ -150,7 +150,7 @@ export interface Reparation {
     clientId: string
     vehiculeId: string
     numero: string
-    statut: 'en_attente' | 'en_cours' | 'termine' | 'facture'
+    statut: 'brouillon' | 'en_attente' | 'en_cours' | 'termine' | 'facture'
     priorite: 'normal' | 'prioritaire' | 'urgent'
     description: string
     dateEntree: Timestamp
@@ -162,6 +162,8 @@ export interface Reparation {
     montantHT: number
     montantTTC: number
     notes?: string
+    photosAvant?: string[]
+    photosApres?: string[]
     createdAt: Timestamp
     updatedAt: Timestamp
 }
@@ -189,6 +191,7 @@ export interface Document {
     dateEmission: Timestamp
     dateEcheance?: Timestamp
     datePaiement?: Timestamp
+    modePaiement?: string
     montantHT: number
     montantTVA: number
     montantTTC: number

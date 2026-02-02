@@ -42,6 +42,7 @@ interface ReparationWithDetails extends Reparation {
 }
 
 const statusConfig = {
+    brouillon: { label: "Brouillon", color: "bg-zinc-100 text-zinc-600", icon: FileText },
     en_attente: { label: "En attente", color: "bg-amber-100 text-amber-700", icon: Clock },
     en_cours: { label: "En cours", color: "bg-blue-100 text-blue-700", icon: Wrench },
     termine: { label: "Terminé", color: "bg-emerald-100 text-emerald-700", icon: CheckCircle },
@@ -60,7 +61,7 @@ export default function RepairsPage() {
     const [personnel, setPersonnel] = useState<Personnel[]>([])
     const [loading, setLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState("")
-    const [filterStatus, setFilterStatus] = useState<"all" | "en_attente" | "en_cours" | "termine" | "facture">("all")
+    const [filterStatus, setFilterStatus] = useState<"all" | "brouillon" | "en_attente" | "en_cours" | "termine" | "facture">("all")
     const [filterMecanicien, setFilterMecanicien] = useState<string>("all")
     const [sortBy, setSortBy] = useState<"date" | "priority" | "amount">("date")
     const [viewMode, setViewMode] = useState<"list" | "board">("list")
@@ -187,35 +188,57 @@ export default function RepairsPage() {
                 </div>
 
                 {/* Mobile Stats */}
-                <div className="sm:hidden flex gap-2 overflow-x-auto pb-2 -mx-4 px-4">
-                    {[
-                        { label: "Attente", value: enAttente, color: "bg-amber-100 text-amber-700" },
-                        { label: "En cours", value: enCours, color: "bg-blue-100 text-blue-700" },
-                        { label: "Terminées", value: terminees, color: "bg-emerald-100 text-emerald-700" },
-                    ].map(stat => (
-                        <div key={stat.label} className={cn("px-3 py-1.5 rounded-lg flex items-center gap-2 whitespace-nowrap", stat.color)}>
-                            <span className="text-base font-semibold">{stat.value}</span>
-                            <span className="text-xs">{stat.label}</span>
-                        </div>
-                    ))}
+                {/* Mobile Stats - Modern Scrollable Cards */}
+                <div className="sm:hidden -mx-4 px-4 overflow-x-auto pb-4 scrollbar-hide">
+                    <div className="flex gap-3">
+                        {[
+                            { label: "En attente", value: enAttente, icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
+                            { label: "En cours", value: enCours, icon: Wrench, color: "text-blue-600", bg: "bg-blue-50" },
+                            { label: "Terminées", value: terminees, icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-50" },
+                            { label: "CA Cours", value: `${(caEnCours / 1000).toFixed(1)}k€`, icon: Euro, color: "text-zinc-600", bg: "bg-zinc-50" },
+                        ].map((stat) => (
+                            <div key={stat.label} className="min-w-[120px] bg-white p-3 rounded-2xl border border-zinc-100 shadow-sm flex flex-col justify-between h-20">
+                                <div className="flex items-start justify-between">
+                                    <span className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider">{stat.label}</span>
+                                    <div className={cn("p-1.5 rounded-full", stat.bg, stat.color)}>
+                                        <stat.icon className="h-3 w-3" />
+                                    </div>
+                                </div>
+                                <span className="text-xl font-bold text-zinc-900 leading-none mt-1">{stat.value}</span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Search & Filters */}
-                <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                {/* Filters & Actions Bar */}
+                <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+                    {/* Search Bar - Modern & Wide */}
+                    <div className="relative w-full lg:max-w-md group">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Search className="h-5 w-5 text-zinc-400 group-focus-within:text-[var(--accent-primary)] transition-colors" />
+                        </div>
                         <input
                             type="text"
-                            placeholder="Rechercher par plaque, client, description..."
+                            placeholder="Rechercher une réparation..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full h-9 pl-10 pr-4 bg-white border border-[var(--border-default)] rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-transparent transition-shadow"
+                            className="block w-full pl-10 pr-3 py-2.5 border border-zinc-200 rounded-xl leading-5 bg-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-transparent transition-all shadow-sm hover:shadow-md"
                         />
+                        <div className="absolute inset-y-0 right-0 flex py-1.5 pr-1.5">
+                            <kbd className="inline-flex items-center border border-zinc-200 rounded px-2 text-xs font-sans font-medium text-zinc-400">
+                                ⌘K
+                            </kbd>
+                        </div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                        <div className="flex gap-0.5 p-1 bg-[var(--bg-tertiary)] rounded-lg overflow-x-auto">
+
+                    {/* Right Side Actions */}
+                    <div className="flex items-center gap-3 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
+                        {/* Status Filter - Segmented Control Style */}
+                        <div className="p-1 bg-zinc-100/80 rounded-xl flex items-center gap-1">
                             {[
                                 { id: "all", label: "Toutes" },
+                                { id: "brouillon", label: "Brouillons" },
                                 { id: "en_attente", label: "Attente" },
                                 { id: "en_cours", label: "En cours" },
                                 { id: "termine", label: "Terminées" },
@@ -224,60 +247,61 @@ export default function RepairsPage() {
                                     key={filter.id}
                                     onClick={() => setFilterStatus(filter.id as any)}
                                     className={cn(
-                                        "px-3 py-1.5 rounded-md text-[12px] font-medium transition-all whitespace-nowrap",
-                                        filterStatus === filter.id ? "bg-white text-[var(--text-primary)]" : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
+                                        "px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap",
+                                        filterStatus === filter.id
+                                            ? "bg-white text-zinc-900 shadow-sm ring-1 ring-black/5"
+                                            : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50"
                                     )}
-                                    style={filterStatus === filter.id ? { boxShadow: 'var(--shadow-xs)' } : {}}
                                 >
                                     {filter.label}
                                 </button>
                             ))}
                         </div>
-                        {/* Filtre mécanicien */}
-                        {personnel.length > 0 && (
-                            <select
-                                value={filterMecanicien}
-                                onChange={(e) => setFilterMecanicien(e.target.value)}
-                                className="h-9 px-3 bg-white border border-zinc-200 rounded-xl text-sm focus:outline-none hidden sm:block"
-                            >
-                                <option value="all">Tous les mécaniciens</option>
-                                {personnel.map(p => (
-                                    <option key={p.id} value={p.id}>
-                                        {p.prenom} {p.nom}
-                                    </option>
-                                ))}
-                            </select>
-                        )}
-                        <select
-                            value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value as any)}
-                            className="h-9 px-3 bg-white border border-zinc-200 rounded-xl text-sm focus:outline-none hidden sm:block"
-                        >
-                            <option value="date">Plus récentes</option>
-                            <option value="priority">Par priorité</option>
-                            <option value="amount">Par montant</option>
-                        </select>
-                        <div className="flex bg-[var(--bg-tertiary)] rounded-xl p-1 gap-1">
-                            <button
-                                onClick={() => setViewMode("list")}
-                                className={cn(
-                                    "p-2 rounded-lg transition-colors",
-                                    viewMode === "list" ? "bg-white shadow-sm text-zinc-900" : "text-zinc-500 hover:text-zinc-900"
-                                )}
-                                title="Vue liste"
-                            >
-                                <Filter className="h-4 w-4 rotate-90" />
-                            </button>
-                            <button
-                                onClick={() => setViewMode("board")}
-                                className={cn(
-                                    "p-2 rounded-lg transition-colors",
-                                    viewMode === "board" ? "bg-white shadow-sm text-zinc-900" : "text-zinc-500 hover:text-zinc-900"
-                                )}
-                                title="Vue tableau"
-                            >
-                                <TrendingUp className="h-4 w-4 rotate-90" />
-                            </button>
+
+                        <div className="w-px h-8 bg-zinc-200 mx-1 hidden sm:block" />
+
+                        {/* View Toggles & secondary filters */}
+                        <div className="flex items-center gap-2">
+                            {/* Mechanic Filter (Desktop) */}
+                            {personnel.length > 0 && (
+                                <div className="hidden sm:block relative">
+                                    <select
+                                        value={filterMecanicien}
+                                        onChange={(e) => setFilterMecanicien(e.target.value)}
+                                        className="appearance-none h-10 pl-3 pr-8 bg-white border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] hover:border-zinc-300 transition-colors"
+                                    >
+                                        <option value="all">Tous les mécaniciens</option>
+                                        {personnel.map(p => (
+                                            <option key={p.id} value={p.id}>{p.prenom} {p.nom}</option>
+                                        ))}
+                                    </select>
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-zinc-500">
+                                        <ChevronRight className="h-4 w-4 rotate-90" />
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* View Mode Toggle */}
+                            <div className="flex bg-zinc-100/80 p-1 rounded-xl">
+                                <button
+                                    onClick={() => setViewMode("list")}
+                                    className={cn(
+                                        "p-2 rounded-lg transition-all",
+                                        viewMode === "list" ? "bg-white shadow-sm text-zinc-900 ring-1 ring-black/5" : "text-zinc-400 hover:text-zinc-600"
+                                    )}
+                                >
+                                    <Filter className="h-4 w-4" />
+                                </button>
+                                <button
+                                    onClick={() => setViewMode("board")}
+                                    className={cn(
+                                        "p-2 rounded-lg transition-all",
+                                        viewMode === "board" ? "bg-white shadow-sm text-zinc-900 ring-1 ring-black/5" : "text-zinc-400 hover:text-zinc-600"
+                                    )}
+                                >
+                                    <TrendingUp className="h-4 w-4" />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -336,6 +360,28 @@ export default function RepairsPage() {
                     {/* Kanban View */}
                     {viewMode === "board" && !loading && garage?.id && (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 overflow-x-auto pb-4">
+                            {/* Colonne Brouillons */}
+                            {filteredRepairs.some(r => r.statut === "brouillon") && (
+                                <div className="min-w-[260px] flex flex-col gap-3">
+                                    <div className="flex items-center justify-between sticky top-0 bg-zinc-50 z-10 py-1.5">
+                                        <div className="flex items-center gap-2">
+                                            <div className="p-1.5 bg-zinc-100 rounded-lg">
+                                                <FileText className="h-4 w-4 text-zinc-600" />
+                                            </div>
+                                            <h3 className="font-semibold text-zinc-900">Brouillons</h3>
+                                            <span className="bg-zinc-200 text-zinc-700 text-xs px-2 py-0.5 rounded-full">
+                                                {filteredRepairs.filter(r => r.statut === "brouillon").length}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col gap-2 min-h-[160px]">
+                                        {filteredRepairs.filter(r => r.statut === "brouillon").map(repair => (
+                                            <RepairCard key={repair.id} repair={repair} />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Colonne En attente */}
                             <div className="min-w-[260px] flex flex-col gap-3">
                                 <div className="flex items-center justify-between sticky top-0 bg-zinc-50 z-10 py-1.5">

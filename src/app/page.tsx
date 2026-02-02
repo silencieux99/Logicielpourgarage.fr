@@ -8,19 +8,18 @@ import {
   Star,
   Shield,
   ChevronRight,
-  Menu,
-  X,
   Loader2,
   CreditCard,
   Search,
-  Car
+  Car,
+  X
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
 import { BrandLogo } from "@/components/ui/brand-logo"
-import { ThemeToggleButton } from "@/components/ui/theme-toggle-button"
+import { LandingHeader } from "@/components/layout/LandingHeader"
 
 const features = [
   { title: "Gestion clients", description: "Centralisez toutes les informations de vos clients et leur historique." },
@@ -176,7 +175,6 @@ function CheckoutModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
 export default function HomePage() {
   const router = useRouter()
   const { user, loading } = useAuth()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [plate, setPlate] = useState("")
   const [lookupLoading, setLookupLoading] = useState(false)
@@ -220,60 +218,7 @@ export default function HomePage() {
       />
 
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-[var(--bg-primary)]/95 backdrop-blur-sm border-b border-[var(--border-light)]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-20 sm:h-22 md:h-24 flex items-center justify-between">
-          <Link href="/" className="flex items-center -ml-4 mt-3">
-            <img
-              src="/GaragePROlogo.png"
-              alt="GaragePro"
-              width="300"
-              height="75"
-              className="w-[180px] sm:w-[220px] md:w-[260px] h-auto logo-invert"
-            />
-          </Link>
-
-          <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-[14px] text-zinc-600 hover:text-zinc-900">Fonctionnalités</a>
-            <a href="#pricing" className="text-[14px] text-zinc-600 hover:text-zinc-900">Tarifs</a>
-            <a href="#faq" className="text-[14px] text-zinc-600 hover:text-zinc-900">FAQ</a>
-          </div>
-
-          <div className="hidden md:flex items-center gap-3">
-            <ThemeToggleButton />
-            <Link href="/login" className="text-[14px] font-medium text-zinc-600 hover:text-zinc-900 px-3 py-2">
-              Connexion
-            </Link>
-            <Link href="/inscription" className="h-9 px-4 bg-zinc-900 text-white text-[14px] font-medium rounded-lg flex items-center transition-colors hover:bg-zinc-800">
-              Essai gratuit
-            </Link>
-          </div>
-
-          <button
-            className="md:hidden p-2 -mr-2"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
-        </div>
-
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-[var(--bg-primary)] border-t border-[var(--border-light)] px-4 py-4 space-y-3">
-            <a href="#features" className="block text-[15px] text-zinc-700 py-2" onClick={() => setMobileMenuOpen(false)}>Fonctionnalités</a>
-            <a href="#pricing" className="block text-[15px] text-zinc-700 py-2" onClick={() => setMobileMenuOpen(false)}>Tarifs</a>
-            <a href="#faq" className="block text-[15px] text-zinc-700 py-2" onClick={() => setMobileMenuOpen(false)}>FAQ</a>
-            <div className="pt-3 border-t border-zinc-100 space-y-2">
-              <ThemeToggleButton className="w-full justify-center" />
-              <Link href="/login" className="block w-full h-11 bg-zinc-100 text-zinc-900 text-[15px] font-medium rounded-lg text-center leading-[44px]">
-                Connexion
-              </Link>
-              <Link href="/inscription" className="block w-full h-11 bg-zinc-900 text-white text-[15px] font-medium rounded-lg text-center leading-[44px]">
-                Essai gratuit
-              </Link>
-            </div>
-          </div>
-        )}
-      </nav>
+      <LandingHeader />
 
       {/* Hero */}
       <section className="pt-28 sm:pt-32 md:pt-36 pb-16 sm:pb-24 px-4 sm:px-6">
@@ -324,21 +269,21 @@ export default function HomePage() {
 
             <form onSubmit={handlePlateLookup} className="space-y-3">
               {/* French License Plate - forced light colors */}
-              <div 
+              <div
                 className="flex items-stretch h-12 sm:h-14 rounded overflow-hidden border-2"
                 style={{ backgroundColor: "#ffffff", borderColor: "#27272a" }}
               >
                 {/* Left EU band */}
                 <div className="w-8 sm:w-10 flex flex-col items-center justify-center shrink-0" style={{ backgroundColor: "#003399" }}>
                   <svg className="w-3 sm:w-4 h-2.5 sm:h-3 mb-0.5" viewBox="0 0 16 12">
-                    <circle cx="8" cy="2" r="0.8" fill="#FFCC00"/>
-                    <circle cx="5" cy="3" r="0.8" fill="#FFCC00"/>
-                    <circle cx="11" cy="3" r="0.8" fill="#FFCC00"/>
-                    <circle cx="4" cy="6" r="0.8" fill="#FFCC00"/>
-                    <circle cx="12" cy="6" r="0.8" fill="#FFCC00"/>
-                    <circle cx="5" cy="9" r="0.8" fill="#FFCC00"/>
-                    <circle cx="11" cy="9" r="0.8" fill="#FFCC00"/>
-                    <circle cx="8" cy="10" r="0.8" fill="#FFCC00"/>
+                    <circle cx="8" cy="2" r="0.8" fill="#FFCC00" />
+                    <circle cx="5" cy="3" r="0.8" fill="#FFCC00" />
+                    <circle cx="11" cy="3" r="0.8" fill="#FFCC00" />
+                    <circle cx="4" cy="6" r="0.8" fill="#FFCC00" />
+                    <circle cx="12" cy="6" r="0.8" fill="#FFCC00" />
+                    <circle cx="5" cy="9" r="0.8" fill="#FFCC00" />
+                    <circle cx="11" cy="9" r="0.8" fill="#FFCC00" />
+                    <circle cx="8" cy="10" r="0.8" fill="#FFCC00" />
                   </svg>
                   <span className="text-[9px] sm:text-[11px] font-bold" style={{ color: "#ffffff" }}>F</span>
                 </div>

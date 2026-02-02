@@ -77,12 +77,13 @@ export default function InvoicesPage() {
                     numero: doc.numero,
                     type: doc.type,
                     status: doc.statut,
-                    clientNom: client?.nom || "Client inconnu",
+                    clientNom: client ? `${client.prenom} ${client.nom}` : "Client inconnu",
                     montantTTC: doc.montantTTC,
                     createdAt: dateCreation.toISOString()
                 }
             })
 
+            console.log('Documents chargés:', formattedDocs.length, formattedDocs)
             setDocuments(formattedDocs)
         } catch (error) {
             console.error("Erreur chargement documents:", error)
