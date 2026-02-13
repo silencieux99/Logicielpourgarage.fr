@@ -27,8 +27,10 @@ import {
     getRendezVous,
     getDocuments,
     getReparationsEnCours,
+    getReparations,
     checkClientLimit,
-    checkVehiculeLimit
+    checkVehiculeLimit,
+    type RendezVous
 } from "@/lib/database"
 
 interface DashboardStats {
@@ -56,6 +58,7 @@ export default function DashboardPage() {
     const [clientLimit, setClientLimit] = useState<{ allowed: boolean; current: number; limit: number; isPro: boolean } | null>(null)
     const [vehiculeLimit, setVehiculeLimit] = useState<{ allowed: boolean; current: number; limit: number; isPro: boolean } | null>(null)
     const [recentItems, setRecentItems] = useState<RecentItem[]>([])
+    const [todayAppointments, setTodayAppointments] = useState<RendezVous[]>([])
     const [fabOpen, setFabOpen] = useState(false)
 
     useEffect(() => {
@@ -93,19 +96,23 @@ export default function DashboardPage() {
         if (!garage?.id) return
         setLoading(true)
         try {
-            const [statsData, rdvToday, documents, reparationsEnCours, clientLimitData, vehiculeLimitData] = await Promise.all([
+            // On récupère TOUTES les données récentes pour avoir une vraie vue d'ensemble
+            const [statsData, rdvToday, documents, allReparations, clientLimitData, vehiculeLimitData] = await Promise.all([
                 getStats(garage.id),
                 getRendezVous(garage.id, new Date()),
-                getDocuments(garage.id, 'facture'),
-                getReparationsEnCours(garage.id),
+                getDocuments(garage.id), // Tous les documents (devis + factures)
+                getReparations(garage.id), // Toutes les réparations
                 checkClientLimit(garage.id),
                 checkVehiculeLimit(garage.id)
             ])
 
+            // Calculer les réparations en cours manuellement
+            const reparationsEnCours = allReparations.filter(r => ['en_attente', 'en_cours'].includes(r.statut))
+
             const today = new Date()
             today.setHours(0, 0, 0, 0)
             const facturesAujourdhui = documents.filter(d => {
-                if (d.statut !== 'paye' || !d.datePaiement) return false
+                if (d.type !== 'facture' || d.statut !== 'paye' || !d.datePaiement) return false
                 const paidDate = d.datePaiement.toDate ? d.datePaiement.toDate() : new Date(d.datePaiement as unknown as string)
                 paidDate.setHours(0, 0, 0, 0)
                 return paidDate.getTime() === today.getTime()
@@ -121,15 +128,48 @@ export default function DashboardPage() {
                 caJourChange: 0
             })
 
-            const recentRepairs: RecentItem[] = reparationsEnCours.slice(0, 5).map(r => ({
-                id: r.id || '',
-                type: 'repair' as const,
-                titre: r.description?.substring(0, 50) || 'Réparation',
-                sousTitre: `#${r.numero}`,
-                date: r.dateEntree?.toDate ? r.dateEntree.toDate().toLocaleDateString('fr-FR') : '-'
-            }))
+            // Créer une liste unifiée d'activités récentes
+            const allActivities = [
+                ...allReparations.map(r => ({
+                    sortDate: r.createdAt?.toDate ? r.createdAt.toDate() : new Date(0),
+                    item: {
+                        id: r.id || '',
+                        type: 'repair' as const,
+                        titre: r.description?.substring(0, 50) || 'Réparation',
+                        sousTitre: `#${r.numero}`,
+                        date: r.createdAt?.toDate ? r.createdAt.toDate().toLocaleDateString('fr-FR') : '-'
+                    }
+                })),
+                ...documents.map(d => ({
+                    sortDate: d.createdAt?.toDate ? d.createdAt.toDate() : new Date(0),
+                    item: {
+                        id: d.id || '',
+                        type: 'invoice' as const,
+                        titre: d.type === 'devis' ? `Devis #${d.numero}` : `Facture #${d.numero}`,
+                        sousTitre: `${d.montantTTC.toFixed(2)}€ • ${d.statut}`,
+                        date: d.createdAt?.toDate ? d.createdAt.toDate().toLocaleDateString('fr-FR') : '-'
+                    }
+                })),
+                ...rdvToday.map(r => ({
+                    sortDate: r.createdAt?.toDate ? r.createdAt.toDate() : new Date(0),
+                    item: {
+                        id: r.id || '',
+                        type: 'appointment' as const,
+                        titre: r.description || 'Rendez-vous',
+                        sousTitre: r.dateHeure?.toDate ? r.dateHeure.toDate().toLocaleString('fr-FR') : '',
+                        date: r.createdAt?.toDate ? r.createdAt.toDate().toLocaleDateString('fr-FR') : '-'
+                    }
+                }))
+            ]
 
-            setRecentItems(recentRepairs)
+            // Trier par date décroissante et prendre les 5 premiers
+            const recentActivity = allActivities
+                .sort((a, b) => b.sortDate.getTime() - a.sortDate.getTime())
+                .slice(0, 5)
+                .map(a => a.item)
+
+            setRecentItems(recentActivity)
+            setTodayAppointments(rdvToday)
             setClientLimit(clientLimitData)
             setVehiculeLimit(vehiculeLimitData)
 
@@ -312,8 +352,8 @@ export default function DashboardPage() {
                 {/* Left Column - 2/3 width */}
                 <div className="lg:col-span-2 space-y-4">
                     {/* Recent Activity */}
-                    <div className="bg-white rounded-xl border border-[var(--border-light)]" style={{ boxShadow: 'var(--shadow-sm)' }}>
-                        <div className="px-4 py-3 border-b border-[var(--border-light)] flex items-center justify-between">
+                    <div className="bg-white rounded-xl" style={{ boxShadow: 'var(--shadow-sm)' }}>
+                        <div className="px-4 py-3 flex items-center justify-between">
                             <h2 className="text-[14px] font-semibold text-[var(--text-primary)]">
                                 Activité récente
                             </h2>
@@ -334,9 +374,9 @@ export default function DashboardPage() {
                                 </p>
                             </div>
                         ) : (
-                            <div className="divide-y divide-[var(--border-light)]">
+                            <div className="">
                                 {recentItems.map((item) => (
-                                    <div key={item.id} className="px-4 py-3 hover:bg-[var(--bg-secondary)] transition-colors">
+                                    <div key={item.id} className="px-4 py-3 hover:bg-[var(--bg-secondary)] transition-colors rounded-lg">
                                         <div className="flex items-center gap-3">
                                             <div className="w-8 h-8 rounded-lg bg-[var(--bg-tertiary)] flex items-center justify-center flex-shrink-0">
                                                 {item.type === "repair" ? (
@@ -403,7 +443,7 @@ export default function DashboardPage() {
                     </div>
 
                     {/* RDV Today */}
-                    <div className="bg-white rounded-xl border border-[var(--border-light)] p-4" style={{ boxShadow: 'var(--shadow-sm)' }}>
+                    <div className="bg-white rounded-xl p-4" style={{ boxShadow: 'var(--shadow-sm)' }}>
                         <div className="flex items-center justify-between mb-3">
                             <h2 className="text-[13px] font-semibold text-[var(--text-primary)]">RDV du jour</h2>
                             <Link href="/schedule" className="text-[12px] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors">
@@ -411,18 +451,42 @@ export default function DashboardPage() {
                             </Link>
                         </div>
 
-                        <div className="text-center py-4">
-                            <div className="w-10 h-10 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center mx-auto mb-2">
-                                <Calendar className="h-5 w-5 text-[var(--text-muted)]" strokeWidth={1.5} />
+                        {todayAppointments.length === 0 ? (
+                            <div className="text-center py-4">
+                                <div className="w-10 h-10 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center mx-auto mb-2">
+                                    <Calendar className="h-5 w-5 text-[var(--text-muted)]" strokeWidth={1.5} />
+                                </div>
+                                <p className="text-[13px] text-[var(--text-secondary)]">Aucun rendez-vous</p>
+                                <Link
+                                    href="/schedule/new"
+                                    className="text-[12px] text-[var(--accent-primary)] font-medium hover:underline mt-1 inline-block"
+                                >
+                                    Planifier un RDV
+                                </Link>
                             </div>
-                            <p className="text-[13px] text-[var(--text-secondary)]">Aucun rendez-vous</p>
-                            <Link
-                                href="/schedule/new"
-                                className="text-[12px] text-[var(--accent-primary)] font-medium hover:underline mt-1 inline-block"
-                            >
-                                Planifier un RDV
-                            </Link>
-                        </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {todayAppointments.map((rdv) => (
+                                    <div key={rdv.id} className="flex items-center gap-3 p-2 hover:bg-[var(--bg-secondary)] rounded-lg transition-colors">
+                                        <div className="w-8 h-8 rounded-lg bg-[var(--bg-tertiary)] flex items-center justify-center flex-shrink-0">
+                                            <span className="text-[11px] font-semibold text-[var(--text-secondary)]">
+                                                {rdv.dateHeure?.toDate ? rdv.dateHeure.toDate().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                                            </span>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-[13px] font-medium text-[var(--text-primary)] truncate">{rdv.description || rdv.type || 'Rendez-vous'}</p>
+                                            <p className="text-[11px] text-[var(--text-muted)] truncate">{rdv.type}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                                <Link
+                                    href="/schedule/new"
+                                    className="block text-center text-[12px] text-[var(--accent-primary)] font-medium hover:underline mt-3 pt-2"
+                                >
+                                    Planifier un autre RDV
+                                </Link>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

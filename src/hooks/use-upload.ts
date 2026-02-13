@@ -148,6 +148,7 @@ export function useUpload(options: UseUploadOptions = {}) {
         removeFile,
         clearFiles,
         getFilesByType,
+        setFiles,
     }
 }
 

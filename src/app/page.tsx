@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import Image from "next/image"
 import {
   CheckCircle2,
   ArrowRight,
@@ -9,62 +8,70 @@ import {
   Shield,
   ChevronRight,
   Loader2,
-  CreditCard,
-  Search,
+  X,
+  Users,
   Car,
-  X
+  Wrench,
+  FileText,
+  CalendarDays,
+  Package,
+  BarChart3,
+  Mail,
+  Zap,
+  Check
 } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { useState, useEffect } from "react"
-import { useAuth } from "@/lib/auth-context"
-import { useRouter } from "next/navigation"
-import { BrandLogo } from "@/components/ui/brand-logo"
+import { useState } from "react"
 import { LandingHeader } from "@/components/layout/LandingHeader"
 
+/* ─── DATA ──────────────────────────────────────────────────────── */
+
 const features = [
-  { title: "Gestion clients", description: "Centralisez toutes les informations de vos clients et leur historique." },
-  { title: "Parc automobile", description: "Recherche par plaque ou VIN, infos véhicule automatiques." },
-  { title: "Suivi réparations", description: "Suivez l'avancement des interventions en temps réel." },
-  { title: "Devis & Factures", description: "Documents professionnels conformes en quelques clics." },
-  { title: "Agenda intégré", description: "Planifiez vos RDV et envoyez des rappels automatiques." },
-  { title: "Gestion de stock", description: "Gérez votre inventaire avec alertes de stock bas." },
-  { title: "Analytiques", description: "Suivez votre CA et vos performances en temps réel." },
-  { title: "Communications", description: "SMS et emails automatisés pour vos clients." },
+  { icon: Users, title: "Gestion clients", description: "Centralisez vos fiches clients, historiques et contacts en un seul endroit." },
+  { icon: Car, title: "Parc automobile", description: "Recherche par plaque ou VIN avec détection automatique du véhicule." },
+  { icon: Wrench, title: "Suivi réparations", description: "Suivez chaque intervention du diagnostic à la livraison." },
+  { icon: FileText, title: "Devis & Factures", description: "Créez des documents conformes et professionnels en quelques clics." },
+  { icon: CalendarDays, title: "Agenda intégré", description: "Planifiez vos rendez-vous et envoyez des rappels automatiques." },
+  { icon: Package, title: "Gestion de stock", description: "Inventaire en temps réel avec alertes de stock bas." },
+  { icon: BarChart3, title: "Analytiques", description: "Tableaux de bord pour suivre votre CA et vos KPIs." },
+  { icon: Mail, title: "Communications", description: "Emails et SMS automatisés pour fidéliser vos clients." },
 ]
 
-const benefitsPro = [
-  "Clients illimités",
-  "Véhicules illimités",
-  "Factures et devis illimités",
-  "Mises à jour incluses",
-  "Support prioritaire",
-  "Exports Excel et PDF",
-  "Hébergement en France",
-  "Conforme RGPD",
-]
-
-const benefitsDemo = [
-  "5 clients maximum",
-  "5 véhicules maximum",
-  "Toutes les fonctionnalités",
-  "Sans carte bancaire",
+const steps = [
+  { num: "01", title: "Créez votre compte", description: "Inscription en 30 secondes. Aucune carte bancaire requise pour démarrer." },
+  { num: "02", title: "Configurez votre garage", description: "Ajoutez vos informations, personnalisez vos documents et tarifs." },
+  { num: "03", title: "Gérez tout au même endroit", description: "Clients, véhicules, réparations, factures — tout est centralisé." },
 ]
 
 const testimonials = [
-  { name: "Pierre M.", garage: "Lyon", quote: "J'ai divisé par 3 le temps passé sur l'administratif." },
-  { name: "Sophie D.", garage: "Paris", quote: "Interface intuitive, adoptée en moins d'une journée." },
-  { name: "Marc L.", garage: "Bordeaux", quote: "Le rapport qualité/prix est imbattable." },
+  { name: "Pierre M.", garage: "Auto Service Lyon", quote: "J'ai divisé par 3 le temps passé sur l'administratif. L'interface est tellement intuitive que mes mécaniciens l'ont adoptée en une journée." },
+  { name: "Sophie D.", garage: "Garage Central Paris", quote: "Le meilleur investissement qu'on ait fait cette année. On ne pourrait plus s'en passer pour la gestion quotidienne." },
+  { name: "Marc L.", garage: "Atelier Bordeaux Sud", quote: "Le rapport qualité-prix est imbattable. On a enfin un outil moderne qui correspond à nos besoins réels." },
 ]
 
 const faqs = [
   { q: "Y a-t-il des frais cachés ?", a: "Non. 59,99€ HT/mois, point final. Pas de frais de mise en service, pas de frais de résiliation. Annulez quand vous voulez." },
-  { q: "Comment fonctionne la démo ?", a: "Accès à toutes les fonctionnalités, limité à 5 clients et 5 véhicules. Parfait pour tester avant de s'abonner." },
-  { q: "Puis-je annuler quand je veux ?", a: "Oui, sans engagement. Annulation en un clic depuis votre espace." },
-  { q: "Mes données sont-elles sécurisées ?", a: "Hébergement en France, conforme RGPD, sauvegardes quotidiennes." },
-  { q: "Combien d'utilisateurs ?", a: "Illimité. Ajoutez autant de collaborateurs que vous voulez sans surcoût." },
+  { q: "Comment fonctionne la version gratuite ?", a: "Accès à toutes les fonctionnalités, limité à 5 clients et 5 véhicules. Parfait pour tester avant de s'engager." },
+  { q: "Puis-je annuler quand je veux ?", a: "Oui, sans engagement. Annulation en un clic depuis votre espace, effective immédiatement." },
+  { q: "Mes données sont-elles sécurisées ?", a: "Hébergement en France, conforme RGPD, chiffrement des données, sauvegardes quotidiennes automatiques." },
+  { q: "Combien d'utilisateurs par garage ?", a: "Illimité. Ajoutez autant de collaborateurs que nécessaire sans surcoût." },
+  { q: "Faut-il installer un logiciel ?", a: "Non. GaragePro fonctionne 100% dans votre navigateur, sur ordinateur, tablette ou téléphone." },
 ]
 
-// Composant Modal Checkout
+const pricingFeatures = [
+  { name: "Clients", demo: "5 max", pro: "Illimités" },
+  { name: "Véhicules", demo: "5 max", pro: "Illimités" },
+  { name: "Devis & Factures", demo: "Illimités", pro: "Illimités" },
+  { name: "Recherche par plaque", demo: true, pro: true },
+  { name: "Agenda & planning", demo: true, pro: true },
+  { name: "Gestion de stock", demo: true, pro: true },
+  { name: "Analytiques & stats", demo: false, pro: true },
+  { name: "Export PDF & Excel", demo: false, pro: true },
+  { name: "Support prioritaire", demo: false, pro: true },
+  { name: "SMS & emails auto", demo: false, pro: true },
+]
+
+/* ─── CHECKOUT MODAL ────────────────────────────────────────────── */
+
 function CheckoutModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
@@ -74,10 +81,7 @@ function CheckoutModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
     e.preventDefault()
     setLoading(true)
     setError(null)
-
     try {
-      // Pour l'instant, rediriger vers l'inscription
-      // Le paiement se fera après la création du compte
       window.location.href = `/inscription`
     } catch (err: any) {
       setError(err.message || 'Une erreur est survenue')
@@ -89,82 +93,60 @@ function CheckoutModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/60 z-50 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm" onClick={onClose} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
-          {/* Header */}
-          <div className="bg-zinc-900 px-6 py-5 text-white">
+        <div
+          className="bg-[var(--bg-primary)] rounded-3xl w-full max-w-lg overflow-hidden border border-[var(--border-default)]"
+          onClick={(e) => e.stopPropagation()}
+          style={{ boxShadow: '0 25px 60px -12px rgba(0,0,0,0.2)' }}
+        >
+          <div className="bg-zinc-900 px-8 py-7 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-zinc-400">Abonnement Pro</p>
-                <p className="text-2xl font-bold">59,99€ <span className="text-sm font-normal text-zinc-400">HT/mois</span></p>
+                <p className="text-base text-zinc-400 mb-1">Abonnement Pro</p>
+                <p className="text-3xl font-bold">59,99€ <span className="text-base font-normal text-zinc-400">HT/mois</span></p>
               </div>
-              <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-                <X className="h-5 w-5" />
+              <button onClick={onClose} className="p-3 hover:bg-white/10 rounded-xl transition-colors">
+                <X className="h-6 w-6" />
               </button>
             </div>
-            <div className="mt-3 flex items-center gap-2">
-              <span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs font-medium rounded">
-                Accès complet
-              </span>
-              <span className="text-sm text-zinc-400">59,99€/mois</span>
-            </div>
           </div>
-
-          {/* Content */}
-          <div className="p-6">
+          <div className="p-8">
             <form onSubmit={handleCheckout}>
-              <p className="text-sm text-zinc-600 mb-4">
-                Entrez votre email pour vous inscrire
+              <p className="text-base text-[var(--text-secondary)] mb-5">
+                Entrez votre email pour commencer
               </p>
-
               {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+                <div className="mb-5 p-4 bg-red-50 border border-red-200 rounded-xl text-base text-red-600">
                   {error}
                 </div>
               )}
-
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="vous@exemple.fr"
                 required
-                className="w-full h-12 px-4 border border-zinc-300 rounded-xl text-[15px] mb-4 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                className="w-full h-14 px-5 border border-[var(--border-default)] rounded-2xl text-base mb-5 focus:outline-none focus:ring-2 focus:ring-zinc-900 bg-[var(--bg-secondary)]"
               />
-
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-400 text-white text-[15px] font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
+                className="w-full h-14 bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-400 text-white text-base font-semibold rounded-2xl flex items-center justify-center gap-2.5 transition-colors"
               >
                 {loading ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
                   <>
                     <Shield className="h-5 w-5" />
-                    Commencer gratuitement
+                    Commencer maintenant
                   </>
                 )}
               </button>
-
-              <p className="text-xs text-zinc-400 text-center mt-4">
-                Paiement sécurisé par Stripe • Sans engagement, résiliable à tout moment
+              <p className="text-sm text-[var(--text-muted)] text-center mt-5">
+                Paiement sécurisé par Stripe · Sans engagement
               </p>
             </form>
-
-            {/* Features */}
-            <div className="mt-6 pt-6 border-t border-zinc-100">
-              <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-3">Inclus :</p>
-              <div className="grid grid-cols-2 gap-2">
-                {['Clients illimités', 'Véhicules illimités', 'Support prioritaire', 'Sans engagement'].map((f) => (
-                  <div key={f} className="flex items-center gap-2 text-[13px] text-zinc-600">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                    {f}
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -172,379 +154,455 @@ function CheckoutModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
   )
 }
 
-export default function HomePage() {
-  const router = useRouter()
-  const { user, loading } = useAuth()
-  const [checkoutOpen, setCheckoutOpen] = useState(false)
-  const [plate, setPlate] = useState("")
-  const [lookupLoading, setLookupLoading] = useState(false)
-  const [lookupError, setLookupError] = useState<string | null>(null)
-  const [lookupResult, setLookupResult] = useState<any>(null)
+/* ─── FAQ ITEM ──────────────────────────────────────────────────── */
 
-  const openCheckout = () => {
-    setCheckoutOpen(true)
-  }
-
-  const handlePlateLookup = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const cleanPlate = plate.trim()
-    if (!cleanPlate || cleanPlate.length < 5) return
-
-    setLookupLoading(true)
-    setLookupError(null)
-    setLookupResult(null)
-
-    try {
-      const formatted = cleanPlate.toUpperCase().replace(/\s+/g, '-')
-      const response = await fetch(`/api/vehicle-lookup?type=plate&value=${encodeURIComponent(formatted)}`)
-      const result = await response.json()
-      if (!result.success || !result.data) {
-        throw new Error(result.error || "Véhicule introuvable")
-      }
-      setLookupResult(result.data)
-    } catch (err: any) {
-      setLookupError(err.message || "Une erreur est survenue")
-    } finally {
-      setLookupLoading(false)
-    }
-  }
+function FaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Modal Checkout */}
-      <CheckoutModal
-        isOpen={checkoutOpen}
-        onClose={() => setCheckoutOpen(false)}
-      />
+    <div className="border-b border-[var(--border-light)]">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between py-7 sm:py-8 text-left group"
+      >
+        <span className="text-lg sm:text-xl font-medium text-[var(--text-primary)] pr-8 group-hover:text-[var(--text-secondary)] transition-colors">
+          {q}
+        </span>
+        <ChevronRight
+          className={`h-5 w-5 sm:h-6 sm:w-6 text-[var(--text-muted)] flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-90' : ''}`}
+        />
+      </button>
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-out ${open ? 'max-h-48 pb-7 sm:pb-8' : 'max-h-0'}`}
+      >
+        <p className="text-base sm:text-lg text-[var(--text-secondary)] leading-relaxed pr-12">
+          {a}
+        </p>
+      </div>
+    </div>
+  )
+}
 
-      {/* Navigation */}
+/* ─── HOME PAGE ─────────────────────────────────────────────────── */
+
+export default function HomePage() {
+  const [checkoutOpen, setCheckoutOpen] = useState(false)
+
+  return (
+    <div className="min-h-screen bg-[var(--bg-primary)]">
+      <CheckoutModal isOpen={checkoutOpen} onClose={() => setCheckoutOpen(false)} />
       <LandingHeader />
 
-      {/* Hero */}
-      <section className="pt-28 sm:pt-32 md:pt-36 pb-16 sm:pb-24 px-4 sm:px-6">
-        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-10 items-center">
-          <div className="text-center lg:text-left">
-            <p className="inline-block px-3 py-1.5 bg-zinc-100 rounded-full text-zinc-700 text-[13px] font-medium mb-6">
-              Version gratuite • 5 clients & 5 véhicules
-            </p>
-
-            <h1 className="text-[32px] sm:text-[44px] lg:text-[52px] font-bold text-zinc-900 leading-[1.15] tracking-tight mb-5">
-              Le logiciel de gestion pour votre garage
-            </h1>
-
-            <p className="text-[16px] sm:text-[18px] text-zinc-600 leading-relaxed max-w-2xl mx-auto lg:mx-0 mb-8">
-              Gérez vos clients, véhicules, réparations et factures depuis une interface simple. Gagnez du temps au quotidien.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 mb-8">
-              <Link href="/inscription" className="w-full sm:w-auto h-12 px-6 bg-zinc-900 text-white text-[15px] font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors">
-                Démarrer l'essai gratuit
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <a href="#pricing" className="w-full sm:w-auto h-12 px-6 bg-zinc-100 text-zinc-900 text-[15px] font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-zinc-200 transition-colors">
-                Voir les tarifs
-              </a>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-6 gap-y-2 text-[13px] text-zinc-500">
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                Sans engagement
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                Sans frais cachés
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                Support inclus
-              </span>
-            </div>
+      {/* ═══════════════════════════════════════
+          HERO — Full viewport impact
+      ═══════════════════════════════════════ */}
+      <section className="min-h-[90vh] sm:min-h-screen flex items-center justify-center px-5 sm:px-8 lg:px-12">
+        <div className="w-full max-w-[1400px] mx-auto text-center py-20 sm:py-0">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-[var(--border-default)] bg-[var(--bg-secondary)] mb-10 sm:mb-12">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-sm sm:text-base font-medium text-[var(--text-secondary)]">
+              Essai gratuit · Sans carte bancaire
+            </span>
           </div>
 
-          {/* Plate Lookup Demo */}
-          <div className="bg-white rounded-xl sm:rounded-2xl border border-zinc-200 p-4 sm:p-6 shadow-sm sm:shadow-lg">
-            <p className="text-zinc-900 font-semibold text-center mb-1">Testez la détection</p>
-            <p className="text-zinc-500 text-xs sm:text-sm text-center mb-5">Entrez une immatriculation française</p>
+          {/* Headline — MASSIVE */}
+          <h1 className="landing-hero-title text-[var(--text-primary)] mb-8 sm:mb-10 max-w-5xl mx-auto">
+            Le logiciel de gestion
+            <br />
+            <span className="text-[var(--text-muted)]">pour votre garage</span>
+          </h1>
 
-            <form onSubmit={handlePlateLookup} className="space-y-3">
-              {/* French License Plate - forced light colors */}
-              <div
-                className="flex items-stretch h-12 sm:h-14 rounded overflow-hidden border-2"
-                style={{ backgroundColor: "#ffffff", borderColor: "#27272a" }}
-              >
-                {/* Left EU band */}
-                <div className="w-8 sm:w-10 flex flex-col items-center justify-center shrink-0" style={{ backgroundColor: "#003399" }}>
-                  <svg className="w-3 sm:w-4 h-2.5 sm:h-3 mb-0.5" viewBox="0 0 16 12">
-                    <circle cx="8" cy="2" r="0.8" fill="#FFCC00" />
-                    <circle cx="5" cy="3" r="0.8" fill="#FFCC00" />
-                    <circle cx="11" cy="3" r="0.8" fill="#FFCC00" />
-                    <circle cx="4" cy="6" r="0.8" fill="#FFCC00" />
-                    <circle cx="12" cy="6" r="0.8" fill="#FFCC00" />
-                    <circle cx="5" cy="9" r="0.8" fill="#FFCC00" />
-                    <circle cx="11" cy="9" r="0.8" fill="#FFCC00" />
-                    <circle cx="8" cy="10" r="0.8" fill="#FFCC00" />
-                  </svg>
-                  <span className="text-[9px] sm:text-[11px] font-bold" style={{ color: "#ffffff" }}>F</span>
-                </div>
-                {/* Plate input */}
-                <input
-                  type="text"
-                  value={plate}
-                  onChange={(e) => setPlate(e.target.value.toUpperCase())}
-                  placeholder="AB-123-CD"
-                  maxLength={9}
-                  className="flex-1 min-w-0 text-base sm:text-xl font-bold tracking-wider text-center outline-none px-2"
-                  style={{ backgroundColor: "#ffffff", color: "#18181b" }}
-                />
-                {/* Right region band */}
-                <div className="w-8 sm:w-10 flex flex-col items-center justify-center shrink-0" style={{ backgroundColor: "#003399" }}>
-                  <span className="text-[8px] sm:text-[10px] font-bold mb-0.5" style={{ color: "#ffffff" }}>IDF</span>
-                  {/* French flag - vertical stripes */}
-                  <div className="w-3 sm:w-4 h-2 sm:h-3 rounded-[1px] overflow-hidden flex flex-row">
-                    <div className="flex-1" style={{ backgroundColor: "#002395" }}></div>
-                    <div className="flex-1" style={{ backgroundColor: "#ffffff" }}></div>
-                    <div className="flex-1" style={{ backgroundColor: "#ED2939" }}></div>
-                  </div>
-                </div>
-              </div>
+          {/* Subtitle */}
+          <p className="text-lg sm:text-xl lg:text-2xl text-[var(--text-secondary)] leading-relaxed max-w-3xl mx-auto mb-12 sm:mb-14">
+            Clients, véhicules, réparations, devis et factures — simplifiez votre quotidien avec un outil pensé pour les pros de l'automobile.
+          </p>
 
-              <button
-                type="submit"
-                disabled={lookupLoading}
-                className="w-full h-10 sm:h-11 bg-zinc-900 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors"
-              >
-                {lookupLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-                Rechercher
-              </button>
+          {/* CTAs — BIG */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5 mb-14 sm:mb-16">
+            <Link
+              href="/inscription"
+              className="w-full sm:w-auto h-14 sm:h-16 px-10 sm:px-14 bg-zinc-900 text-white text-base sm:text-lg font-semibold rounded-2xl flex items-center justify-center gap-3 hover:bg-zinc-800 transition-all duration-200 hover:shadow-xl active:scale-[0.98]"
+            >
+              Démarrer gratuitement
+              <ArrowRight className="h-5 w-5" />
+            </Link>
+            <a
+              href="#pricing"
+              className="w-full sm:w-auto h-14 sm:h-16 px-10 sm:px-14 bg-[var(--bg-secondary)] text-[var(--text-primary)] text-base sm:text-lg font-semibold rounded-2xl flex items-center justify-center gap-2 border border-[var(--border-default)] hover:border-[var(--border-strong)] transition-all duration-200 active:scale-[0.98]"
+            >
+              Voir les tarifs
+            </a>
+          </div>
 
-              {lookupError && (
-                <p className="text-xs sm:text-sm text-red-600 text-center">{lookupError}</p>
-              )}
-
-              {lookupResult && (
-                <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 sm:p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-white border border-zinc-200 flex items-center justify-center shrink-0">
-                      <BrandLogo brand={lookupResult.make || ""} size={24} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-zinc-900 text-sm sm:text-base font-semibold truncate">
-                        {lookupResult.make} {lookupResult.model}
-                      </p>
-                      <p className="text-zinc-500 text-xs sm:text-sm">
-                        {lookupResult.year} • {lookupResult.fuel || "—"}
-                      </p>
-                    </div>
-                  </div>
-                  {lookupResult.vin && (
-                    <p className="text-zinc-400 text-[10px] sm:text-xs font-mono mt-2 sm:mt-3 truncate">VIN {lookupResult.vin}</p>
-                  )}
-                  <Link
-                    href="/inscription"
-                    className="mt-3 w-full h-9 sm:h-10 bg-zinc-900 hover:bg-zinc-800 text-white text-xs sm:text-sm font-medium rounded-lg flex items-center justify-center gap-2 transition-colors"
-                  >
-                    Créer un devis
-                    <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  </Link>
-                </div>
-              )}
-            </form>
-
-            <p className="text-zinc-400 text-[10px] sm:text-xs text-center mt-4">
-              Données SIV en temps réel
-            </p>
+          {/* Trust signals */}
+          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-sm sm:text-base text-[var(--text-tertiary)]">
+            <span className="flex items-center gap-2.5">
+              <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+              Sans engagement
+            </span>
+            <span className="flex items-center gap-2.5">
+              <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+              Données hébergées en France
+            </span>
+            <span className="flex items-center gap-2.5">
+              <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+              Support inclus
+            </span>
           </div>
         </div>
       </section>
 
-      {/* Social Proof Bar */}
-      <section className="py-8 px-4 sm:px-6 border-y border-zinc-100 bg-zinc-50">
-        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-6 sm:gap-12">
-          <div className="text-center">
-            <p className="text-[28px] sm:text-[32px] font-bold text-zinc-900">500+</p>
-            <p className="text-[13px] text-zinc-500">Garages équipés</p>
-          </div>
-          <div className="hidden sm:block w-px h-10 bg-zinc-200"></div>
-          <div className="text-center">
-            <p className="text-[28px] sm:text-[32px] font-bold text-zinc-900">50 000+</p>
-            <p className="text-[13px] text-zinc-500">Véhicules gérés</p>
-          </div>
-          <div className="hidden sm:block w-px h-10 bg-zinc-200"></div>
-          <div className="text-center">
-            <p className="text-[28px] sm:text-[32px] font-bold text-zinc-900">4.9/5</p>
-            <p className="text-[13px] text-zinc-500">Satisfaction client</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section id="features" className="py-16 sm:py-24 px-4 sm:px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12 sm:mb-16">
-            <h2 className="text-[28px] sm:text-[36px] font-bold text-zinc-900 mb-3">Tout ce dont vous avez besoin</h2>
-            <p className="text-[15px] sm:text-[17px] text-zinc-600 max-w-xl mx-auto">
-              Une suite complète pour gérer votre garage de A à Z.
-            </p>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {features.map((feature) => (
-              <div
-                key={feature.title}
-                className="p-5 sm:p-6 bg-zinc-50 hover:bg-zinc-100 rounded-xl transition-colors"
-              >
-                <h3 className="text-[15px] font-semibold text-zinc-900 mb-2">{feature.title}</h3>
-                <p className="text-[14px] text-zinc-600 leading-relaxed">{feature.description}</p>
+      {/* ═══════════════════════════════════════
+          SOCIAL PROOF — Large numbers
+      ═══════════════════════════════════════ */}
+      <section className="border-y border-[var(--border-light)] bg-[var(--bg-secondary)]">
+        <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-12 py-14 sm:py-20">
+          <div className="grid grid-cols-3 gap-4 sm:gap-8">
+            {[
+              { value: "500+", label: "Garages équipés" },
+              { value: "50 000+", label: "Véhicules gérés" },
+              { value: "4.9/5", label: "Satisfaction client" },
+            ].map((stat) => (
+              <div key={stat.label} className="text-center">
+                <p className="text-3xl sm:text-5xl lg:text-6xl font-bold text-[var(--text-primary)] tracking-tight leading-none">
+                  {stat.value}
+                </p>
+                <p className="text-sm sm:text-base lg:text-lg text-[var(--text-tertiary)] mt-2 sm:mt-3">
+                  {stat.label}
+                </p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="py-16 sm:py-24 px-4 sm:px-6 bg-zinc-50">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-10 sm:mb-12">
-            <h2 className="text-[28px] sm:text-[36px] font-bold text-zinc-900 mb-3">Tarifs simples</h2>
-            <p className="text-[15px] sm:text-[17px] text-zinc-600">
-              Pas de frais cachés. Sans engagement.
+      {/* ═══════════════════════════════════════
+          FEATURES — 2-column grid, big cards
+      ═══════════════════════════════════════ */}
+      <section id="features" className="px-5 sm:px-8 lg:px-12 py-28 sm:py-36 lg:py-44">
+        <div className="max-w-[1400px] mx-auto">
+          {/* Section header */}
+          <div className="text-center mb-16 sm:mb-24">
+            <p className="text-sm sm:text-base font-semibold text-[var(--text-muted)] uppercase tracking-[0.15em] mb-5">
+              Fonctionnalités
+            </p>
+            <h2 className="landing-section-title text-[var(--text-primary)] mb-6">
+              Tout ce dont vous avez besoin
+            </h2>
+            <p className="text-lg sm:text-xl text-[var(--text-secondary)] max-w-2xl mx-auto leading-relaxed">
+              Une suite complète d'outils pour gérer votre garage de A à Z.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
-            {/* Demo */}
-            <div className="bg-white rounded-2xl p-6 sm:p-8 border border-zinc-200">
-              <div className="mb-5">
-                <h3 className="text-[18px] font-bold text-zinc-900 mb-1">Démo</h3>
-                <p className="text-[14px] text-zinc-500">Pour tester</p>
-              </div>
-
-              <div className="flex items-baseline gap-1 mb-5">
-                <span className="text-[40px] font-bold text-zinc-900">0€</span>
-                <span className="text-[14px] text-zinc-400">gratuit</span>
-              </div>
-
-              <div className="space-y-3 mb-6">
-                {benefitsDemo.map((b) => (
-                  <div key={b} className="flex items-center gap-2.5 text-[14px] text-zinc-700">
-                    <CheckCircle2 className="h-4 w-4 text-zinc-400 flex-shrink-0" />
-                    {b}
+          {/* Grid — 2 cols mobile, 4 cols large */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
+            {features.map((feature) => {
+              const Icon = feature.icon
+              return (
+                <div
+                  key={feature.title}
+                  className="group p-6 sm:p-8 lg:p-10 rounded-2xl sm:rounded-3xl border border-[var(--border-light)] hover:border-[var(--border-default)] bg-[var(--bg-primary)] hover:bg-[var(--bg-secondary)] transition-all duration-300"
+                >
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[var(--bg-secondary)] group-hover:bg-[var(--bg-tertiary)] flex items-center justify-center mb-5 sm:mb-6 transition-colors duration-300">
+                    <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--text-tertiary)]" strokeWidth={1.5} />
                   </div>
-                ))}
+                  <h3 className="text-base sm:text-lg font-semibold text-[var(--text-primary)] mb-2 sm:mb-3">
+                    {feature.title}
+                  </h3>
+                  <p className="text-sm sm:text-base text-[var(--text-secondary)] leading-relaxed">
+                    {feature.description}
+                  </p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════
+          HOW IT WORKS — 3 steps, big numbers
+      ═══════════════════════════════════════ */}
+      <section className="px-5 sm:px-8 lg:px-12 py-28 sm:py-36 lg:py-44 bg-[var(--bg-secondary)]">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="text-center mb-16 sm:mb-24">
+            <p className="text-sm sm:text-base font-semibold text-[var(--text-muted)] uppercase tracking-[0.15em] mb-5">
+              Comment ça marche
+            </p>
+            <h2 className="landing-section-title text-[var(--text-primary)]">
+              Opérationnel en 5 minutes
+            </h2>
+          </div>
+
+          <div className="grid sm:grid-cols-3 gap-8 sm:gap-10 lg:gap-16 max-w-6xl mx-auto">
+            {steps.map((step) => (
+              <div key={step.num} className="text-center">
+                <span className="inline-block text-6xl sm:text-7xl lg:text-8xl font-bold text-[var(--border-strong)] leading-none mb-6 sm:mb-8">
+                  {step.num}
+                </span>
+                <h3 className="text-xl sm:text-2xl font-semibold text-[var(--text-primary)] mb-3 sm:mb-4">
+                  {step.title}
+                </h3>
+                <p className="text-base sm:text-lg text-[var(--text-secondary)] leading-relaxed max-w-xs mx-auto">
+                  {step.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════
+          PRICING — Totally redesigned comparison
+      ═══════════════════════════════════════ */}
+      <section id="pricing" className="px-5 sm:px-8 lg:px-12 py-28 sm:py-36 lg:py-44">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="text-center mb-16 sm:mb-24">
+            <p className="text-sm sm:text-base font-semibold text-[var(--text-muted)] uppercase tracking-[0.15em] mb-5">
+              Tarifs
+            </p>
+            <h2 className="landing-section-title text-[var(--text-primary)] mb-6">
+              Un prix, zéro surprise
+            </h2>
+            <p className="text-lg sm:text-xl text-[var(--text-secondary)] max-w-2xl mx-auto">
+              Testez gratuitement ou passez directement au Pro. Sans engagement, sans frais cachés.
+            </p>
+          </div>
+
+          {/* Cards side by side — NEW DESIGN */}
+          <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-6 sm:gap-8">
+
+            {/* DEMO CARD */}
+            <div className="rounded-3xl border-2 border-[var(--border-default)] bg-[var(--bg-primary)] p-8 sm:p-10 lg:p-12 flex flex-col">
+              <div className="flex items-center justify-between mb-8 sm:mb-10">
+                <div>
+                  <h3 className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">Démo</h3>
+                  <p className="text-base sm:text-lg text-[var(--text-tertiary)] mt-1">Pour découvrir</p>
+                </div>
               </div>
 
-              <Link href="/login" className="block w-full h-11 bg-zinc-100 hover:bg-zinc-200 text-zinc-900 text-[14px] font-semibold rounded-lg text-center leading-[44px] transition-colors">
+              <div className="mb-10 sm:mb-12">
+                <div className="flex items-end gap-2">
+                  <span className="text-6xl sm:text-7xl font-extrabold text-[var(--text-primary)] tracking-tighter leading-none">0€</span>
+                </div>
+                <p className="text-base text-[var(--text-muted)] mt-2">Gratuit pour toujours</p>
+              </div>
+
+              <div className="space-y-5 mb-10 sm:mb-12 flex-1">
+                <p className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider">Inclus :</p>
+                <div className="flex items-center gap-3 text-base sm:text-lg text-[var(--text-secondary)]">
+                  <Check className="h-5 w-5 text-emerald-500 flex-shrink-0" />
+                  5 clients maximum
+                </div>
+                <div className="flex items-center gap-3 text-base sm:text-lg text-[var(--text-secondary)]">
+                  <Check className="h-5 w-5 text-emerald-500 flex-shrink-0" />
+                  5 véhicules maximum
+                </div>
+                <div className="flex items-center gap-3 text-base sm:text-lg text-[var(--text-secondary)]">
+                  <Check className="h-5 w-5 text-emerald-500 flex-shrink-0" />
+                  Toutes les fonctionnalités
+                </div>
+                <div className="flex items-center gap-3 text-base sm:text-lg text-[var(--text-secondary)]">
+                  <Check className="h-5 w-5 text-emerald-500 flex-shrink-0" />
+                  Sans carte bancaire
+                </div>
+              </div>
+
+              <Link
+                href="/inscription"
+                className="w-full h-14 sm:h-16 bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] text-base sm:text-lg font-semibold rounded-2xl flex items-center justify-center transition-all duration-200 border border-[var(--border-default)] active:scale-[0.98]"
+              >
                 Commencer gratuitement
               </Link>
             </div>
 
-            {/* Pro */}
-            <div className="bg-zinc-900 rounded-2xl p-6 sm:p-8 relative">
-              <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
-                <span className="px-2.5 py-1 bg-emerald-500 text-white text-[11px] font-bold rounded-full">
-                  POPULAIRE
+            {/* PRO CARD — Highlighted */}
+            <div className="rounded-3xl bg-zinc-900 p-8 sm:p-10 lg:p-12 flex flex-col relative overflow-hidden ring-2 ring-zinc-900">
+              {/* Glow effect top */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-px bg-gradient-to-r from-transparent via-zinc-600 to-transparent" />
+
+              <div className="flex items-center justify-between mb-8 sm:mb-10">
+                <div>
+                  <h3 className="text-2xl sm:text-3xl font-bold text-white">Pro</h3>
+                  <p className="text-base sm:text-lg text-zinc-400 mt-1">Accès complet</p>
+                </div>
+                <span className="px-4 py-2 bg-emerald-500 text-white text-xs sm:text-sm font-bold rounded-full uppercase tracking-wider">
+                  Populaire
                 </span>
               </div>
 
-              <div className="mb-5">
-                <h3 className="text-[18px] font-bold text-white mb-1">Pro</h3>
-                <p className="text-[14px] text-zinc-400">Accès complet</p>
+              <div className="mb-10 sm:mb-12">
+                <div className="flex items-end gap-2">
+                  <span className="text-6xl sm:text-7xl font-extrabold text-white tracking-tighter leading-none">59,99€</span>
+                  <span className="text-lg sm:text-xl text-zinc-500 mb-2">/mois HT</span>
+                </div>
+                <p className="text-base text-emerald-400 mt-2">Sans engagement · Résiliable à tout moment</p>
               </div>
 
-              <div className="flex items-baseline gap-1 mb-1">
-                <span className="text-[40px] font-bold text-white">59,99€</span>
-                <span className="text-[14px] text-zinc-400">HT/mois</span>
-              </div>
-
-              <p className="text-[13px] text-emerald-400 mb-5">Sans engagement • Sans frais cachés</p>
-
-              <div className="space-y-3 mb-6">
-                {benefitsPro.map((b) => (
-                  <div key={b} className="flex items-center gap-2.5 text-[14px] text-white/90">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-                    {b}
-                  </div>
-                ))}
+              <div className="space-y-5 mb-10 sm:mb-12 flex-1">
+                <p className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Tout de Démo, plus :</p>
+                <div className="flex items-center gap-3 text-base sm:text-lg text-white/90">
+                  <Check className="h-5 w-5 text-emerald-400 flex-shrink-0" />
+                  Clients illimités
+                </div>
+                <div className="flex items-center gap-3 text-base sm:text-lg text-white/90">
+                  <Check className="h-5 w-5 text-emerald-400 flex-shrink-0" />
+                  Véhicules illimités
+                </div>
+                <div className="flex items-center gap-3 text-base sm:text-lg text-white/90">
+                  <Check className="h-5 w-5 text-emerald-400 flex-shrink-0" />
+                  Factures et devis illimités
+                </div>
+                <div className="flex items-center gap-3 text-base sm:text-lg text-white/90">
+                  <Check className="h-5 w-5 text-emerald-400 flex-shrink-0" />
+                  Support prioritaire
+                </div>
+                <div className="flex items-center gap-3 text-base sm:text-lg text-white/90">
+                  <Check className="h-5 w-5 text-emerald-400 flex-shrink-0" />
+                  Exports PDF & Excel
+                </div>
+                <div className="flex items-center gap-3 text-base sm:text-lg text-white/90">
+                  <Check className="h-5 w-5 text-emerald-400 flex-shrink-0" />
+                  SMS & emails automatiques
+                </div>
               </div>
 
               <button
-                onClick={openCheckout}
-                className="w-full h-11 bg-white hover:bg-zinc-100 text-zinc-900 text-[14px] font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors"
+                onClick={() => setCheckoutOpen(true)}
+                className="w-full h-14 sm:h-16 bg-white hover:bg-zinc-100 text-zinc-900 text-base sm:text-lg font-semibold rounded-2xl flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.98]"
               >
-                <Shield className="h-4 w-4" />
                 S'abonner maintenant
+                <ArrowRight className="h-5 w-5" />
               </button>
+              <p className="text-sm text-zinc-500 mt-4 text-center">
+                Paiement sécurisé Stripe · Facture disponible
+              </p>
+            </div>
+          </div>
 
-              <p className="text-[11px] text-zinc-500 mt-3 text-center">Paiement sécurisé Stripe • Sans engagement</p>
+          {/* Comparison table — desktop only */}
+          <div className="hidden lg:block max-w-4xl mx-auto mt-20">
+            <div className="rounded-2xl border border-[var(--border-default)] overflow-hidden">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-[var(--bg-secondary)]">
+                    <th className="text-left text-base font-semibold text-[var(--text-primary)] px-8 py-5">Fonctionnalité</th>
+                    <th className="text-center text-base font-semibold text-[var(--text-primary)] px-8 py-5 w-40">Démo</th>
+                    <th className="text-center text-base font-semibold text-[var(--text-primary)] px-8 py-5 w-40 bg-zinc-900 text-white">Pro</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pricingFeatures.map((f, i) => (
+                    <tr key={f.name} className={i % 2 === 0 ? 'bg-[var(--bg-primary)]' : 'bg-[var(--bg-secondary)]'}>
+                      <td className="text-base text-[var(--text-secondary)] px-8 py-4">{f.name}</td>
+                      <td className="text-center px-8 py-4">
+                        {typeof f.demo === 'boolean' ? (
+                          f.demo ? <Check className="h-5 w-5 text-emerald-500 mx-auto" /> : <span className="text-[var(--text-muted)]">—</span>
+                        ) : (
+                          <span className="text-base text-[var(--text-secondary)]">{f.demo}</span>
+                        )}
+                      </td>
+                      <td className="text-center px-8 py-4 bg-zinc-900/5">
+                        {typeof f.pro === 'boolean' ? (
+                          f.pro ? <Check className="h-5 w-5 text-emerald-500 mx-auto" /> : <span className="text-[var(--text-muted)]">—</span>
+                        ) : (
+                          <span className="text-base font-medium text-[var(--text-primary)]">{f.pro}</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-16 sm:py-24 px-4 sm:px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-10 sm:mb-12">
-            <h2 className="text-[28px] sm:text-[36px] font-bold text-zinc-900 mb-3">Ils nous font confiance</h2>
+      {/* ═══════════════════════════════════════
+          TESTIMONIALS — Big quote cards
+      ═══════════════════════════════════════ */}
+      <section className="px-5 sm:px-8 lg:px-12 py-28 sm:py-36 lg:py-44 bg-[var(--bg-secondary)]">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="text-center mb-16 sm:mb-24">
+            <p className="text-sm sm:text-base font-semibold text-[var(--text-muted)] uppercase tracking-[0.15em] mb-5">
+              Témoignages
+            </p>
+            <h2 className="landing-section-title text-[var(--text-primary)]">
+              Ils nous font confiance
+            </h2>
           </div>
 
-          <div className="grid sm:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid sm:grid-cols-3 gap-5 sm:gap-6 lg:gap-8 max-w-6xl mx-auto">
             {testimonials.map((t) => (
-              <div key={t.name} className="bg-zinc-50 rounded-xl p-5 sm:p-6">
-                <div className="flex gap-0.5 mb-3">
+              <div
+                key={t.name}
+                className="p-8 sm:p-10 rounded-3xl bg-[var(--bg-primary)] border border-[var(--border-light)]"
+              >
+                <div className="flex gap-1 mb-6">
                   {[...Array(5)].map((_, j) => (
-                    <Star key={j} className="h-4 w-4 text-amber-400 fill-amber-400" />
+                    <Star key={j} className="h-5 w-5 text-amber-400 fill-amber-400" />
                   ))}
                 </div>
-                <p className="text-[14px] text-zinc-700 leading-relaxed mb-4">"{t.quote}"</p>
-                <p className="text-[13px] font-medium text-zinc-900">{t.name} <span className="text-zinc-400 font-normal">• {t.garage}</span></p>
+                <p className="text-base sm:text-lg text-[var(--text-secondary)] leading-relaxed mb-8">
+                  &ldquo;{t.quote}&rdquo;
+                </p>
+                <div>
+                  <p className="text-base sm:text-lg font-semibold text-[var(--text-primary)]">{t.name}</p>
+                  <p className="text-sm sm:text-base text-[var(--text-tertiary)]">{t.garage}</p>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* FAQ */}
-      <section id="faq" className="py-16 sm:py-24 px-4 sm:px-6 bg-zinc-50">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-10 sm:mb-12">
-            <h2 className="text-[28px] sm:text-[36px] font-bold text-zinc-900 mb-3">Questions fréquentes</h2>
+      {/* ═══════════════════════════════════════
+          FAQ — Wide accordion
+      ═══════════════════════════════════════ */}
+      <section id="faq" className="px-5 sm:px-8 lg:px-12 py-28 sm:py-36 lg:py-44">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="text-center mb-16 sm:mb-24">
+            <p className="text-sm sm:text-base font-semibold text-[var(--text-muted)] uppercase tracking-[0.15em] mb-5">
+              FAQ
+            </p>
+            <h2 className="landing-section-title text-[var(--text-primary)]">
+              Questions fréquentes
+            </h2>
           </div>
 
-          <div className="space-y-3">
+          <div className="max-w-4xl mx-auto">
             {faqs.map((faq, i) => (
-              <details key={i} className="group bg-white rounded-xl border border-zinc-200">
-                <summary className="flex items-center justify-between p-4 sm:p-5 cursor-pointer list-none">
-                  <span className="text-[14px] sm:text-[15px] font-medium text-zinc-900 pr-4">{faq.q}</span>
-                  <ChevronRight className="h-4 w-4 text-zinc-400 transition-transform group-open:rotate-90 flex-shrink-0" />
-                </summary>
-                <div className="px-4 sm:px-5 pb-4 sm:pb-5 text-[14px] text-zinc-600 leading-relaxed">
-                  {faq.a}
-                </div>
-              </details>
+              <FaqItem key={i} q={faq.q} a={faq.a} />
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-16 sm:py-24 px-4 sm:px-6 bg-zinc-900">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-[28px] sm:text-[36px] font-bold text-white mb-4">
-            Prêt à simplifier votre gestion ?
+      {/* ═══════════════════════════════════════
+          CTA FINAL — Full impact
+      ═══════════════════════════════════════ */}
+      <section className="px-5 sm:px-8 lg:px-12 py-28 sm:py-36 lg:py-44 bg-zinc-900 relative overflow-hidden">
+        {/* Subtle gradient orb */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-zinc-800/50 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="max-w-[1400px] mx-auto text-center relative z-10">
+          <h2 className="text-3xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight tracking-tight mb-6 sm:mb-8 max-w-3xl mx-auto">
+            Prêt à simplifier la gestion de votre garage ?
           </h2>
-          <p className="text-[15px] sm:text-[17px] text-zinc-400 mb-8">
-            Commencez gratuitement avec 5 clients et 5 véhicules. Passez au Pro quand vous voulez.
+          <p className="text-lg sm:text-xl text-zinc-400 max-w-2xl mx-auto mb-12 sm:mb-14 leading-relaxed">
+            Rejoignez plus de 500 garages qui utilisent GaragePro au quotidien. Commencez gratuitement, passez au Pro quand vous êtes prêt.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link href="/inscription" className="w-full sm:w-auto h-12 px-8 bg-white text-zinc-900 text-[15px] font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-zinc-100 transition-colors">
-              Démarrer l'essai gratuit
-              <ArrowRight className="h-4 w-4" />
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5">
+            <Link
+              href="/inscription"
+              className="w-full sm:w-auto h-14 sm:h-16 px-10 sm:px-14 bg-white text-zinc-900 text-base sm:text-lg font-semibold rounded-2xl flex items-center justify-center gap-3 hover:bg-zinc-100 transition-all duration-200 active:scale-[0.98]"
+            >
+              Démarrer gratuitement
+              <ArrowRight className="h-5 w-5" />
             </Link>
             <button
-              onClick={openCheckout}
-              className="w-full sm:w-auto h-12 px-8 bg-zinc-800 text-white text-[15px] font-semibold rounded-lg flex items-center justify-center gap-2 border border-zinc-700 hover:bg-zinc-700 transition-colors"
+              onClick={() => setCheckoutOpen(true)}
+              className="w-full sm:w-auto h-14 sm:h-16 px-10 sm:px-14 bg-transparent text-white text-base sm:text-lg font-semibold rounded-2xl flex items-center justify-center gap-2 border border-zinc-700 hover:border-zinc-500 hover:bg-white/5 transition-all duration-200 active:scale-[0.98]"
             >
               S'abonner au Pro
             </button>
@@ -552,28 +610,32 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-8 sm:py-10 px-4 sm:px-6 border-t border-zinc-100">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+      {/* ═══════════════════════════════════════
+          FOOTER
+      ═══════════════════════════════════════ */}
+      <footer className="border-t border-[var(--border-light)] bg-[var(--bg-primary)]">
+        <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-12 py-12 sm:py-16">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-8">
             <div className="flex items-center">
               <img
-                src="/GaragePROlogo.png"
+                src="/logo.png"
                 alt="GaragePro"
-                width="240"
-                height="60"
-                className="w-[160px] sm:w-[200px] h-auto logo-invert"
+                width="128"
+                height="128"
+                className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 object-contain"
               />
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-[13px] text-zinc-500">
-              <a href="#" className="hover:text-zinc-900">Mentions légales</a>
-              <a href="#" className="hover:text-zinc-900">CGV</a>
-              <a href="#" className="hover:text-zinc-900">Confidentialité</a>
-              <a href="mailto:contact@garagepro.fr" className="hover:text-zinc-900">Contact</a>
+            <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-10 text-sm sm:text-base text-[var(--text-tertiary)]">
+              <a href="#" className="hover:text-[var(--text-primary)] transition-colors">Mentions légales</a>
+              <a href="#" className="hover:text-[var(--text-primary)] transition-colors">CGV</a>
+              <a href="#" className="hover:text-[var(--text-primary)] transition-colors">Confidentialité</a>
+              <a href="mailto:contact@garagepro.fr" className="hover:text-[var(--text-primary)] transition-colors">Contact</a>
             </div>
 
-            <p className="text-[12px] text-zinc-400">© 2024 GaragePro</p>
+            <p className="text-sm text-[var(--text-muted)]">
+              © {new Date().getFullYear()} GaragePro
+            </p>
           </div>
         </div>
       </footer>

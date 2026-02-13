@@ -2,22 +2,15 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Menu, X } from "lucide-react"
+import { Menu, X, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
-// import { ThemeToggleButton } from "@/components/ui/theme-toggle-button" // Ensure this path is correct, logic was in page.tsx
-
-// Assuming ThemeToggleButton is available at existing path
-import { ThemeToggleButton } from "@/components/ui/theme-toggle-button"
 
 export function LandingHeader() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
     const [scrolled, setScrolled] = useState(false)
 
-    // Add scroll effect
     useEffect(() => {
-        const handleScroll = () => {
-            setScrolled(window.scrollY > 20)
-        }
+        const handleScroll = () => setScrolled(window.scrollY > 10)
         window.addEventListener("scroll", handleScroll)
         return () => window.removeEventListener("scroll", handleScroll)
     }, [])
@@ -25,119 +18,109 @@ export function LandingHeader() {
     return (
         <header
             className={cn(
-                "fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b",
+                "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
                 scrolled
-                    ? "bg-[var(--bg-primary)]/95 backdrop-blur-md border-[var(--border-light)] shadow-sm"
-                    : "bg-transparent border-transparent"
+                    ? "bg-[var(--bg-primary)]/80 backdrop-blur-2xl border-b border-[var(--border-light)]"
+                    : "bg-transparent border-b border-transparent"
             )}
         >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-20">
+            <div className="max-w-[1400px] mx-auto px-5 sm:px-8 lg:px-12">
+                <div className="flex items-center justify-between h-20 sm:h-[88px] lg:h-24">
 
-                    {/* Logo Area */}
-                    <div className="flex-shrink-0 flex items-center">
-                        <Link href="/" className="flex items-center gap-2">
-                            <img
-                                src="/GaragePROlogo.png"
-                                alt="GaragePro"
-                                width="180"
-                                height="45"
-                                className="h-10 w-auto logo-invert object-contain"
-                            />
-                        </Link>
-                    </div>
+                    {/* ── Logo ── */}
+                    <Link href="/" className="flex items-center flex-shrink-0">
+                        <img
+                            src="/logo.png"
+                            alt="GaragePro"
+                            width="128"
+                            height="128"
+                            className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 object-contain"
+                        />
+                    </Link>
 
-                    {/* Desktop Navigation */}
-                    <div className="hidden md:flex items-center gap-8 ml-auto mr-8">
-                        <Link href="/#features" className="text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors">
-                            Fonctionnalités
-                        </Link>
-                        <Link href="/#pricing" className="text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors">
-                            Tarifs
-                        </Link>
-                        <Link href="/#faq" className="text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors">
-                            FAQ
-                        </Link>
-                    </div>
+                    {/* ── Desktop Nav ── */}
+                    <nav className="hidden lg:flex items-center gap-10 xl:gap-12">
+                        {[
+                            { label: "Fonctionnalités", href: "/#features" },
+                            { label: "Tarifs", href: "/#pricing" },
+                            { label: "FAQ", href: "/#faq" },
+                        ].map(link => (
+                            <Link
+                                key={link.label}
+                                href={link.href}
+                                className="text-[15px] xl:text-base font-medium text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors duration-200 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[2px] after:bg-[var(--text-primary)] hover:after:w-full after:transition-all after:duration-300"
+                            >
+                                {link.label}
+                            </Link>
+                        ))}
+                    </nav>
 
-                    {/* Desktop Actions */}
-                    <div className="hidden md:flex items-center gap-4">
-                        <ThemeToggleButton />
-                        <div className="h-6 w-px bg-zinc-200 mx-1"></div>
+                    {/* ── Desktop Actions ── */}
+                    <div className="hidden lg:flex items-center gap-2">
                         <Link
                             href="/login"
-                            className="text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors"
+                            className="h-11 xl:h-12 px-5 xl:px-6 text-[15px] xl:text-base font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors rounded-xl flex items-center justify-center hover:bg-[var(--bg-secondary)]"
                         >
                             Connexion
                         </Link>
                         <Link
                             href="/inscription"
-                            className="inline-flex items-center justify-center h-10 px-5 text-sm font-semibold text-white transition-colors bg-zinc-900 rounded-lg hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2"
+                            className="h-11 xl:h-12 px-6 xl:px-8 text-[15px] xl:text-base font-semibold text-white bg-zinc-900 rounded-xl flex items-center justify-center gap-2 hover:bg-zinc-800 transition-all duration-200 hover:shadow-lg active:scale-[0.97]"
                         >
                             Essai gratuit
+                            <ArrowRight className="h-4 w-4" />
                         </Link>
                     </div>
 
-                    {/* Mobile Menu Button */}
-                    <div className="flex md:hidden items-center gap-4">
-                        <ThemeToggleButton />
+                    {/* ── Mobile Actions ── */}
+                    <div className="flex lg:hidden items-center gap-2">
                         <button
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                            className="p-2 -mr-2 text-zinc-600 hover:text-zinc-900 transition-colors"
+                            className="p-2.5 rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-all"
                             aria-label="Menu"
                         >
-                            {mobileMenuOpen ? (
-                                <X className="h-6 w-6" />
-                            ) : (
-                                <Menu className="h-6 w-6" />
-                            )}
+                            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                         </button>
                     </div>
                 </div>
             </div>
 
-            {/* Mobile Menu Overlay */}
+            {/* ── Mobile Menu ── */}
             {mobileMenuOpen && (
-                <div className="md:hidden absolute top-full left-0 right-0 bg-[var(--bg-primary)] border-b border-[var(--border-light)] shadow-lg animate-in slide-in-from-top-2 duration-200">
-                    <div className="px-4 py-6 space-y-4">
-                        <nav className="flex flex-col space-y-4">
-                            <Link
-                                href="/#features"
-                                className="block text-base font-medium text-zinc-600 hover:text-zinc-900 py-2"
-                                onClick={() => setMobileMenuOpen(false)}
-                            >
-                                Fonctionnalités
-                            </Link>
-                            <Link
-                                href="/#pricing"
-                                className="block text-base font-medium text-zinc-600 hover:text-zinc-900 py-2"
-                                onClick={() => setMobileMenuOpen(false)}
-                            >
-                                Tarifs
-                            </Link>
-                            <Link
-                                href="/#faq"
-                                className="block text-base font-medium text-zinc-600 hover:text-zinc-900 py-2"
-                                onClick={() => setMobileMenuOpen(false)}
-                            >
-                                FAQ
-                            </Link>
+                <div className="lg:hidden bg-[var(--bg-primary)]/95 backdrop-blur-2xl border-b border-[var(--border-light)]">
+                    <div className="px-5 sm:px-8 py-8">
+                        <nav className="space-y-1 mb-8">
+                            {[
+                                { label: "Fonctionnalités", href: "/#features" },
+                                { label: "Tarifs", href: "/#pricing" },
+                                { label: "FAQ", href: "/#faq" },
+                            ].map(link => (
+                                <Link
+                                    key={link.label}
+                                    href={link.href}
+                                    className="block py-4 text-lg font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                >
+                                    {link.label}
+                                </Link>
+                            ))}
                         </nav>
 
-                        <div className="pt-4 mt-4 border-t border-zinc-100 flex flex-col gap-3">
+                        <div className="border-t border-[var(--border-light)] pt-6 flex flex-col gap-3">
                             <Link
                                 href="/login"
-                                className="w-full h-11 flex items-center justify-center text-base font-medium text-zinc-900 bg-zinc-100 rounded-lg hover:bg-zinc-200 transition-colors"
+                                className="w-full h-13 flex items-center justify-center text-base font-medium text-[var(--text-primary)] bg-[var(--bg-secondary)] rounded-2xl transition-colors active:scale-[0.98]"
                                 onClick={() => setMobileMenuOpen(false)}
                             >
                                 Connexion
                             </Link>
                             <Link
                                 href="/inscription"
-                                className="w-full h-11 flex items-center justify-center text-base font-medium text-white bg-zinc-900 rounded-lg hover:bg-zinc-800 transition-colors"
+                                className="w-full h-13 flex items-center justify-center text-base font-semibold text-white bg-zinc-900 rounded-2xl hover:bg-zinc-800 transition-all gap-2 active:scale-[0.98]"
                                 onClick={() => setMobileMenuOpen(false)}
                             >
                                 Essai gratuit
+                                <ArrowRight className="h-4 w-4" />
                             </Link>
                         </div>
                     </div>
