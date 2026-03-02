@@ -233,76 +233,110 @@ export default function DashboardPage() {
                 </Link>
             </div>
 
-            {/* Subscription Banner */}
+            {/* Subscription Banner — Demo */}
             {!isPro && (
-                <div className="bg-white rounded-2xl border border-[var(--border-light)] p-4 sm:p-5" style={{ boxShadow: 'var(--shadow-sm)' }}>
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-[var(--accent-soft)] flex items-center justify-center flex-shrink-0">
-                                <TrendingUp className="h-5 w-5 text-[var(--accent-primary)]" />
-                            </div>
+                <div className="relative overflow-hidden rounded-2xl" style={{ background: 'linear-gradient(135deg, #18181b 0%, #27272a 50%, #18181b 100%)' }}>
+                    {/* Subtle glow */}
+                    <div className="absolute top-0 right-0 w-72 h-72 rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(circle, var(--accent-primary), transparent 70%)' }} />
+
+                    <div className="relative p-5 sm:p-6">
+                        {/* Top row */}
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                             <div>
-                                <p className="text-[14px] font-semibold text-[var(--text-primary)]">Plan Démo</p>
-                                <p className="text-[12px] text-[var(--text-tertiary)]">
-                                    5 clients et 5 véhicules • Passez au Pro pour un accès illimité
+                                <div className="flex items-center gap-2.5 mb-1.5">
+                                    <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                                    <span className="text-xs font-semibold uppercase tracking-widest text-zinc-500">Version d'essai</span>
+                                </div>
+                                <p className="text-base sm:text-lg font-semibold text-white">
+                                    Passez au Pro pour un accès illimité
                                 </p>
                             </div>
+                            <Link
+                                href="/upgrade"
+                                className="h-10 sm:h-11 px-6 bg-white hover:bg-zinc-100 text-zinc-900 text-sm font-semibold rounded-xl flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg active:scale-[0.97] flex-shrink-0"
+                            >
+                                <Crown className="h-4 w-4" />
+                                Passer au Pro
+                            </Link>
                         </div>
-                        <Link
-                            href="/upgrade"
-                            className="h-9 px-4 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white text-[13px] font-medium rounded-lg flex items-center gap-1.5 transition-colors"
-                        >
-                            <span>Passer au Pro</span>
-                            <ChevronRight className="h-3.5 w-3.5" />
-                        </Link>
+
+                        {/* Usage meters — circular rings */}
+                        {clientLimit && vehiculeLimit && (
+                            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                                {/* Clients */}
+                                <div className="bg-white/[0.06] backdrop-blur-sm rounded-xl p-4 border border-white/[0.06]">
+                                    <div className="flex items-center gap-4">
+                                        <div className="relative w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0">
+                                            <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                                                <circle cx="18" cy="18" r="15.5" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
+                                                <circle
+                                                    cx="18" cy="18" r="15.5" fill="none"
+                                                    stroke={clientPercent >= 80 ? '#f59e0b' : '#10b981'}
+                                                    strokeWidth="3"
+                                                    strokeLinecap="round"
+                                                    strokeDasharray={`${clientPercent * 0.9738} 97.38`}
+                                                    className="transition-all duration-700"
+                                                />
+                                            </svg>
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <Users className="h-4 w-4 sm:h-5 sm:w-5 text-zinc-400" strokeWidth={1.5} />
+                                            </div>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-[22px] sm:text-2xl font-bold text-white tracking-tight">
+                                                {clientLimit.current}<span className="text-zinc-600 text-base font-medium">/{clientLimit.limit}</span>
+                                            </p>
+                                            <p className="text-xs sm:text-sm text-zinc-500">Clients utilisés</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Véhicules */}
+                                <div className="bg-white/[0.06] backdrop-blur-sm rounded-xl p-4 border border-white/[0.06]">
+                                    <div className="flex items-center gap-4">
+                                        <div className="relative w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0">
+                                            <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                                                <circle cx="18" cy="18" r="15.5" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
+                                                <circle
+                                                    cx="18" cy="18" r="15.5" fill="none"
+                                                    stroke={vehiculePercent >= 80 ? '#f59e0b' : '#10b981'}
+                                                    strokeWidth="3"
+                                                    strokeLinecap="round"
+                                                    strokeDasharray={`${vehiculePercent * 0.9738} 97.38`}
+                                                    className="transition-all duration-700"
+                                                />
+                                            </svg>
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <Car className="h-4 w-4 sm:h-5 sm:w-5 text-zinc-400" strokeWidth={1.5} />
+                                            </div>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-[22px] sm:text-2xl font-bold text-white tracking-tight">
+                                                {vehiculeLimit.current}<span className="text-zinc-600 text-base font-medium">/{vehiculeLimit.limit}</span>
+                                            </p>
+                                            <p className="text-xs sm:text-sm text-zinc-500">Véhicules utilisés</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
-
-                    {clientLimit && vehiculeLimit && (
-                        <div className="mt-4 grid sm:grid-cols-2 gap-3">
-                            <div className="rounded-xl border border-[var(--border-light)] bg-[var(--bg-secondary)] p-3">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-[12px] text-[var(--text-tertiary)]">Clients restants</span>
-                                    <span className="text-[12px] font-medium text-[var(--text-primary)]">{clientRemaining}/{clientLimit.limit}</span>
-                                </div>
-                                <div className="mt-2 h-2 rounded-full bg-white border border-[var(--border-light)] overflow-hidden">
-                                    <div
-                                        className="h-full bg-[var(--accent-primary)]"
-                                        style={{ width: `${clientPercent}%` }}
-                                    />
-                                </div>
-                                <p className="mt-1 text-[11px] text-[var(--text-tertiary)]">
-                                    Utilisés: {clientLimit.current}/{clientLimit.limit}
-                                </p>
-                            </div>
-
-                            <div className="rounded-xl border border-[var(--border-light)] bg-[var(--bg-secondary)] p-3">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-[12px] text-[var(--text-tertiary)]">Véhicules restants</span>
-                                    <span className="text-[12px] font-medium text-[var(--text-primary)]">{vehiculeRemaining}/{vehiculeLimit.limit}</span>
-                                </div>
-                                <div className="mt-2 h-2 rounded-full bg-white border border-[var(--border-light)] overflow-hidden">
-                                    <div
-                                        className="h-full bg-[var(--accent-primary)]"
-                                        style={{ width: `${vehiculePercent}%` }}
-                                    />
-                                </div>
-                                <p className="mt-1 text-[11px] text-[var(--text-tertiary)]">
-                                    Utilisés: {vehiculeLimit.current}/{vehiculeLimit.limit}
-                                </p>
-                            </div>
-                        </div>
-                    )}
                 </div>
             )}
 
+            {/* Subscription Banner — Pro */}
             {isPro && (
-                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100/50 rounded-xl p-4 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
-                        <Crown className="h-4 w-4 text-white" />
+                <div className="relative overflow-hidden rounded-2xl" style={{ background: 'linear-gradient(135deg, #451a03 0%, #78350f 50%, #451a03 100%)' }}>
+                    <div className="absolute top-0 right-0 w-48 h-48 rounded-full opacity-20" style={{ background: 'radial-gradient(circle, #f59e0b, transparent 70%)' }} />
+                    <div className="relative px-5 py-4 sm:px-6 sm:py-5 flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-amber-500/20">
+                            <Crown className="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                            <p className="text-sm sm:text-base font-semibold text-amber-100">Plan Pro actif</p>
+                            <p className="text-xs sm:text-sm text-amber-200/60">Accès illimité à toutes les fonctionnalités</p>
+                        </div>
                     </div>
-                    <p className="text-[13px] font-medium text-amber-900">
-                        Plan Pro actif — Accès illimité
-                    </p>
                 </div>
             )}
 

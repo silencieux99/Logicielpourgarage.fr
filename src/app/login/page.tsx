@@ -63,7 +63,9 @@ function LoginForm() {
         } catch (err: any) {
             console.error("Auth error:", err)
             // Traduire les erreurs Firebase
-            if (err.code === "auth/user-not-found") {
+            if (err.code === "auth/invalid-credential") {
+                setError("Email ou mot de passe incorrect")
+            } else if (err.code === "auth/user-not-found") {
                 setError("Aucun compte associé à cet email")
             } else if (err.code === "auth/wrong-password") {
                 setError("Mot de passe incorrect")
@@ -72,7 +74,9 @@ function LoginForm() {
             } else if (err.code === "auth/invalid-email") {
                 setError("Email invalide")
             } else if (err.code === "auth/weak-password") {
-                setError("Mot de passe trop faible")
+                setError("Mot de passe trop faible (minimum 6 caractères)")
+            } else if (err.code === "auth/too-many-requests") {
+                setError("Trop de tentatives. Veuillez réessayer dans quelques minutes.")
             } else {
                 setError("Une erreur est survenue. Réessayez.")
             }
