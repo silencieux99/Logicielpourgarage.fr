@@ -421,7 +421,7 @@ export default function EditVehiclePage() {
                                     multiple
                                     accept="image/*"
                                     className="hidden"
-                                    onChange={(e) => uploadFiles(e.target.files, 'avant')}
+                                    onChange={(e) => e.target.files && uploadFiles(e.target.files, 'avant')}
                                 />
                             </div>
 
@@ -477,7 +477,7 @@ export default function EditVehiclePage() {
                                     multiple
                                     accept="image/*"
                                     className="hidden"
-                                    onChange={(e) => uploadFiles(e.target.files, 'apres')}
+                                    onChange={(e) => e.target.files && uploadFiles(e.target.files, 'apres')}
                                 />
                             </div>
 

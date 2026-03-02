@@ -1,6 +1,0 @@
-src/app/(dashboard)/schedule/page.tsx(350,20): error TS7053: Element implicitly has an 'any' type because expression of type '"brouillon" | "en_attente" | "en_cours" | "termine" | "facture"' can't be used to index type '{ en_attente: { label: string; color: string; }; en_cours: { label: string; color: string; }; termine: { label: string; color: string; }; facture: { label: string; color: string; }; }'.
-  Property 'brouillon' does not exist on type '{ en_attente: { label: string; color: string; }; en_cours: { label: string; color: string; }; termine: { label: string; color: string; }; facture: { label: string; color: string; }; }'.
-src/app/(dashboard)/vehicles/[id]/edit/page.tsx(424,66): error TS2345: Argument of type 'FileList | null' is not assignable to parameter of type 'FileList | File[]'.
-  Type 'null' is not assignable to type 'FileList | File[]'.
-src/app/(dashboard)/vehicles/[id]/edit/page.tsx(480,66): error TS2345: Argument of type 'FileList | null' is not assignable to parameter of type 'FileList | File[]'.
-  Type 'null' is not assignable to type 'FileList | File[]'.

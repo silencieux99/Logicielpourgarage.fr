@@ -41,7 +41,8 @@ const prioriteConfig = {
     urgent: { color: "bg-red-50 border-red-400" },
 }
 
-const statutConfig = {
+const statutConfig: Record<string, { label: string, color: string }> = {
+    brouillon: { label: "Brouillon", color: "bg-zinc-100 text-zinc-700" },
     en_attente: { label: "Attente", color: "bg-amber-100 text-amber-700" },
     en_cours: { label: "En cours", color: "bg-blue-100 text-blue-700" },
     termine: { label: "Terminé", color: "bg-emerald-100 text-emerald-700" },
